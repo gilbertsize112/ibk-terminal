@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* --- FORCING TRANSPARENCY & BLACK BASE --- */
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+/* UPDATED: Changed height and overflow to allow scrolling */
+body, html, #root {
+  width: 100%;
+  min-height: 100%; 
+  background: #000 !important; 
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto; 
+}
+
+/* UPDATED: Changed height to min-height */
+.app-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* --- THE SLIDESHOW SYSTEM --- */
+.slideshow-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0; 
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,26,51,0.7));
+  z-index: 1;
+}
+
+/* --- SPLASH & AUTH LAYERS --- */
+.splash-screen, .auth-page {
+  position: relative;
+  z-index: 10; 
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent !important;
+}
+
+/* --- THE PREMIUM CARD (CLEAN VERSION) --- */
+.auth-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  width: 100%;
+  max-width: 450px;
+  padding: 50px 40px;
+  border-radius: 40px;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-align: center;
+  position: relative;
+  overflow: hidden; 
+}
+
+.auth-header h1 { 
+  font-size: 2.4rem; 
+  color: #002d5a; 
+  margin: 10px 0; 
+  font-weight: 800; 
+}
+
+.brand-tag { 
+  color: #004da0; 
+  background: rgba(0, 77, 160, 0.1); 
+  padding: 5px 15px; 
+  border-radius: 50px; 
+  font-size: 12px; 
+  font-weight: 700; 
+}
+
+.sub-text { 
+  color: #64748b; 
+  margin-bottom: 25px; 
+}
+
+.floating-input input {
+  width: 100%; 
+  padding: 18px; 
+  margin-bottom: 15px;
+  border: 1.5px solid #e2e8f0; 
+  border-radius: 18px;
+  background: #f8fafc; 
+  font-size: 16px; 
+  transition: 0.3s;
+}
+
+.floating-input input:focus { 
+  border-color: #004da0; 
+  outline: none; 
+  background: #fff; 
+}
+
+.submit-btn.primary {
+  width: 100%; 
+  padding: 18px; 
+  border-radius: 18px; 
+  border: none;
+  background: #004da0; 
+  color: white; 
+  font-weight: 700; 
+  font-size: 1.1rem;
+  cursor: pointer; 
+  transition: 0.3s;
+}
+
+.submit-btn.primary:hover { 
+  transform: translateY(-3px); 
+  box-shadow: 0 10px 20px rgba(0, 77, 160, 0.3); 
+}
+
+/* --- ICON & SPLASH --- */
+.spinning-icon { 
+  font-size: 80px; 
+  margin-bottom: 20px; 
+  animation: spin3D 4s infinite linear; 
+}
+
+@keyframes spin3D { 
+  from { transform: rotateY(0deg); } 
+  to { transform: rotateY(360deg); } 
+}
+
+.logo-text { 
+  font-size: 4.5rem; 
+  color: #fff; 
+  font-weight: 800; 
+}
+
+.korean-badge { 
+  background: #00a0e9; 
+  padding: 5px 20px; 
+  border-radius: 8px; 
+  margin: 20px 0; 
+  color: #fff; 
+}
+
+.login-link-btn {
+  background: transparent; 
+  border: 2px solid #004da0; 
+  color: #004da0;
+  width: 100%; 
+  padding: 14px; 
+  border-radius: 16px; 
+  font-weight: 700; 
+  margin-top: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-link-btn:hover {
+  background: #004da0;
+  color: #fff;
+}
+
+.auth-footer {
+  margin-top: 20px;
+}

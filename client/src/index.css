@@ -1,0 +1,10 @@
+/* src/index.css */
+:root {
+  background-color: transparent !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000 !important; /* Forces the base to black */
+}
