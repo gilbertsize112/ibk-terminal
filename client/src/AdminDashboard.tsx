@@ -87,7 +87,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-container">
+    <div className="dashboard-wrapper admin-container">
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
@@ -102,7 +102,7 @@ const AdminDashboard = () => {
 
         .admin-container {
           display: flex;
-          width: 100vw;
+          width: 100%;
           min-height: 100vh;
           background: #060a11; 
           font-family: 'Inter', sans-serif;
@@ -124,7 +124,6 @@ const AdminDashboard = () => {
           left: 0; top: 0; bottom: 0;
           z-index: 2000;
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-sizing: border-box;
         }
 
         .main-content {
@@ -135,7 +134,6 @@ const AdminDashboard = () => {
           min-height: 100vh;
           box-sizing: border-box;
           width: calc(100% - 280px);
-          transition: margin 0.3s ease;
         }
 
         .mobile-header {
@@ -152,31 +150,30 @@ const AdminDashboard = () => {
           box-sizing: border-box;
         }
 
-        /* 3-Line Hamburger Icon */
         .hamburger {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
           background: none;
           border: none;
           cursor: pointer;
-          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 8px;
         }
+
         .hamburger span {
           display: block;
-          width: 25px;
-          height: 3px;
+          width: 22px;
+          height: 2px;
           background: white;
           border-radius: 2px;
-          transition: 0.3s;
         }
 
         @media (max-width: 1024px) {
           .sidebar {
-            transform: translateX(-100%); /* Hidden by default on mobile */
+            transform: translateX(-100%);
           }
           .sidebar.active {
-            transform: translateX(0); /* Slide in when active */
+            transform: translateX(0);
           }
           .main-content {
             margin-left: 0;
@@ -204,7 +201,7 @@ const AdminDashboard = () => {
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 10px 5px; 
+            padding: 12px 5px; 
             text-align: right; 
           }
           td:before { 
@@ -213,6 +210,7 @@ const AdminDashboard = () => {
             color: #64748b;
             text-transform: uppercase;
             font-size: 10px;
+            margin-right: 15px;
           }
         }
 
@@ -260,9 +258,7 @@ const AdminDashboard = () => {
           <span style={{fontWeight: 800, fontSize: '18px'}}>IBK</span>
         </div>
         <button className="hamburger" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          <span style={{transform: isSidebarOpen ? 'rotate(45deg) translate(5px, 6px)' : ''}}></span>
-          <span style={{opacity: isSidebarOpen ? 0 : 1}}></span>
-          <span style={{transform: isSidebarOpen ? 'rotate(-45deg) translate(5px, -6px)' : ''}}></span>
+          <span></span><span></span><span></span>
         </button>
       </div>
 
@@ -274,7 +270,7 @@ const AdminDashboard = () => {
         />
       )}
 
-      {/* Sidebar Restored with "active" class logic */}
+      {/* Sidebar with Active Class */}
       <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px'}}>
           <div style={{width: '35px', height: '35px', background: '#004da0', borderRadius: '8px', animation: 'pulse 2s infinite'}}></div>
