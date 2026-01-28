@@ -10,8 +10,18 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors()); 
+// ✅ UPDATED MIDDLEWARE: Explicitly allow your frontend
+app.use(cors({
+  origin: [
+    'https://ibk-finance.vercel.app', // Your new live frontend
+    'http://localhost:5173',          // Your local dev environment
+    'http://localhost:3000'           // Alternative local port
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
@@ -27,7 +37,6 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // MongoDB Connection
-// On Vercel, we connect but don't strictly need app.listen to block the process
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
