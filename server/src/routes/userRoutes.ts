@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { Transaction } from '../models/Transaction.js'; 
 import jwt from 'jsonwebtoken';
@@ -57,9 +58,12 @@ router.get('/transactions', authenticateToken, async (req: any, res: any) => {
 
 /**
  * @route   POST /api/user/transfer
- * @desc    Transfer funds from the logged-in user to another user by Account Number
+ * @desc    Transfer funds using a database session for safety
  */
 router.post('/transfer', authenticateToken, async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { recipientAccountNumber, amount } = req.body;
     const senderId = req.user.id;
@@ -70,16 +74,16 @@ router.post('/transfer', authenticateToken, async (req: any, res: any) => {
       return res.status(400).json({ message: "Please enter a valid amount" });
     }
 
-    // 2. Find Sender and verify funds
-    const sender = await User.findById(senderId);
-    if (!sender) return res.status(404).json({ message: "Sender not found" });
+    // 2. Find Sender and verify funds (using session)
+    const sender = await User.findById(senderId).session(session);
+    if (!sender) throw new Error("Sender not found");
     
     if (sender.balance < numericAmount) {
       return res.status(400).json({ message: "Insufficient funds for this transfer" });
     }
 
-    // 3. Find Recipient
-    const recipient = await User.findOne({ accountNumber: recipientAccountNumber });
+    // 3. Find Recipient (using session)
+    const recipient = await User.findOne({ accountNumber: recipientAccountNumber }).session(session);
     if (!recipient) {
       return res.status(404).json({ message: "Recipient account number not recognized" });
     }
@@ -89,12 +93,12 @@ router.post('/transfer', authenticateToken, async (req: any, res: any) => {
       return res.status(400).json({ message: "Cannot transfer funds to yourself" });
     }
 
-    // 5. Atomic Update (Subtract from sender, add to recipient)
+    // 5. Atomic Update
     sender.balance -= numericAmount;
     recipient.balance += numericAmount;
 
-    await sender.save();
-    await recipient.save();
+    await sender.save({ session });
+    await recipient.save({ session });
 
     // 6. Create Transaction Records (Receipts for both)
     const senderDebit = new Transaction({
@@ -113,16 +117,26 @@ router.post('/transfer', authenticateToken, async (req: any, res: any) => {
       status: 'completed'
     });
 
-    await Promise.all([senderDebit.save(), recipientCredit.save()]);
+    await senderDebit.save({ session });
+    await recipientCredit.save({ session });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(200).json({ 
       message: "Transfer successful", 
       newBalance: sender.balance 
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    // If anything fails, abort the whole process
+    await session.abortTransaction();
+    session.endSession();
     console.error("Transfer Logic Error:", error);
-    res.status(500).json({ message: "Critical error during transfer process" });
+    res.status(error.message === "Sender not found" ? 404 : 400).json({ 
+      message: error.message || "Critical error during transfer process" 
+    });
   }
 });
 

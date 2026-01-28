@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
 
 const UserDashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Transfer Modal States
-  const [showTransferModal, setShowTransferModal] = useState(false);
-  const [transferData, setTransferData] = useState({ accNo: '', amount: '' });
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<any>(null); // ✅ New state for Modal
+  const [activeTab, setActiveTab] = useState<'overview' | 'security'>('overview'); // ✅ Toggle between views
+  const [pin, setPin] = useState(['', '', '', '']); // ✅ State for 4-digit PIN
+  const navigate = useNavigate(); // ✅ Initialize navigation
 
   // ✅ Keep localhost support while adding production support
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -49,24 +49,17 @@ const UserDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const handleTransfer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/api/user/transfer`, 
-        { recipientAccountNumber: transferData.accNo, amount: transferData.amount },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      alert("Transfer Successful!");
-      setShowTransferModal(false);
-      setTransferData({ accNo: '', amount: '' });
-      fetchDashboardData(); 
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Transfer failed.");
-    } finally {
-      setIsProcessing(false);
+  // Handle PIN input
+  const handlePinChange = (index: number, value: string) => {
+    if (isNaN(Number(value))) return;
+    const newPin = [...pin];
+    newPin[index] = value.substring(value.length - 1);
+    setPin(newPin);
+    
+    // Auto focus next input
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`pin-${index + 1}`);
+      nextInput?.focus();
     }
   };
 
@@ -136,6 +129,7 @@ const UserDashboard = () => {
           font-size: 10px;
           color: #64748b;
           gap: 4px;
+          cursor: pointer;
         }
         .mobile-item.active { color: #3b82f6; }
         .mobile-item span { font-size: 20px; }
@@ -240,7 +234,7 @@ const UserDashboard = () => {
         }
         .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        .tx-card {
+        .tx-card, .security-card {
           background: #070c1b;
           border-radius: 20px;
           border: 1px solid rgba(255,255,255,0.05);
@@ -249,13 +243,34 @@ const UserDashboard = () => {
 
         .tx-row {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+          padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.03);
+          cursor: pointer;
+          transition: background 0.2s ease;
+          border-radius: 12px;
+        }
+        .tx-row:hover {
+          background: rgba(255,255,255,0.03);
         }
 
-        .modal-overlay {
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
-          display: flex; justify-content: center; align-items: center; z-index: 1000;
+        /* Security Specific Styles */
+        .security-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .pin-input {
+          width: 50px;
+          height: 60px;
+          background: #0f172a;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          text-align: center;
+          font-size: 24px;
+          font-weight: 700;
+          color: white;
         }
 
         .gold-chip {
@@ -264,32 +279,70 @@ const UserDashboard = () => {
           border-radius: 6px;
         }
 
-        @media (max-width: 480px) {
-          .balance-amount { font-size: 28px; }
-          .card-visual { height: 190px; padding: 20px; }
-          .card-number { font-size: 16px; }
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.85);
+          display: flex; justify-content: center; align-items: center;
+          z-index: 1000;
+          backdrop-filter: blur(8px);
+          padding: 20px;
+        }
+        .modal-content {
+          background: #0f172a;
+          border: 1px solid rgba(255,255,255,0.1);
+          width: 100%;
+          max-width: 400px;
+          border-radius: 24px;
+          padding: 32px;
+          position: relative;
+        }
+        .detail-row {
+          display: flex; justify-content: space-between;
+          padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
       `}</style>
 
-      {/* SIDEBAR - DESKTOP ONLY */}
+      {/* TRANSACTION MODAL */}
+      {selectedTx && (
+        <div className="modal-overlay" onClick={() => setSelectedTx(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 style={{ textAlign: 'center', marginBottom: '24px' }}>Transaction Details</h3>
+            <div className="detail-row">
+              <span style={{ color: '#64748b' }}>Amount</span>
+              <span style={{ fontWeight: 600 }}>${selectedTx.amount.toLocaleString()}</span>
+            </div>
+            <div className="detail-row">
+              <span style={{ color: '#64748b' }}>Date</span>
+              <span>{new Date(selectedTx.createdAt).toLocaleString()}</span>
+            </div>
+            <div className="detail-row">
+              <span style={{ color: '#64748b' }}>Description</span>
+              <span>{selectedTx.description || 'Electronic Transfer'}</span>
+            </div>
+            <button className="action-btn" style={{ width: '100%', marginTop: '20px' }} onClick={() => setSelectedTx(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* SIDEBAR */}
       <aside className="sidebar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px', padding: '0 10px' }}>
           <div style={{ width: '28px', height: '28px', background: '#3b82f6', borderRadius: '6px' }}></div>
-          <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px' }}>IBK BANK</span>
+          <span style={{ fontSize: '18px', fontWeight: 800 }}>IBK BANK</span>
         </div>
-        <div className="nav-item active"><span>🏠</span> Overview</div>
-        <div className="nav-item"><span>💸</span> Payments</div>
+        <div className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><span>🏠</span> Overview</div>
+        <div className="nav-item" onClick={() => navigate('/transfer')}><span>💸</span> Payments</div>
         <div className="nav-item"><span>📉</span> Statistics</div>
-        <div className="nav-item"><span>🛡️</span> Security</div>
+        <div className={`nav-item ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}><span>🛡️</span> Security</div>
         <div style={{ marginTop: 'auto' }} className="nav-item" onClick={handleLogout}><span>🚪</span> Logout</div>
       </aside>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
+      {/* MOBILE NAV */}
       <nav className="mobile-nav">
-        <div className="mobile-item active"><span>🏠</span>Overview</div>
-        <div className="mobile-item" onClick={() => setShowTransferModal(true)}><span>💸</span>Payments</div>
-        <div className="mobile-item"><span>📉</span>Stats</div>
-        <div className="mobile-item"><span>🛡️</span>Security</div>
+        <div className={`mobile-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><span>🏠</span>Overview</div>
+        <div className="mobile-item" onClick={() => navigate('/transfer')}><span>💸</span>Payments</div>
+        <div className={`mobile-item ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}><span>🛡️</span>Security</div>
         <div className="mobile-item" onClick={handleLogout}><span>🚪</span>Exit</div>
       </nav>
 
@@ -297,110 +350,106 @@ const UserDashboard = () => {
       <main className="main-content">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>Hello, {user?.name?.split(' ')[0]}</h1>
-            <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '14px' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>
+              {activeTab === 'overview' ? `Hello, ${user?.name?.split(' ')[0]}` : 'Security Settings'}
+            </h1>
+            <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '14px' }}>
+              {activeTab === 'overview' ? new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Manage your account protection'}
+            </p>
           </div>
           <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)', color: '#3b82f6' }}>
             {user?.name?.[0]}
           </div>
         </header>
 
-        <div className="top-section">
-          {/* MASTERCARD DESIGN */}
-          <div className="card-visual">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="gold-chip"></div>
-              <span style={{ fontWeight: 700, fontSize: '14px', color: '#64748b' }}>PREMIUM DEBIT</span>
-            </div>
-            <div className="card-number">
-              {user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• ••••'}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div>
-                <p style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase', margin: '0 0 4px 0' }}>Card Holder</p>
-                <p style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>{user?.name || 'IBK CLIENT'}</p>
+        {activeTab === 'overview' ? (
+          <>
+            <div className="top-section">
+              <div className="card-visual">
+                <div className="gold-chip"></div>
+                <div className="card-number">{user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• ••••'}</div>
+                <div style={{ fontWeight: 600 }}>{user?.name || 'IBK CLIENT'}</div>
               </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#eb001b', opacity: 0.9 }}></div>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f79e1b', opacity: 0.9, marginLeft: '-12px' }}></div>
-              </div>
-            </div>
-          </div>
-
-          {/* BALANCE PANEL */}
-          <div className="balance-panel">
-            <p style={{ color: '#64748b', fontSize: '13px', margin: 0, fontWeight: 500 }}>Available Balance</p>
-            <h2 className="balance-amount">${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button className="action-btn" onClick={() => setShowTransferModal(true)}>Send Money</button>
-              <button className="action-btn secondary">Add Funds</button>
-            </div>
-          </div>
-        </div>
-
-        {/* TRANSACTIONS SECTION */}
-        <div className="tx-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ margin: 0, fontSize: '18px' }}>Recent Activity</h3>
-            <span style={{ color: '#3b82f6', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>View all</span>
-          </div>
-          
-          {transactions.length > 0 ? (
-            transactions.map((tx: any) => (
-              <div key={tx._id} className="tx-row">
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                  <div style={{ 
-                    width: '40px', height: '40px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)', 
-                    borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: tx.type === 'credit' ? '#22c55e' : '#94a3b8', fontSize: '16px'
-                  }}>
-                    {tx.type === 'credit' ? '↓' : '↑'}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px' }}>{tx.description || 'Electronic Transfer'}</div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, fontSize: '14px', color: tx.type === 'credit' ? '#22c55e' : '#f8fafc' }}>
-                    {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Completed</div>
+              <div className="balance-panel">
+                <p style={{ color: '#64748b', fontSize: '13px' }}>Available Balance</p>
+                <h2 className="balance-amount">${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <button className="action-btn" onClick={() => navigate('/transfer')}>Send Money</button>
+                  <button className="action-btn secondary">Add Funds</button>
                 </div>
               </div>
-            ))
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', fontSize: '14px' }}>
-              No recent transaction activity found.
             </div>
-          )}
-        </div>
+
+            <div className="tx-card">
+              <h3 style={{ marginBottom: '24px' }}>Recent Activity</h3>
+              {transactions.length > 0 ? (
+                transactions.map((tx: any) => (
+                  <div key={tx._id} className="tx-row" onClick={() => setSelectedTx(tx)}>
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <div style={{ width: '40px', height: '40px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tx.type === 'credit' ? '#22c55e' : '#94a3b8' }}>{tx.type === 'credit' ? '↓' : '↑'}</div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '14px' }}>{tx.description || 'Transfer'}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: tx.type === 'credit' ? '#22c55e' : '#f8fafc' }}>
+                      {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString()}
+                    </div>
+                  </div>
+                ))
+              ) : <div style={{ textAlign: 'center', color: '#64748b' }}>No activity found.</div>}
+            </div>
+          </>
+        ) : (
+          /* ✅ SECURITY SECTION WITH 4-DIGIT PIN */
+          <div className="security-card">
+            <h3 style={{ marginBottom: '8px' }}>Transaction PIN</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>Set a 4-digit PIN to authorize your transfers.</p>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '32px' }}>
+              {pin.map((digit, i) => (
+                <input
+                  key={i}
+                  id={`pin-${i}`}
+                  type="password"
+                  className="pin-input"
+                  value={digit}
+                  maxLength={1}
+                  onChange={(e) => handlePinChange(i, e.target.value)}
+                />
+              ))}
+            </div>
+            
+            <button className="action-btn" style={{ width: '100%' }}>Update PIN</button>
+
+            <div style={{ marginTop: '40px' }}>
+              <div className="security-item">
+                <div>
+                  <div style={{ fontWeight: 600 }}>Freeze Account</div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>Instantly stop all card activity</div>
+                </div>
+                <div style={{ width: '40px', height: '20px', background: '#1e293b', borderRadius: '10px' }}></div>
+              </div>
+              
+              <div className="security-item">
+                <div>
+                  <div style={{ fontWeight: 600 }}>2-Factor Authentication</div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>Secure your login with SMS</div>
+                </div>
+                <div style={{ color: '#22c55e', fontSize: '12px', fontWeight: 600 }}>ENABLED</div>
+              </div>
+
+              <div className="security-item" style={{ border: 'none' }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>Active Sessions</div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>Currently logged in on iPhone 15 Pro</div>
+                </div>
+                <span style={{ fontSize: '18px' }}>📱</span>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
-
-      {/* TRANSFER MODAL */}
-      {showTransferModal && (
-        <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
-          <div style={{ width: '90%', maxWidth: '380px', background: '#070c1b', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, fontSize: '20px' }}>Secure Transfer</h2>
-            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '24px' }}>Move funds instantly to any IBK Bank account.</p>
-            <form onSubmit={handleTransfer}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px', fontWeight: 700 }}>RECIPIENT ACCOUNT</label>
-                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '10px', color: 'white', boxSizing: 'border-box' }} 
-                  placeholder="Enter 10-digit number" value={transferData.accNo} onChange={e => setTransferData({...transferData, accNo: e.target.value})} required />
-              </div>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px', fontWeight: 700 }}>AMOUNT (USD)</label>
-                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '10px', color: 'white', boxSizing: 'border-box', fontSize: '18px', fontWeight: 700 }} 
-                  type="number" placeholder="0.00" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value})} required />
-              </div>
-              <button type="submit" disabled={isProcessing} className="action-btn" style={{ width: '100%', padding: '16px' }}>
-                {isProcessing ? 'Authorizing...' : 'Confirm Transfer'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
