@@ -73,7 +73,7 @@ const UserDashboard = () => {
   return (
     <div className="user-dashboard">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Mono:wght@400;700&display=swap');
 
         .user-dashboard {
           min-height: 100vh;
@@ -173,28 +173,161 @@ const UserDashboard = () => {
 
         @media (min-width: 1024px) { .top-section { grid-template-columns: 1fr 1fr; } }
 
-        /* Professional Card */
+        /* REAL PROFESSIONAL BANK CARD DESIGN - THE "ELITE BLACK" VERSION */
         .card-visual {
           width: 100%;
-          height: 220px;
-          background: linear-gradient(135deg, #1e293b 0%, #020617 100%);
+          height: 240px;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          background-image: 
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05) 0%, transparent 50%),
+            linear-gradient(135deg, #111827 0%, #000000 100%);
           border-radius: 20px;
-          padding: 28px;
+          padding: 30px;
           position: relative;
-          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+          box-shadow: 
+            0 20px 40px -10px rgba(0,0,0,0.9),
+            inset 0 1px 1px rgba(255,255,255,0.1);
           border: 1px solid rgba(255,255,255,0.08);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           box-sizing: border-box;
+          overflow: hidden;
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          cursor: pointer;
+        }
+        
+        .card-visual:hover {
+          transform: translateY(-8px) scale(1.01);
+          box-shadow: 0 30px 60px -12px rgba(0,0,0,0.9);
+        }
+
+        /* Glossy Reflection Overlay */
+        .card-visual::before {
+          content: "";
+          position: absolute;
+          top: -150%;
+          left: -50%;
+          width: 300%;
+          height: 300%;
+          background: linear-gradient(
+            45deg,
+            transparent 45%,
+            rgba(255, 255, 255, 0.03) 48%,
+            rgba(255, 255, 255, 0.07) 50%,
+            rgba(255, 255, 255, 0.03) 52%,
+            transparent 55%
+          );
+          transform: rotate(-20deg);
+          transition: all 0.6s ease;
+        }
+        
+        .card-visual:hover::before {
+          top: -100%;
+        }
+
+        .card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          z-index: 5;
+        }
+
+        .bank-name {
+          font-family: 'Plus Jakarta Sans';
+          font-weight: 700;
+          font-size: 14px;
+          letter-spacing: 2px;
+          color: rgba(255,255,255,0.8);
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Realistic EMV Chip */
+        .card-chip {
+          width: 48px;
+          height: 36px;
+          background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+          border-radius: 6px;
+          position: relative;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .card-chip::after {
+          content: "";
+          position: absolute;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.1) 5px),
+                      repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.1) 9px);
+          border-radius: 6px;
+        }
+
+        /* Contactless Icon */
+        .wireless-icon {
+           width: 20px;
+           height: 20px;
+           color: rgba(255,255,255,0.5);
+           position: absolute;
+           top: 38px;
+           right: 30px;
         }
 
         .card-number {
-          font-family: 'Courier New', monospace;
-          font-size: 20px;
-          letter-spacing: 2px;
-          color: #fff;
+          font-family: 'Space Mono', monospace;
+          font-size: 22px;
+          letter-spacing: 3.5px;
+          color: #ffffff;
           margin: 20px 0;
+          text-shadow: 0 2px 2px rgba(0,0,0,0.8);
+          z-index: 5;
+          filter: drop-shadow(0 0 1px rgba(255,255,255,0.2));
+        }
+
+        .card-bottom {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          z-index: 5;
+        }
+
+        .card-info-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .card-label {
+          font-size: 8px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #64748b;
+        }
+
+        .card-holder {
+          text-transform: uppercase;
+          font-size: 14px;
+          letter-spacing: 1.5px;
+          font-weight: 600;
+          color: #f8fafc;
+        }
+
+        .visa-logo-box {
+          text-align: right;
+        }
+
+        .visa-type {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          color: #fde68a;
+          margin-bottom: -4px;
+        }
+
+        .visa-text {
+          font-size: 28px;
+          font-weight: 900;
+          font-style: italic;
+          color: white;
+          line-height: 1;
         }
 
         /* Balance Panel */
@@ -252,15 +385,6 @@ const UserDashboard = () => {
           background: rgba(255,255,255,0.03);
         }
 
-        /* Security Specific Styles */
-        .security-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
         .pin-input {
           width: 50px;
           height: 60px;
@@ -271,12 +395,6 @@ const UserDashboard = () => {
           font-size: 24px;
           font-weight: 700;
           color: white;
-        }
-
-        .gold-chip {
-          width: 42px; height: 32px;
-          background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
-          border-radius: 6px;
         }
 
         .modal-overlay {
@@ -365,11 +483,33 @@ const UserDashboard = () => {
         {activeTab === 'overview' ? (
           <>
             <div className="top-section">
+              {/* ✅ THE ELITE BANK CARD VISUAL */}
               <div className="card-visual">
-                <div className="gold-chip"></div>
-                <div className="card-number">{user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• ••••'}</div>
-                <div style={{ fontWeight: 600 }}>{user?.name || 'IBK CLIENT'}</div>
+                <div className="card-top">
+                  <span className="bank-name">IBK PREMIER</span>
+                  <div className="card-chip"></div>
+                </div>
+                
+                <svg className="wireless-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 8a10 10 0 0 1 14 0"/><path d="M7 10a6 6 0 0 1 10 0"/><path d="M9 12a2 2 0 0 1 6 0"/></svg>
+
+                <div className="card-number">
+                  {user?.accountNumber 
+                    ? user.accountNumber.match(/.{1,4}/g).join(' ') 
+                    : '5244 9012 3456 7890'}
+                </div>
+                
+                <div className="card-bottom">
+                  <div className="card-info-group">
+                    <span className="card-label">Card Holder</span>
+                    <div className="card-holder">{user?.name || 'IBK CLIENT'}</div>
+                  </div>
+                  <div className="visa-logo-box">
+                    <div className="visa-type">WORLD ELITE</div>
+                    <div className="visa-text"></div>
+                  </div>
+                </div>
               </div>
+
               <div className="balance-panel">
                 <p style={{ color: '#64748b', fontSize: '13px' }}>Available Balance</p>
                 <h2 className="balance-amount">${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h2>
@@ -401,7 +541,7 @@ const UserDashboard = () => {
             </div>
           </>
         ) : (
-          /* ✅ SECURITY SECTION WITH 4-DIGIT PIN */
+          /* ✅ SECURITY SECTION */
           <div className="security-card">
             <h3 style={{ marginBottom: '8px' }}>Transaction PIN</h3>
             <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>Set a 4-digit PIN to authorize your transfers.</p>
@@ -423,28 +563,12 @@ const UserDashboard = () => {
             <button className="action-btn" style={{ width: '100%' }}>Update PIN</button>
 
             <div style={{ marginTop: '40px' }}>
-              <div className="security-item">
+              <div className="security-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div>
                   <div style={{ fontWeight: 600 }}>Freeze Account</div>
                   <div style={{ fontSize: '12px', color: '#64748b' }}>Instantly stop all card activity</div>
                 </div>
                 <div style={{ width: '40px', height: '20px', background: '#1e293b', borderRadius: '10px' }}></div>
-              </div>
-              
-              <div className="security-item">
-                <div>
-                  <div style={{ fontWeight: 600 }}>2-Factor Authentication</div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>Secure your login with SMS</div>
-                </div>
-                <div style={{ color: '#22c55e', fontSize: '12px', fontWeight: 600 }}>ENABLED</div>
-              </div>
-
-              <div className="security-item" style={{ border: 'none' }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Active Sessions</div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>Currently logged in on iPhone 15 Pro</div>
-                </div>
-                <span style={{ fontSize: '18px' }}>📱</span>
               </div>
             </div>
           </div>
