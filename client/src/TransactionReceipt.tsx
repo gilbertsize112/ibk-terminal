@@ -317,7 +317,7 @@ const TransactionReceipt = () => {
           <div className="data-row" style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '15px', marginTop: '5px' }}>
             <span className="label" style={{ color: '#10b981' }}>Status</span>
             <div style={{ textAlign: 'right' }}>
-               <span className="value" style={{ color: '#10b981', display: 'block' }}>COMPLETED</span>
+               <span className="value" style={{ color: '#10b981', display: 'block' }}>SENT</span>
                <span style={{ fontSize: '9px', color: '#10b981', fontWeight: 600 }}>정상 송금 완료</span>
             </div>
           </div>
