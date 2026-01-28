@@ -7,6 +7,7 @@ const AdminDashboard = () => {
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{id: string, name: string} | null>(null);
   const [amount, setAmount] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ✅ Maintain localhost support with dynamic fallback
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -89,8 +90,13 @@ const AdminDashboard = () => {
     <div className="admin-container">
       <style>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(15px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
         }
 
         @keyframes pulse {
@@ -104,8 +110,8 @@ const AdminDashboard = () => {
           display: flex;
           width: 100%;
           min-height: 100vh;
-          background: #0a0f18; 
-          font-family: 'Inter', sans-serif;
+          background: #060a11; 
+          font-family: 'Inter', -apple-system, sans-serif;
           color: #e2e8f0;
           overflow-x: hidden;
           position: relative;
@@ -113,17 +119,16 @@ const AdminDashboard = () => {
 
         .sidebar {
           width: 280px;
-          background: rgba(15, 23, 42, 0.95);
-          backdrop-filter: blur(10px);
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(15, 23, 42, 0.98);
+          backdrop-filter: blur(15px);
+          border-right: 1px solid rgba(255, 255, 255, 0.05);
           padding: 40px 20px;
           display: flex;
           flex-direction: column;
           position: fixed; 
-          left: 0;
-          top: 0;
-          bottom: 0;
-          z-index: 100;
+          left: 0; top: 0; bottom: 0;
+          z-index: 1000;
+          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .main-content {
@@ -132,16 +137,29 @@ const AdminDashboard = () => {
           padding: 40px;
           animation: fadeIn 0.8s ease-out;
           min-height: 100vh;
-          display: block; 
           box-sizing: border-box;
+          width: 100%;
         }
 
+        .mobile-header {
+          display: none;
+          padding: 15px 20px;
+          background: #0f172a;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          justify-content: space-between;
+          align-items: center;
+          position: sticky;
+          top: 0;
+          z-index: 900;
+        }
+
+        /* --- NAVIGATION --- */
         .nav-item {
-          padding: 16px 20px;
-          border-radius: 14px;
+          padding: 14px 18px;
+          border-radius: 12px;
           margin-bottom: 8px;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           gap: 12px;
@@ -150,80 +168,100 @@ const AdminDashboard = () => {
         }
 
         .nav-item:hover {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.03);
           color: white;
-          transform: translateX(5px);
+          transform: translateX(4px);
         }
 
         .nav-item.active {
-          background: linear-gradient(135deg, #004da0 0%, #002d5a 100%);
+          background: linear-gradient(135deg, #004da0 0%, #003366 100%);
           color: white;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- TABLES & CARDS --- */
+        .stat-grid {
+          display: grid; 
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+          gap: 20px;
         }
 
         .stat-card {
-          background: rgba(30, 41, 59, 0.5);
+          background: rgba(30, 41, 59, 0.4);
           border: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 25px;
-          border-radius: 24px;
-          transition: transform 0.3s ease;
+          padding: 24px;
+          border-radius: 20px;
+          transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-          transform: translateY(-5px);
+          transform: translateY(-4px);
           border-color: #004da0;
+          background: rgba(30, 41, 59, 0.6);
         }
 
         .user-table-card {
-          background: rgba(30, 41, 59, 0.5);
+          background: rgba(30, 41, 59, 0.3);
           border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: 24px;
           overflow: hidden;
           margin-top: 30px;
-          margin-bottom: 80px; 
+          margin-bottom: 50px;
         }
 
-        .table-responsive {
-          width: 100%;
-          overflow-x: auto;
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 1024px) {
+          .sidebar {
+            transform: translateX(${isSidebarOpen ? '0' : '-100%'});
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+          }
+          .main-content {
+            margin-left: 0;
+            padding: 20px;
+          }
+          .mobile-header {
+            display: flex;
+          }
+          .desktop-only-header {
+            display: none !important;
+          }
+          
+          /* Force table to behave like cards on small screens */
+          table, thead, tbody, th, td, tr { display: block; }
+          thead tr { position: absolute; top: -9999px; left: -9999px; }
+          tr { border: 1px solid rgba(255,255,255,0.05); border-radius: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.02); }
+          td { border: none; position: relative; padding-left: 50% !important; text-align: right; }
+          td:before { 
+            position: absolute; left: 15px; width: 45%; padding-right: 10px; 
+            white-space: nowrap; text-align: left; font-weight: bold; color: #64748b; font-size: 11px;
+          }
+          td:nth-of-type(1):before { content: "IDENTIFIER"; }
+          td:nth-of-type(2):before { content: "ACCOUNT"; }
+          td:nth-of-type(3):before { content: "STATUS"; }
+          td:nth-of-type(4):before { content: "BALANCE"; }
+          td:nth-of-type(5):before { content: "ACTION"; }
         }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(15, 23, 42, 0.5); padding: 20px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; }
-        td { padding: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); }
 
         .btn-load {
           background: #004da0;
           color: white;
           border: none;
-          padding: 10px 20px;
+          padding: 10px 16px;
           border-radius: 10px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s;
-          margin-right: 10px;
+          transition: 0.3s;
         }
 
-        .btn-load:hover {
-          background: #00a0e9;
-          box-shadow: 0 0 15px rgba(0, 160, 233, 0.4);
-        }
-
-        /* NEW STYLE: Block/Freeze Button */
         .btn-block {
           background: rgba(239, 68, 68, 0.1);
           color: #ef4444;
           border: 1px solid rgba(239, 68, 68, 0.2);
-          padding: 10px 20px;
+          padding: 10px 16px;
           border-radius: 10px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s;
-        }
-
-        .btn-block:hover {
-          background: #ef4444;
-          color: white;
+          margin-left: 8px;
         }
 
         .status-badge {
@@ -234,58 +272,41 @@ const AdminDashboard = () => {
           text-transform: uppercase;
         }
 
-        .status-active { background: rgba(5, 150, 105, 0.2); color: #10b981; }
-        .status-frozen { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-frozen { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
         .logout-btn {
           margin-top: auto;
           padding: 15px;
-          border-radius: 12px;
-          background: rgba(239, 68, 68, 0.1);
+          border-radius: 14px;
+          background: rgba(239, 68, 68, 0.05);
           color: #ef4444;
           text-align: center;
           font-weight: 700;
           cursor: pointer;
-          transition: 0.3s;
-          border: 1px solid rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.1);
         }
 
-        .logout-btn:hover {
-          background: #ef4444;
+        .menu-toggle {
+          background: #004da0;
+          border: none;
           color: white;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
-          backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-card {
-          background: #1e293b;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .modal-input {
-          background: #0f172a;
-          border: 1px solid #334155;
-          color: white;
-          transition: all 0.3s;
-        }
-
-        .modal-input:focus {
-          border-color: #004da0;
-          outline: none;
-          box-shadow: 0 0 0 4px rgba(0, 77, 160, 0.2);
+          padding: 8px 12px;
+          border-radius: 8px;
+          cursor: pointer;
         }
       `}</style>
+
+      {/* MOBILE TOP BAR */}
+      <div className="mobile-header">
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <div style={{width: '25px', height: '25px', background: '#004da0', borderRadius: '4px'}}></div>
+          <span style={{fontWeight: 800, fontSize: '18px'}}>IBK</span>
+        </div>
+        <button className="menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+          {isSidebarOpen ? '✕ Close' : '☰ Menu'}
+        </button>
+      </div>
 
       <aside className="sidebar">
         <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px'}}>
@@ -294,10 +315,10 @@ const AdminDashboard = () => {
         </div>
         
         <nav style={{flex: 1}}>
-          <div className="nav-item active"><span>📊</span> Dashboard</div>
-          <div className="nav-item"><span>👥</span> User Records</div>
-          <div className="nav-item"><span>🛡️</span> Security</div>
-          <div className="nav-item"><span>⚙️</span> Settings</div>
+          <div className="nav-item active" onClick={() => setIsSidebarOpen(false)}><span>📊</span> Dashboard</div>
+          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>👥</span> User Records</div>
+          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>🛡️</span> Security</div>
+          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>⚙️</span> Settings</div>
         </nav>
 
         <div className="logout-btn" onClick={handleLogout}>
@@ -306,40 +327,40 @@ const AdminDashboard = () => {
       </aside>
 
       <main className="main-content">
-        <header style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px'}}>
+        <header className="desktop-only-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px'}}>
           <div>
             <h2 style={{fontSize: '32px', margin: 0, fontWeight: 800}}>Executive Panel</h2>
             <p style={{color: '#64748b', margin: '5px 0 0 0'}}>Welcome back, Authorized Administrator.</p>
           </div>
-          <div style={{display: 'flex', gap: '15px'}}>
-            <div style={{textAlign: 'right'}}>
-              <div style={{fontWeight: 700}}>Daniel Gilbert</div>
-              <div style={{fontSize: '12px', color: '#059669'}}>● System Online</div>
-            </div>
+          <div style={{textAlign: 'right'}}>
+            <div style={{fontWeight: 700}}>Daniel Gilbert</div>
+            <div style={{fontSize: '12px', color: '#059669'}}>● System Online</div>
           </div>
         </header>
 
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '25px'}}>
+        {/* STATS SECTION */}
+        <div className="stat-grid">
           <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '10px'}}>TOTAL NETWORK USERS</p>
-            <h3 style={{fontSize: '36px', margin: 0}}>{users.length}</h3>
+            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>TOTAL NETWORK USERS</p>
+            <h3 style={{fontSize: '32px', margin: 0, fontWeight: 800}}>{users.length}</h3>
           </div>
           <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '10px'}}>SYSTEM LIQUIDITY</p>
-            <h3 style={{fontSize: '36px', margin: 0, color: '#00a0e9'}}>$842,000</h3>
+            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>SYSTEM LIQUIDITY</p>
+            <h3 style={{fontSize: '32px', margin: 0, color: '#00a0e9', fontWeight: 800}}>$842,000</h3>
           </div>
           <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '10px'}}>ACTIVE SESSIONS</p>
-            <h3 style={{fontSize: '36px', margin: 0, color: '#059669'}}>12</h3>
+            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>ACTIVE SESSIONS</p>
+            <h3 style={{fontSize: '32px', margin: 0, color: '#059669', fontWeight: 800}}>12</h3>
           </div>
         </div>
 
+        {/* TABLE SECTION */}
         <div className="user-table-card">
-          <div style={{padding: '25px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700}}>
+          <div style={{padding: '20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700}}>
             Global User Registry
           </div>
           <div className="table-responsive">
-            <table>
+            <table style={{width: '100%', borderCollapse: 'collapse'}}>
               <thead>
                 <tr>
                   <th>IDENTIFIER</th>
@@ -388,27 +409,28 @@ const AdminDashboard = () => {
         </div>
       </main>
 
+      {/* MODAL SECTION */}
       {showLoadModal && (
         <div className="modal-backdrop" onClick={() => setShowLoadModal(false)}>
-          <div className="modal-card" style={{width: '90%', maxWidth: '450px', padding: '40px', borderRadius: '32px'}} onClick={e => e.stopPropagation()}>
-            <h2 style={{margin: '0 0 10px 0'}}>Fund Injection</h2>
-            <p style={{color: '#94a3b8', marginBottom: '30px'}}>Target: <span style={{color: 'white', fontWeight: 700}}>{selectedUser?.name}</span></p>
+          <div className="modal-card" style={{width: '90%', maxWidth: '400px', padding: '30px', borderRadius: '24px', background: '#1e293b'}} onClick={e => e.stopPropagation()}>
+            <h2 style={{margin: '0 0 10px 0', fontSize: '24px'}}>Fund Injection</h2>
+            <p style={{color: '#94a3b8', marginBottom: '25px', fontSize: '14px'}}>Target Account: <span style={{color: 'white', fontWeight: 700}}>{selectedUser?.name}</span></p>
             <form onSubmit={handleLoadMoney}>
-              <div style={{position: 'relative'}}>
-                <span style={{position: 'absolute', left: '20px', top: '15px', color: '#64748b', fontWeight: 800}}>$</span>
+              <div style={{position: 'relative', marginBottom: '20px'}}>
+                <span style={{position: 'absolute', left: '15px', top: '15px', color: '#64748b', fontWeight: 800}}>$</span>
                 <input 
                   type="number" 
                   className="modal-input" 
-                  style={{width: '100%', padding: '18px 20px 18px 40px', borderRadius: '16px', fontSize: '20px', marginBottom: '30px', boxSizing: 'border-box'}}
+                  style={{width: '100%', padding: '15px 15px 15px 35px', borderRadius: '12px', fontSize: '18px', boxSizing: 'border-box', background: '#0f172a', border: '1px solid #334155', color: 'white'}}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
                 />
               </div>
-              <div style={{display: 'flex', gap: '15px'}}>
-                <button type="button" onClick={() => setShowLoadModal(false)} style={{flex: 1, padding: '18px', borderRadius: '16px', background: 'transparent', border: '1px solid #334155', color: 'white', cursor: 'pointer'}}>Abort</button>
-                <button type="submit" style={{flex: 2, padding: '18px', borderRadius: '16px', background: '#004da0', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer'}}>Execute Transaction</button>
+              <div style={{display: 'flex', gap: '10px'}}>
+                <button type="button" onClick={() => setShowLoadModal(false)} style={{flex: 1, padding: '15px', borderRadius: '12px', background: 'transparent', border: '1px solid #334155', color: 'white', cursor: 'pointer', fontWeight: 600}}>Abort</button>
+                <button type="submit" style={{flex: 2, padding: '15px', borderRadius: '12px', background: '#004da0', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer'}}>Execute</button>
               </div>
             </form>
           </div>
