@@ -14,10 +14,7 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-
 const PORT = process.env.PORT || 5000;
-
-
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bank_app';
 
 // Routes
@@ -29,15 +26,22 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Bank Server API is running...');
 });
 
-// MongoDB Connection & Server Start
+// MongoDB Connection
+// On Vercel, we connect but don't strictly need app.listen to block the process
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    
-    app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`🚀 Server ready and listening on port ${PORT}`);
-    });
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err);
   });
+
+// This allows the app to still run locally
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(Number(PORT), () => {
+    console.log(`🚀 Local Server ready on port ${PORT}`);
+  });
+}
+
+// CRITICAL FOR VERCEL: Export the app
+export default app;
