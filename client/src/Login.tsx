@@ -5,7 +5,7 @@ import UserDashboard from './UserDashboard'; // Added Import for Standard Users
 
 const images = ['/k1.jpg', '/k2.jpg', '/k3.jpg', '/k4.jpg'];
 
-// Updated Props to include setUser to fix the red underline in App.tsx
+
 interface LoginProps {
   onSwitchToSignup: () => void;
   setUser: (user: any) => void;
