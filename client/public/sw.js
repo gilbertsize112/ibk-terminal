@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ibk-bank-v3'; // ✅ Version bumped for auto-update
+const CACHE_NAME = 'ibk-bank-v4'; // ✅ Bumped to v4
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,41 +6,30 @@ const ASSETS_TO_CACHE = [
   '/logo.png' 
 ];
 
-// 1. Install Phase: Save the files to the phone's memory
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('IBK App: Caching system files');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
-  // ✅ Forces the waiting Service Worker to become active
   self.skipWaiting();
 });
 
-// 2. Activate Phase: Remove old versions and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('IBK App: Clearing old version:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) => Promise.all(
+      keys.map((key) => key !== CACHE_NAME && caches.delete(key))
+    ))
   );
-  // ✅ Ensures that updates happen immediately across all open tabs/windows
   return self.clients.claim();
 });
 
-// 3. Fetch Phase: Serve files from cache if network is slow
+// 3. Fetch Phase: THE FIX IS HERE
 self.addEventListener('fetch', (event) => {
-  // ✅ CRITICAL: Never cache POST/PUT/DELETE (Money transfers must be real-time)
-  if (event.request.method !== 'GET') return;
+  // ✅ 1. IF IT'S AN API CALL (Login, Transfer, etc.), IGNORE THE CACHE COMPLETELY
+  if (event.request.url.includes('/api')) {
+    return; // Tells the Service Worker: "Don't touch this, let it go to the server"
+  }
 
+  // ✅ 2. For images/HTML, try the Network first, fall back to Cache if offline
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
