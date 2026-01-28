@@ -29,12 +29,10 @@ const UserDashboard = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      // ✅ Updated to dynamic URL
       const profileRes = await axios.get(`${API_BASE_URL}/api/user/profile`, config);
       setUser(profileRes.data);
 
       try {
-        // ✅ Updated to dynamic URL
         const transRes = await axios.get(`${API_BASE_URL}/api/user/transactions`, config);
         setTransactions(transRes.data);
       } catch (transErr) {
@@ -56,7 +54,6 @@ const UserDashboard = () => {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('token');
-      // ✅ Updated to dynamic URL
       await axios.post(`${API_BASE_URL}/api/user/transfer`, 
         { recipientAccountNumber: transferData.accNo, amount: transferData.amount },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -83,161 +80,202 @@ const UserDashboard = () => {
   return (
     <div className="user-dashboard">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
 
         .user-dashboard {
           min-height: 100vh;
           background: #020617;
           color: #f8fafc;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           display: flex;
           width: 100%;
         }
 
-        /* Sidebar - Hidden on mobile */
+        /* Desktop Sidebar */
         .sidebar {
-          width: 280px;
+          width: 260px;
           background: #070c1b;
           border-right: 1px solid rgba(255,255,255,0.05);
-          padding: 40px 24px;
+          padding: 32px 20px;
           display: flex;
           flex-direction: column;
+          position: sticky;
+          top: 0;
+          height: 100vh;
         }
 
-        @media (max-width: 1024px) { .sidebar { display: none; } }
+        @media (max-width: 1024px) { 
+          .sidebar { display: none; } 
+        }
+
+        /* Mobile Bottom Nav */
+        .mobile-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          background: #070c1b;
+          border-top: 1px solid rgba(255,255,255,0.1);
+          padding: 12px 0;
+          justify-content: space-around;
+          align-items: center;
+          z-index: 100;
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        @media (max-width: 1024px) {
+          .mobile-nav { display: flex; }
+          .main-content { padding-bottom: 100px !important; }
+        }
+
+        .mobile-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          font-size: 10px;
+          color: #64748b;
+          gap: 4px;
+        }
+        .mobile-item.active { color: #3b82f6; }
+        .mobile-item span { font-size: 20px; }
 
         .nav-item {
-          padding: 14px 18px;
-          border-radius: 12px;
-          margin-bottom: 8px;
-          color: #64748b;
+          padding: 12px 16px;
+          border-radius: 10px;
+          margin-bottom: 4px;
+          color: #94a3b8;
           cursor: pointer;
-          transition: 0.3s;
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           gap: 12px;
-          font-weight: 600;
+          font-weight: 500;
+          font-size: 14px;
         }
 
-        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
+        .nav-item:hover { background: rgba(255,255,255,0.03); color: white; }
+        .nav-item.active { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
 
         .main-content {
           flex: 1;
-          padding: 24px;
-          max-width: 1200px;
+          padding: 40px;
+          max-width: 1100px;
           margin: 0 auto;
           width: 100%;
         }
 
-        /* Stats & Card Grid */
+        @media (max-width: 640px) {
+          .main-content { padding: 20px; }
+        }
+
+        /* Card Section */
         .top-section {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 24px;
-          margin-bottom: 32px;
+          gap: 20px;
+          margin-bottom: 40px;
         }
 
-        @media (min-width: 768px) { .top-section { grid-template-columns: 1.2fr 1.8fr; } }
+        @media (min-width: 1024px) { .top-section { grid-template-columns: 1fr 1fr; } }
 
-        /* Mastercard Styling */
+        /* Professional Card */
         .card-visual {
           width: 100%;
-          max-width: 400px;
-          height: 240px;
-          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-          border-radius: 24px;
-          padding: 30px;
+          height: 220px;
+          background: linear-gradient(135deg, #1e293b 0%, #020617 100%);
+          border-radius: 20px;
+          padding: 28px;
           position: relative;
-          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-          border: 1px solid rgba(255,255,255,0.1);
-          overflow: hidden;
-          transition: transform 0.4s ease;
-          cursor: pointer;
-        }
-        
-        .card-visual:hover { transform: translateY(-5px) rotateX(5deg); }
-
-        .card-visual::before {
-          content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-          background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
-        }
-
-        .gold-chip {
-          width: 50px; height: 40px;
-          background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
-          border-radius: 8px;
-          position: relative;
-          margin-bottom: 40px;
-          box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-        }
-
-        .gold-chip::after {
-          content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-          background-image: linear-gradient(90deg, transparent 45%, rgba(0,0,0,0.1) 50%, transparent 55%),
-                            linear-gradient(0deg, transparent 45%, rgba(0,0,0,0.1) 50%, transparent 55%);
-          background-size: 10px 10px;
+          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          box-sizing: border-box;
         }
 
         .card-number {
           font-family: 'Courier New', monospace;
-          font-size: 22px;
-          letter-spacing: 3px;
-          color: white;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          margin-bottom: 30px;
+          font-size: 20px;
+          letter-spacing: 2px;
+          color: #fff;
+          margin: 20px 0;
         }
 
-        /* Glassmorphism Panels */
-        .glass-panel {
-          background: rgba(15, 23, 42, 0.6);
+        /* Balance Panel */
+        .balance-panel {
+          background: #070c1b;
           border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 24px;
-          padding: 24px;
-          backdrop-filter: blur(12px);
+          border-radius: 20px;
+          padding: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .balance-amount {
+          font-size: 36px;
+          font-weight: 700;
+          letter-spacing: -1px;
+          margin: 8px 0 24px 0;
+          font-family: 'Plus Jakarta Sans';
         }
 
         .action-btn {
-          background: #1e293b;
-          border: 1px solid rgba(255,255,255,0.05);
-          padding: 20px;
-          border-radius: 16px;
+          background: #3b82f6;
+          color: white;
+          padding: 14px;
+          border-radius: 12px;
           text-align: center;
           cursor: pointer;
+          font-weight: 600;
+          font-size: 14px;
           transition: 0.2s;
+          border: none;
         }
-        .action-btn:hover { background: #3b82f6; transform: scale(1.02); }
+        .action-btn.secondary {
+          background: rgba(255,255,255,0.05);
+          color: #f8fafc;
+        }
+        .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .tx-card {
+          background: #070c1b;
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.05);
+          padding: 24px;
+        }
 
         .tx-row {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+          padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
 
         .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0.8);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
+          display: flex; justify-content: center; align-items: center; z-index: 1000;
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 640px) {
-          .main-content { padding: 16px; }
-          .card-number { font-size: 18px; }
-          .top-bar h1 { font-size: 20px; }
+        .gold-chip {
+          width: 42px; height: 32px;
+          background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
+          border-radius: 6px;
+        }
+
+        @media (max-width: 480px) {
+          .balance-amount { font-size: 28px; }
+          .card-visual { height: 190px; padding: 20px; }
+          .card-number { font-size: 16px; }
         }
       `}</style>
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR - DESKTOP ONLY */}
       <aside className="sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px' }}>
-          <div style={{ width: '32px', height: '32px', background: '#3b82f6', borderRadius: '8px' }}></div>
-          <span style={{ fontSize: '20px', fontWeight: 800 }}>IBK BANK</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px', padding: '0 10px' }}>
+          <div style={{ width: '28px', height: '28px', background: '#3b82f6', borderRadius: '6px' }}></div>
+          <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px' }}>IBK BANK</span>
         </div>
         <div className="nav-item active"><span>🏠</span> Overview</div>
         <div className="nav-item"><span>💸</span> Payments</div>
@@ -246,111 +284,118 @@ const UserDashboard = () => {
         <div style={{ marginTop: 'auto' }} className="nav-item" onClick={handleLogout}><span>🚪</span> Logout</div>
       </aside>
 
-      {/* MAIN */}
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <nav className="mobile-nav">
+        <div className="mobile-item active"><span>🏠</span>Overview</div>
+        <div className="mobile-item" onClick={() => setShowTransferModal(true)}><span>💸</span>Payments</div>
+        <div className="mobile-item"><span>📉</span>Stats</div>
+        <div className="mobile-item"><span>🛡️</span>Security</div>
+        <div className="mobile-item" onClick={handleLogout}><span>🚪</span>Exit</div>
+      </nav>
+
+      {/* MAIN CONTENT */}
       <main className="main-content">
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
           <div>
-            <h1 style={{ margin: 0 }}>Hello, {user?.name?.split(' ')[0]}</h1>
-            <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>Hello, {user?.name?.split(' ')[0]}</h1>
+            <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '14px' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
           </div>
-          <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, border: '2px solid #3b82f6' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)', color: '#3b82f6' }}>
             {user?.name?.[0]}
           </div>
         </header>
 
         <div className="top-section">
-          {/* MASTERCARD */}
+          {/* MASTERCARD DESIGN */}
           <div className="card-visual">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="gold-chip"></div>
-              <div style={{ fontWeight: 800, fontStyle: 'italic', fontSize: '18px', color: 'rgba(255,255,255,0.5)' }}>VISA</div>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: '#64748b' }}>PREMIUM DEBIT</span>
             </div>
             <div className="card-number">
-              {user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '4421 •••• •••• 8812'}
+              {user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• ••••'}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>
-                <p style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', margin: 0, letterSpacing: '1px' }}>Account Holder</p>
-                <p style={{ fontSize: '15px', fontWeight: 600, margin: 0 }}>{user?.name || 'USER HOLDER'}</p>
+                <p style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase', margin: '0 0 4px 0' }}>Card Holder</p>
+                <p style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>{user?.name || 'IBK CLIENT'}</p>
               </div>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#eb001b', opacity: 0.8 }}></div>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f79e1b', opacity: 0.8, marginLeft: '-10px' }}></div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#eb001b', opacity: 0.9 }}></div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f79e1b', opacity: 0.9, marginLeft: '-12px' }}></div>
               </div>
             </div>
           </div>
 
-          {/* QUICK ACTIONS */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '8px' }}>Total Balance</p>
-            <h2 style={{ fontSize: '42px', margin: '0 0 24px 0' }}>${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h2>
+          {/* BALANCE PANEL */}
+          <div className="balance-panel">
+            <p style={{ color: '#64748b', fontSize: '13px', margin: 0, fontWeight: 500 }}>Available Balance</p>
+            <h2 className="balance-amount">${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="action-btn" onClick={() => setShowTransferModal(true)}>
-                <span style={{ display: 'block', fontSize: '20px' }}>🚀</span>
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>Send Money</span>
-              </div>
-              <div className="action-btn">
-                <span style={{ display: 'block', fontSize: '20px' }}>➕</span>
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>Deposit</span>
-              </div>
+              <button className="action-btn" onClick={() => setShowTransferModal(true)}>Send Money</button>
+              <button className="action-btn secondary">Add Funds</button>
             </div>
           </div>
         </div>
 
-        {/* TRANSACTIONS */}
-        <div className="glass-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0 }}>Recent Activity</h3>
-            <span style={{ color: '#3b82f6', fontSize: '14px', cursor: 'pointer' }}>View All</span>
+        {/* TRANSACTIONS SECTION */}
+        <div className="tx-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px' }}>Recent Activity</h3>
+            <span style={{ color: '#3b82f6', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>View all</span>
           </div>
+          
           {transactions.length > 0 ? (
             transactions.map((tx: any) => (
               <div key={tx._id} className="tx-row">
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                   <div style={{ 
-                    width: '44px', height: '44px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', 
-                    borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: tx.type === 'credit' ? '#22c55e' : '#ef4444', fontSize: '18px'
+                    width: '40px', height: '40px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)', 
+                    borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: tx.type === 'credit' ? '#22c55e' : '#94a3b8', fontSize: '16px'
                   }}>
-                    {tx.type === 'credit' ? '↙' : '↗'}
+                    {tx.type === 'credit' ? '↓' : '↑'}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600 }}>{tx.description || 'General Transfer'}</div>
+                    <div style={{ fontWeight: 600, fontSize: '14px' }}>{tx.description || 'Electronic Transfer'}</div>
                     <div style={{ fontSize: '12px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, color: tx.type === 'credit' ? '#22c55e' : '#f8fafc' }}>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: tx.type === 'credit' ? '#22c55e' : '#f8fafc' }}>
                     {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString()}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#64748b' }}>Success</div>
+                  <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Completed</div>
                 </div>
               </div>
             ))
           ) : (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No transactions yet.</div>
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', fontSize: '14px' }}>
+              No recent transaction activity found.
+            </div>
           )}
         </div>
       </main>
 
-      {/* MODAL */}
+      {/* TRANSFER MODAL */}
       {showTransferModal && (
         <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', background: '#070c1b' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>New Transfer</h2>
+          <div style={{ width: '90%', maxWidth: '380px', background: '#070c1b', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, fontSize: '20px' }}>Secure Transfer</h2>
+            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '24px' }}>Move funds instantly to any IBK Bank account.</p>
             <form onSubmit={handleTransfer}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '8px' }}>RECIPIENT ACCOUNT</label>
-                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '12px', color: 'white', boxSizing: 'border-box' }} 
-                  placeholder="Enter Account Number" value={transferData.accNo} onChange={e => setTransferData({...transferData, accNo: e.target.value})} required />
+                <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px', fontWeight: 700 }}>RECIPIENT ACCOUNT</label>
+                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '10px', color: 'white', boxSizing: 'border-box' }} 
+                  placeholder="Enter 10-digit number" value={transferData.accNo} onChange={e => setTransferData({...transferData, accNo: e.target.value})} required />
               </div>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '8px' }}>AMOUNT ($)</label>
-                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '12px', color: 'white', boxSizing: 'border-box', fontSize: '20px' }} 
+                <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px', fontWeight: 700 }}>AMOUNT (USD)</label>
+                <input style={{ width: '100%', background: '#020617', border: '1px solid #1e293b', padding: '14px', borderRadius: '10px', color: 'white', boxSizing: 'border-box', fontSize: '18px', fontWeight: 700 }} 
                   type="number" placeholder="0.00" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value})} required />
               </div>
-              <button type="submit" disabled={isProcessing} style={{ width: '100%', padding: '16px', borderRadius: '12px', background: '#3b82f6', border: 'none', color: 'white', fontWeight: 800, cursor: 'pointer' }}>
-                {isProcessing ? 'Processing Securely...' : 'Send Funds Now'}
+              <button type="submit" disabled={isProcessing} className="action-btn" style={{ width: '100%', padding: '16px' }}>
+                {isProcessing ? 'Authorizing...' : 'Confirm Transfer'}
               </button>
             </form>
           </div>
