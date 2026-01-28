@@ -123,7 +123,8 @@ const AdminDashboard = () => {
           position: fixed; 
           left: 0; top: 0; bottom: 0;
           z-index: 2000;
-          transition: transform 0.3s ease-in-out;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-sizing: border-box;
         }
 
         .main-content {
@@ -134,6 +135,7 @@ const AdminDashboard = () => {
           min-height: 100vh;
           box-sizing: border-box;
           width: calc(100% - 280px);
+          transition: margin 0.3s ease;
         }
 
         .mobile-header {
@@ -150,7 +152,32 @@ const AdminDashboard = () => {
           box-sizing: border-box;
         }
 
+        /* 3-Line Hamburger Icon */
+        .hamburger {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 10px;
+        }
+        .hamburger span {
+          display: block;
+          width: 25px;
+          height: 3px;
+          background: white;
+          border-radius: 2px;
+          transition: 0.3s;
+        }
+
         @media (max-width: 1024px) {
+          .sidebar {
+            transform: translateX(-100%); /* Hidden by default on mobile */
+          }
+          .sidebar.active {
+            transform: translateX(0); /* Slide in when active */
+          }
           .main-content {
             margin-left: 0;
             width: 100%;
@@ -232,11 +259,10 @@ const AdminDashboard = () => {
           <div style={{width: '25px', height: '25px', background: '#004da0', borderRadius: '4px'}}></div>
           <span style={{fontWeight: 800, fontSize: '18px'}}>IBK</span>
         </div>
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          style={{background: '#004da0', border: 'none', color: 'white', padding: '8px 15px', borderRadius: '8px', fontWeight: 700}}
-        >
-          {isSidebarOpen ? 'CLOSE' : 'MENU'}
+        <button className="hamburger" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+          <span style={{transform: isSidebarOpen ? 'rotate(45deg) translate(5px, 6px)' : ''}}></span>
+          <span style={{opacity: isSidebarOpen ? 0 : 1}}></span>
+          <span style={{transform: isSidebarOpen ? 'rotate(-45deg) translate(5px, -6px)' : ''}}></span>
         </button>
       </div>
 
@@ -248,8 +274,8 @@ const AdminDashboard = () => {
         />
       )}
 
-      {/* Sidebar with Dynamic Transform */}
-      <aside className="sidebar" style={{ transform: isSidebarOpen ? 'translateX(0)' : undefined }}>
+      {/* Sidebar Restored with "active" class logic */}
+      <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px'}}>
           <div style={{width: '35px', height: '35px', background: '#004da0', borderRadius: '8px', animation: 'pulse 2s infinite'}}></div>
           <h1 style={{fontSize: '22px', fontWeight: 800, margin: 0, letterSpacing: '-1px'}}>IBK <span style={{color: '#64748b', fontWeight: 400}}>Terminal</span></h1>
