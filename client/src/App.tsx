@@ -6,7 +6,8 @@ import UserDashboard from './UserDashboard'   // Added
 import './App.css'
 
 function App() {
-  const [isLogin, setIsLogin] = useState(true); // Default to login
+  // SET TO FALSE: This ensures the Sign Up page loads first by default
+  const [isLogin, setIsLogin] = useState(false); 
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
