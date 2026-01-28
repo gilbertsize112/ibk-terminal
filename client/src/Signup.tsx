@@ -10,7 +10,7 @@ interface SignupProps {
   setUser: (user: any) => void;
 }
 
-const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
+const Signup = ({ setUser }: SignupProps) => { 
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
@@ -89,6 +89,8 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
     <div className="app-viewport">
       {/* INTERNAL CSS */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
         .app-viewport {
           position: relative;
           width: 100%;
@@ -98,13 +100,15 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           display: flex;
           justify-content: center;
           align-items: center;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Plus Jakarta Sans', sans-serif;
         }
+
         .slideshow-container {
           position: fixed;
           inset: 0;
           z-index: 0;
         }
+
         .slide {
           position: absolute;
           inset: 0;
@@ -112,15 +116,18 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           background-position: center;
           background-repeat: no-repeat;
           opacity: 0;
-          transition: opacity 1.5s ease-in-out;
+          transition: opacity 2s ease-in-out;
         }
+
         .slide.active { opacity: 1; }
+
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,26,51,0.8) 100%);
+          background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(2, 6, 23, 0.95));
           z-index: 1;
         }
+
         .splash-screen {
           position: relative;
           z-index: 10;
@@ -128,115 +135,147 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           color: white;
           animation: fadeIn 1s ease-in;
         }
+
         .spinning-icon {
-          font-size: 80px;
+          font-size: 60px;
           margin-bottom: 20px;
           display: inline-block;
-          animation: spin3D 4s infinite linear;
+          animation: float 3s ease-in-out infinite;
         }
-        @keyframes spin3D {
-          from { transform: rotateY(0deg); }
-          to { transform: rotateY(360deg); }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
+
         .logo-text {
-          font-size: clamp(3rem, 10vw, 5rem);
+          font-size: clamp(2.5rem, 8vw, 4rem);
           font-weight: 800;
           margin: 0;
-          letter-spacing: -2px;
+          letter-spacing: -1px;
         }
+
         .auth-page {
           position: relative;
           z-index: 10;
           width: 100%;
           display: flex;
           justify-content: center;
-          padding: 20px;
-        }
-        .auth-card {
-          background: rgba(255, 255, 255, 0.94);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          width: 100%;
-          max-width: 450px;
-          padding: 50px 40px;
-          border-radius: 40px;
-          box-shadow: 0 40px 100px rgba(0,0,0,0.5);
-          border: 1px solid rgba(255,255,255,0.3);
-          text-align: center;
-        }
-        .modal-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0.6);
-          backdrop-filter: blur(10px);
-          z-index: 100;
-          display: flex;
-          justify-content: center;
           align-items: center;
-          padding: 20px;
+          padding: 24px;
         }
-        .slide-up {
-          animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+        .auth-card {
+          background: rgba(255, 255, 255, 1);
+          width: 100%;
+          max-width: 420px;
+          padding: 40px;
+          border-radius: 28px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          text-align: center;
+          animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(40px); }
-          to { opacity: 1; transform: translateY(0); }
+
+        @keyframes cardEntrance {
+          from { opacity: 0; transform: scale(0.9) translateY(20px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
         }
+
+        @media (max-width: 480px) {
+          .auth-card {
+            padding: 30px 24px;
+            max-width: 340px; /* Makes it "Large and little bit small" as requested */
+          }
+          .logo-text { font-size: 2.2rem; }
+        }
+
+        .bank-icon-header {
+          width: 54px;
+          height: 54px;
+          background: #004da0;
+          color: white;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          font-size: 24px;
+          box-shadow: 0 10px 15px -3px rgba(0, 77, 160, 0.3);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0.4); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 77, 160, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0); }
+        }
+
         .floating-input input {
           width: 100%;
-          padding: 18px 22px;
-          margin-bottom: 15px;
-          border-radius: 18px;
-          border: 1.5px solid #e2e8f0;
+          padding: 16px 20px;
+          margin-bottom: 12px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
           background: #f8fafc;
-          font-size: 16px;
+          font-size: 15px;
           outline: none;
-          transition: 0.3s;
+          transition: all 0.2s;
+          box-sizing: border-box;
+          color: #1e293b;
         }
+
         .floating-input input:focus {
           border-color: #004da0;
           background: white;
-          box-shadow: 0 5px 15px rgba(0,77,160,0.1);
+          box-shadow: 0 0 0 4px rgba(0, 77, 160, 0.05);
         }
+
         .submit-btn.primary {
           width: 100%;
-          padding: 18px;
-          border-radius: 18px;
+          padding: 16px;
+          border-radius: 12px;
           border: none;
           background: #004da0;
           color: white;
           font-weight: 700;
-          font-size: 1.1rem;
+          font-size: 16px;
           cursor: pointer;
-          transition: 0.3s;
-          margin-top: 5px;
+          transition: 0.2s;
+          margin-top: 10px;
+          letter-spacing: 0.5px;
         }
+
         .submit-btn.primary:hover {
-          transform: translateY(-2px);
           background: #003a7a;
+          transform: translateY(-1px);
         }
+
         .login-link-btn {
-          background: transparent;
-          border: 2px solid #004da0;
+          background: #f1f5f9;
+          border: none;
           color: #004da0;
           width: 100%;
           padding: 14px;
-          border-radius: 16px;
+          border-radius: 12px;
           font-weight: 700;
+          font-size: 14px;
           cursor: pointer;
-          margin-top: 10px;
-          transition: 0.3s;
+          margin-top: 8px;
+          transition: 0.2s;
         }
-        .login-link-btn:hover { background: #004da0; color: white; }
+
+        .login-link-btn:hover { background: #e2e8f0; }
+
         .forgot-pass {
           text-align: right;
-          margin-top: -10px;
-          margin-bottom: 15px;
+          margin: -4px 0 20px 0;
           font-size: 13px;
-          color: #004da0;
-          font-weight: 600;
+          color: #64748b;
+          font-weight: 500;
           cursor: pointer;
         }
+        .forgot-pass:hover { color: #004da0; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
@@ -257,12 +296,12 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           <div className="splash-content">
             <div className="spinning-icon">🏦</div>
             <h1 className="logo-text">IBK FINANCE</h1>
-            <h2 className="bank-subtitle" style={{color: 'rgba(255,255,255,0.7)', letterSpacing: '4px'}}>Industrial Bank of Korea</h2>
-            <div className="korean-badge" style={{background: '#00a0e9', padding: '5px 20px', borderRadius: '8px', display: 'inline-block', margin: '20px 0'}}>
-              <p className="korean-text" style={{fontWeight: 600, margin: 0}}>기업은행</p>
+            <h2 className="bank-subtitle" style={{color: 'rgba(255,255,255,0.7)', letterSpacing: '4px', fontSize: '14px', fontWeight: 600, marginTop: '10px'}}>INDUSTRIAL BANK OF KOREA</h2>
+            <div className="korean-badge" style={{background: '#00a0e9', padding: '5px 20px', borderRadius: '8px', display: 'inline-block', margin: '30px 0'}}>
+              <p className="korean-text" style={{fontWeight: 600, margin: 0, fontSize: '13px'}}>기업은행</p>
             </div>
             <div className="loading-dots">
-              <p style={{color: '#fff', opacity: 0.6, fontSize: '14px'}}>Connecting to Secure Server...</p>
+              <p style={{color: '#fff', opacity: 0.6, fontSize: '12px', letterSpacing: '1px'}}>SECURE CONNECTION ESTABLISHED</p>
             </div>
           </div>
         </div>
@@ -271,11 +310,10 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           {/* FORGOT PASSWORD MODAL */}
           {modalView === 'forgot' && (
             <div className="modal-overlay">
-              <div className="auth-card slide-up">
-                <div className="auth-header">
-                   <h1 style={{fontSize: '2rem', color: '#002d5a', fontWeight: 800}}>Reset Access</h1>
-                   <p className="sub-text" style={{color: '#64748b', marginBottom: '25px'}}>Enter your registered email to receive a recovery link.</p>
-                </div>
+              <div className="auth-card">
+                <div className="bank-icon-header">🔑</div>
+                <h1 style={{fontSize: '1.5rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Access</h1>
+                <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px'}}>Enter your email for a secure recovery link.</p>
                 <form onSubmit={handleResetSubmit}>
                   <div className="floating-input">
                     <input 
@@ -286,23 +324,25 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
                       onChange={(e) => setResetEmail(e.target.value)}
                     />
                   </div>
-                  <button type="submit" className="submit-btn primary">SEND RECOVERY LINK</button>
+                  <button type="submit" className="submit-btn primary">SEND LINK</button>
                   <p 
                     onClick={() => setModalView('none')} 
-                    style={{marginTop: '20px', cursor: 'pointer', color: '#004da0', fontWeight: 700, fontSize: '14px'}}
+                    style={{marginTop: '20px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px'}}
                   >
-                    RETURN TO SIGNUP
+                    GO BACK
                   </p>
                 </form>
               </div>
             </div>
           )}
 
-          <div className="auth-card slide-up">
+          <div className="auth-card">
+            {/* BANK ICON ON TOP */}
+            <div className="bank-icon-header">🏛️</div>
+            
             <div className="auth-header">
-              <span className="brand-tag" style={{color: '#004da0', fontWeight: 700, fontSize: '12px', background: 'rgba(0,77,160,0.1)', padding: '4px 12px', borderRadius: '50px'}}>IDENTITY VERIFICATION</span>
-              <h1 style={{fontSize: '2.3rem', color: '#002d5a', margin: '10px 0', fontWeight: 800}}>Create Account</h1>
-              <p className="sub-text" style={{color: '#64748b', fontSize: '15px', marginBottom: '30px'}}>Join the world's most secure industrial network.</p>
+              <h1 style={{fontSize: '1.8rem', color: '#0f172a', margin: '0 0 8px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Create Account</h1>
+              <p style={{color: '#64748b', fontSize: '14px', marginBottom: '32px', fontWeight: 500}}>Join the world's most secure industrial network.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="auth-form">
@@ -322,18 +362,18 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
               <div className="forgot-pass" onClick={() => setModalView('forgot')}>Forgot Password?</div>
               
               <button type="submit" disabled={loading} className="submit-btn primary">
-                {loading ? "AUTHENTICATING..." : "SIGN UP"}
+                {loading ? "VERIFYING..." : "SIGN UP"}
               </button>
             </form>
 
-            <div className="auth-footer" style={{marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px'}}>
-              <p style={{color: '#64748b', fontSize: '14px'}}>Member of IBK Global?</p>
+            <div style={{marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '24px'}}>
+              <p style={{color: '#64748b', fontSize: '13px', marginBottom: '16px', fontWeight: 500}}>Already an IBK Member?</p>
               <button 
                 className="login-link-btn" 
                 type="button" 
                 onClick={() => setIsLoginView(true)}
               >
-                LOGIN
+                LOG IN
               </button>
             </div>
           </div>
