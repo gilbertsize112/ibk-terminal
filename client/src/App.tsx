@@ -4,14 +4,16 @@ import Signup from './Signup'
 import Login from './Login' 
 import AdminDashboard from './AdminDashboard'
 import UserDashboard from './UserDashboard' 
-import TransferMoney from './TransferMoney' // ✅ Added import
-import TransactionReceipt from './TransactionReceipt' // ✅ ADD THIS IMPORT
+import TransferMoney from './TransferMoney'
+import TransactionReceipt from './TransactionReceipt'
+// ✅ Import the new component
+import InstallPrompt from './InstallPrompt' 
 import './App.css'
 
 function App() {
   const [isLogin, setIsLogin] = useState(false); 
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true); // Added to prevent flickering
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -23,11 +25,14 @@ function App() {
     setLoading(false);
   }, []);
 
-  if (loading) return null; // Wait for localStorage check
+  if (loading) return null;
 
   return (
     <Router>
       <div className="App">
+        {/* ✅ The Install Prompt floats globally here */}
+        <InstallPrompt />
+
         <Routes>
           {/* AUTH LOGIC */}
           {!user ? (
@@ -40,7 +45,8 @@ function App() {
                   />
                 ) : (
                   <Signup setUser={setUser} /> 
-                )}
+                )
+                }
                 
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                   <p style={{ color: '#64748b' }}>
@@ -70,13 +76,10 @@ function App() {
                 user.role === 'admin' ? <AdminDashboard /> : <UserDashboard />
               } />
 
-              {/* TRANSFER PAGE ROUTE */}
               <Route path="/transfer" element={<TransferMoney />} />
 
-              {/* ✅ ADD THE RECEIPT ROUTE HERE */}
               <Route path="/receipt" element={<TransactionReceipt />} />
 
-              {/* DEFAULT REDIRECT */}
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}

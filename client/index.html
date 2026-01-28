@@ -2,12 +2,196 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="IBK Bank" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <title>IBK Bank</title>
+
+    <style>
+      /* Base App Styling */
+      html, body {
+        background-color: #020617; /* Your dashboard color */
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        overscroll-behavior-y: contain; 
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      #root {
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      input, textarea {
+        user-select: text;
+        -webkit-user-select: text;
+      }
+
+      /* ✅ HIGH-END SPLASH SCREEN STYLING */
+      #splash-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: #000000; /* Pure black to blend your logo.png */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .logo-wrapper {
+        position: relative;
+        width: 160px; 
+        height: 160px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 50px;
+      }
+
+      /* Elegant blue glow behind the black logo */
+      .glow {
+        position: absolute;
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+        animation: breathe 4s infinite ease-in-out;
+      }
+
+      .splash-logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        z-index: 2;
+        animation: pulseLogo 4s infinite ease-in-out;
+      }
+
+      /* Premium streak animation */
+      .shimmer {
+        position: absolute;
+        top: 0; left: -100%;
+        width: 40%; height: 100%;
+        background: linear-gradient(
+          to right, 
+          transparent, 
+          rgba(255,255,255,0.05), 
+          transparent
+        );
+        transform: skewX(-20deg);
+        z-index: 3;
+        animation: shine 2.5s infinite;
+      }
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .bank-text {
+        color: #475569;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 11px;
+        letter-spacing: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .loader-bar {
+        width: 140px;
+        height: 2px;
+        background: #0f172a;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+
+      .loader-bar::after {
+        content: '';
+        position: absolute;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        animation: loading 2s infinite linear;
+      }
+
+      /* Keyframes */
+      @keyframes pulseLogo {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.04); }
+      }
+      @keyframes breathe {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.1); }
+      }
+      @keyframes shine {
+        100% { left: 200%; }
+      }
+      @keyframes loading {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+
+      /* Smooth transition to dashboard */
+      .fade-out {
+        opacity: 0 !important;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body>
+    <div id="splash-screen">
+      <div class="logo-wrapper">
+        <div class="glow"></div>
+        <img src="/logo.png" alt="IBK Bank" class="splash-logo">
+        <div class="shimmer"></div>
+      </div>
+      
+      <div class="loading-container">
+        <span class="bank-text">Initializing Secure Banking</span>
+        <div class="loader-bar"></div>
+      </div>
+    </div>
+
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      // ✅ 4-Second High-End Experience
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.classList.add('fade-out');
+            // Remove from DOM after transition for performance
+            setTimeout(() => splash.remove(), 800);
+          }
+        }, 4000); 
+      });
+
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('IBK App Ready!'))
+            .catch(err => console.log('Registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>
