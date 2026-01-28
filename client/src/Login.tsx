@@ -42,7 +42,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       };
 
       // ✅ DYNAMIC URL: Uses Vercel's variable in production, localhost in development
-      // Make sure there is no trailing slash in your Vercel Dashboard variable!
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
       const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, loginPayload);
@@ -55,7 +54,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // Update the Global state in App.tsx
-      // This clears the login screen and shows the dashboard automatically
       setUser(data.user);
 
       // REDIRECTION LOGIC (Local state fallback):
@@ -80,7 +78,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
   };
 
   // VIEW LOGIC:
-  // Check user view first, then admin view
   if (isUserView) {
     return <UserDashboard />;
   }
@@ -93,6 +90,8 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     <div className="app-viewport">
       {/* INTERNAL CSS - Exact match to Signup for seamless transition */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
         .app-viewport {
           position: relative;
           width: 100%;
@@ -102,13 +101,15 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           display: flex;
           justify-content: center;
           align-items: center;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Plus Jakarta Sans', sans-serif;
         }
+
         .slideshow-container {
           position: fixed;
           inset: 0;
           z-index: 0;
         }
+
         .slide {
           position: absolute;
           inset: 0;
@@ -118,33 +119,70 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           opacity: 0;
           transition: opacity 1.5s ease-in-out;
         }
+
         .slide.active { opacity: 1; }
+
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,26,51,0.85) 100%);
+          background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(2, 6, 23, 0.9));
           z-index: 1;
         }
+
         .auth-page {
           position: relative;
           z-index: 10;
           width: 100%;
           display: flex;
           justify-content: center;
-          padding: 20px;
+          align-items: center;
+          padding: 24px;
         }
+
         .auth-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(25px);
-          -webkit-backdrop-filter: blur(25px);
+          background: #ffffff;
           width: 100%;
-          max-width: 460px;
-          padding: clamp(30px, 5vw, 55px) clamp(20px, 4vw, 45px);
-          border-radius: 40px;
-          box-shadow: 0 50px 100px rgba(0,0,0,0.6);
-          border: 1px solid rgba(255,255,255,0.4);
+          max-width: 420px;
+          padding: 40px;
+          border-radius: 28px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           text-align: center;
+          animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        @keyframes cardEntrance {
+          from { opacity: 0; transform: scale(0.95) translateY(30px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+          .auth-card {
+            padding: 30px 24px;
+            max-width: 340px; /* Large and little bit small for mobile */
+          }
+        }
+
+        .bank-icon-header {
+          width: 54px;
+          height: 54px;
+          background: #004da0;
+          color: white;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          font-size: 24px;
+          box-shadow: 0 10px 15px -3px rgba(0, 77, 160, 0.3);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0.4); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 77, 160, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0); }
+        }
+
         .modal-overlay {
           position: absolute;
           inset: 0;
@@ -156,73 +194,79 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           align-items: center;
           padding: 20px;
         }
-        .slide-up {
-          animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(60px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+
         .floating-input { position: relative; width: 100%; }
+
         .floating-input input {
           width: 100%;
-          padding: 18px 24px;
-          margin-bottom: 16px;
-          border-radius: 20px;
-          border: 1.5px solid #e2e8f0;
+          padding: 16px 20px;
+          margin-bottom: 12px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
           background: #f8fafc;
-          font-size: 16px;
+          font-size: 15px;
           outline: none;
-          transition: all 0.3s ease;
+          transition: all 0.2s;
+          box-sizing: border-box;
+          color: #1e293b;
         }
+
         .floating-input input:focus {
           border-color: #004da0;
           background: white;
-          box-shadow: 0 10px 20px rgba(0,77,160,0.05);
+          box-shadow: 0 0 0 4px rgba(0, 77, 160, 0.05);
         }
+
         .security-indicator {
           position: absolute;
-          right: 20px;
-          top: 18px;
-          font-size: 18px;
-          color: #004da0;
+          right: 18px;
+          top: 15px;
+          font-size: 16px;
+          opacity: 0.7;
         }
+
         .submit-btn.primary {
           width: 100%;
-          padding: 20px;
-          border-radius: 20px;
+          padding: 16px;
+          border-radius: 12px;
           border: none;
-          background: linear-gradient(135deg, #004da0 0%, #002d5a 100%);
+          background: #004da0;
           color: white;
           font-weight: 700;
-          font-size: 1.1rem;
+          font-size: 16px;
           cursor: pointer;
           transition: 0.2s;
-          margin-top: 5px;
+          margin-top: 10px;
+          letter-spacing: 0.5px;
         }
+
         .submit-btn.primary:active { transform: scale(0.98); }
+
         .signup-link-btn {
-          background: transparent;
-          border: 2px solid #004da0;
+          background: #f1f5f9;
+          border: none;
           color: #004da0;
           width: 100%;
-          padding: 16px;
-          border-radius: 18px;
+          padding: 14px;
+          border-radius: 12px;
           font-weight: 700;
+          font-size: 14px;
           cursor: pointer;
-          margin-top: 12px;
-          transition: 0.3s;
+          margin-top: 8px;
+          transition: 0.2s;
         }
-        .signup-link-btn:hover { background: #004da0; color: white; }
+
+        .signup-link-btn:hover { background: #e2e8f0; }
+
         .forgot-pass {
           text-align: right;
-          margin-top: -10px;
-          margin-bottom: 20px;
+          margin: -4px 0 20px 0;
           font-size: 13px;
-          color: #004da0;
-          font-weight: 600;
+          color: #64748b;
+          font-weight: 500;
           cursor: pointer;
         }
+        .forgot-pass:hover { color: #004da0; }
       `}</style>
 
       {/* Background Slideshow */}
@@ -241,11 +285,10 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         {/* FORGOT PASSWORD MODAL */}
         {modalView === 'forgot' && (
           <div className="modal-overlay">
-            <div className="auth-card slide-up">
-              <div className="auth-header">
-                 <h1 style={{fontSize: '2rem', color: '#002d5a', fontWeight: 800}}>Reset Password</h1>
-                 <p style={{color: '#64748b', marginBottom: '25px'}}>Enter your email to receive recovery instructions.</p>
-              </div>
+            <div className="auth-card">
+              <div className="bank-icon-header">🔑</div>
+              <h1 style={{fontSize: '1.5rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Password</h1>
+              <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px'}}>Enter your email to receive recovery instructions.</p>
               <form onSubmit={handleResetSubmit}>
                 <div className="floating-input">
                   <input 
@@ -259,7 +302,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
                 <button type="submit" className="submit-btn primary">SEND LINK</button>
                 <p 
                   onClick={() => setModalView('none')} 
-                  style={{marginTop: '20px', cursor: 'pointer', color: '#004da0', fontWeight: 700, fontSize: '14px'}}
+                  style={{marginTop: '20px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px'}}
                 >
                   BACK TO LOGIN
                 </p>
@@ -269,11 +312,12 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         )}
 
         {/* LOGIN CARD */}
-        <div className="auth-card slide-up">
+        <div className="auth-card">
+          <div className="bank-icon-header">🏛️</div>
           <div className="auth-header">
             <span style={{color: '#004da0', fontWeight: 800, fontSize: '11px', background: 'rgba(0,77,160,0.08)', padding: '5px 14px', borderRadius: '50px', letterSpacing: '1px'}}>SECURE ACCESS</span>
-            <h1 style={{fontSize: '2.5rem', color: '#002d5a', margin: '12px 0', fontWeight: 800, letterSpacing: '-1px'}}>Welcome Back</h1>
-            <p style={{color: '#64748b', fontSize: '15px', marginBottom: '35px', lineHeight: '1.5'}}>Enter your credentials to access your IBK Finance account.</p>
+            <h1 style={{fontSize: '1.8rem', color: '#0f172a', margin: '12px 0 8px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Welcome Back</h1>
+            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5', fontWeight: 500}}>Enter your credentials to access your IBK Finance account.</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -304,8 +348,8 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
             </button>
           </form>
 
-          <div className="auth-footer" style={{marginTop: '35px', borderTop: '1px solid #f1f5f9', paddingTop: '25px'}}>
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '5px'}}>New to IBK Finance?</p>
+          <div className="auth-footer" style={{marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '24px'}}>
+            <p style={{color: '#64748b', fontSize: '13px', marginBottom: '16px', fontWeight: 500}}>New to IBK Finance?</p>
             <button 
               className="signup-link-btn" 
               type="button" 
