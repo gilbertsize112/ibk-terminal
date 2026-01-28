@@ -11,6 +11,9 @@ const UserDashboard = () => {
   const [transferData, setTransferData] = useState({ accNo: '', amount: '' });
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // ✅ Keep localhost support while adding production support
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   // Updated Logout Logic to match App.tsx
   const handleLogout = () => {
     localStorage.clear();
@@ -26,11 +29,13 @@ const UserDashboard = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const profileRes = await axios.get('http://localhost:5000/api/user/profile', config);
+      // ✅ Updated to dynamic URL
+      const profileRes = await axios.get(`${API_BASE_URL}/api/user/profile`, config);
       setUser(profileRes.data);
 
       try {
-        const transRes = await axios.get('http://localhost:5000/api/user/transactions', config);
+        // ✅ Updated to dynamic URL
+        const transRes = await axios.get(`${API_BASE_URL}/api/user/transactions`, config);
         setTransactions(transRes.data);
       } catch (transErr) {
         setTransactions([]); 
@@ -51,7 +56,8 @@ const UserDashboard = () => {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/user/transfer', 
+      // ✅ Updated to dynamic URL
+      await axios.post(`${API_BASE_URL}/api/user/transfer`, 
         { recipientAccountNumber: transferData.accNo, amount: transferData.amount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -204,6 +210,19 @@ const UserDashboard = () => {
         .tx-row {
           display: flex; justify-content: space-between; align-items: center;
           padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
         }
 
         /* Mobile Adjustments */

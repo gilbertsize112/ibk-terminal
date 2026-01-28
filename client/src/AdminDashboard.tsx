@@ -8,6 +8,9 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState<{id: string, name: string} | null>(null);
   const [amount, setAmount] = useState('');
 
+  // ✅ Maintain localhost support with dynamic fallback
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   // Logout Function - Updated to clear everything and force a hard redirect
   const handleLogout = () => {
     // 1. Wipe all local storage to ensure no tokens or user flags remain
@@ -21,7 +24,8 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.get('http://localhost:5000/api/admin/users', {
+      // ✅ Updated to dynamic URL
+      const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data);
@@ -43,7 +47,8 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:5000/api/admin/user-status`, {
+      // ✅ Updated to dynamic URL
+      await axios.patch(`${API_BASE_URL}/api/admin/user-status`, {
         userId,
         status: newStatus
       }, {
@@ -63,7 +68,8 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`http://localhost:5000/api/admin/load-wallet`, {
+      // ✅ Updated to dynamic URL
+      await axios.post(`${API_BASE_URL}/api/admin/load-wallet`, {
         userId: selectedUser.id,
         amount: Number(amount)
       }, {
