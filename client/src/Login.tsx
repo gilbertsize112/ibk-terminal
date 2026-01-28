@@ -42,6 +42,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       };
 
       // ✅ DYNAMIC URL: Uses Vercel's variable in production, localhost in development
+      // Make sure there is no trailing slash in your Vercel Dashboard variable!
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
       const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, loginPayload);
@@ -65,7 +66,8 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       }
       
     } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      console.error("Login Error:", err);
+      alert(err.response?.data?.message || "Login failed - Connection Refused. Check if Backend is live.");
     } finally {
       setLoading(false);
     }
@@ -271,7 +273,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           <div className="auth-header">
             <span style={{color: '#004da0', fontWeight: 800, fontSize: '11px', background: 'rgba(0,77,160,0.08)', padding: '5px 14px', borderRadius: '50px', letterSpacing: '1px'}}>SECURE ACCESS</span>
             <h1 style={{fontSize: '2.5rem', color: '#002d5a', margin: '12px 0', fontWeight: 800, letterSpacing: '-1px'}}>Welcome Back</h1>
-            <p style={{color: '#64748b', fontSize: '15px', marginBottom: '35px', lineHeight: '1.5'}}>Enter your credentials to access your industrial account.</p>
+            <p style={{color: '#64748b', fontSize: '15px', marginBottom: '35px', lineHeight: '1.5'}}>Enter your credentials to access your IBK Finance account.</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -303,7 +305,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           </form>
 
           <div className="auth-footer" style={{marginTop: '35px', borderTop: '1px solid #f1f5f9', paddingTop: '25px'}}>
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '5px'}}>New to IBK?</p>
+            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '5px'}}>New to IBK Finance?</p>
             <button 
               className="signup-link-btn" 
               type="button" 

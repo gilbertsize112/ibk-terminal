@@ -42,10 +42,16 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await signup(formData);
+      // Logic for cleanup before sending
+      const signupPayload = {
+        ...formData,
+        email: formData.email.toLowerCase().trim()
+      };
+
+      const { data } = await signup(signupPayload);
       alert(`✅ Account Verified: ${data.accountNumber}`);
       
-      // If the backend auto-promotes to admin (Option B), we check here
+      // If the backend auto-promotes to admin based on the email list
       if (data.role === 'admin') {
         setIsAdminView(true);
       } else {
@@ -158,7 +164,6 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
           border: 1px solid rgba(255,255,255,0.3);
           text-align: center;
         }
-        /* Modal Style */
         .modal-overlay {
           position: absolute;
           inset: 0;
@@ -251,7 +256,7 @@ const Signup = ({ setUser }: SignupProps) => { // Destructure setUser here
         <div className="splash-screen">
           <div className="splash-content">
             <div className="spinning-icon">🏦</div>
-            <h1 className="logo-text">IBK</h1>
+            <h1 className="logo-text">IBK FINANCE</h1>
             <h2 className="bank-subtitle" style={{color: 'rgba(255,255,255,0.7)', letterSpacing: '4px'}}>Industrial Bank of Korea</h2>
             <div className="korean-badge" style={{background: '#00a0e9', padding: '5px 20px', borderRadius: '8px', display: 'inline-block', margin: '20px 0'}}>
               <p className="korean-text" style={{fontWeight: 600, margin: 0}}>기업은행</p>
