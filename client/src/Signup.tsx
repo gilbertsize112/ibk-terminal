@@ -24,6 +24,7 @@ const Signup = ({ setUser }: SignupProps) => {
   // NEW: UI Enhancement States
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isShaking, setIsShaking] = useState(false); // Vibration/Shake state
 
   // Background Slideshow Logic (3 seconds)
   useEffect(() => {
@@ -78,6 +79,13 @@ const Signup = ({ setUser }: SignupProps) => {
         setIsLoginView(true);
       }
     } catch (err: any) {
+      // Trigger Vibration Effect
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]); // Short double pulse
+      }
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500); // Reset shake state
+
       alert(err.response?.data?.message || "Verification failed");
     } finally {
       setLoading(false);
@@ -180,11 +188,11 @@ const Signup = ({ setUser }: SignupProps) => {
           height: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start; /* Better for mobile keyboard */
+          justify-content: center; /* Centered for Desktop */
           align-items: center;
           padding: 40px 24px;
           overflow-y: auto;
-          -webkit-overflow-scrolling: touch; /* Smooth scroll for iOS */
+          -webkit-overflow-scrolling: touch;
         }
 
         .auth-card {
@@ -194,11 +202,25 @@ const Signup = ({ setUser }: SignupProps) => {
           padding: 40px;
           border-radius: 28px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border for desktop */
           text-align: center;
           animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-          margin-top: auto;
-          margin-bottom: auto;
           flex-shrink: 0;
+          margin: 20px 0; /* Ensures space on short desktop screens */
+        }
+
+        /* Vibration/Shake Animation */
+        .shake-effect {
+          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+          transform: translate3d(0, 0, 0);
+          border: 1px solid #ef4444;
+        }
+
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         @keyframes cardEntrance {
@@ -239,12 +261,12 @@ const Signup = ({ setUser }: SignupProps) => {
           border-radius: 12px;
           border: 1px solid #e2e8f0;
           background: #f8fafc;
-          font-size: 16px; /* Prevents auto-zoom on iOS */
+          font-size: 16px;
           outline: none;
           transition: all 0.2s;
           box-sizing: border-box;
           color: #1e293b;
-          -webkit-appearance: none; /* Removes iOS input shadow */
+          -webkit-appearance: none;
         }
 
         .floating-input input:focus {
@@ -261,7 +283,7 @@ const Signup = ({ setUser }: SignupProps) => {
           color: #94a3b8;
           font-size: 18px;
           z-index: 5;
-          padding: 5px; /* Larger touch area */
+          padding: 5px;
         }
 
         .strength-meter {
@@ -282,7 +304,7 @@ const Signup = ({ setUser }: SignupProps) => {
 
         .submit-btn.primary {
           width: 100%;
-          padding: 18px; /* Slightly taller for mobile thumbs */
+          padding: 18px;
           border-radius: 12px;
           border: none;
           background: #004da0;
@@ -328,17 +350,22 @@ const Signup = ({ setUser }: SignupProps) => {
         }
 
         @media (max-width: 480px) {
+          .auth-page { 
+            justify-content: flex-start; /* Reset for mobile scroll */
+            padding: 20px 16px; 
+            padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+          }
           .auth-card {
             padding: 32px 20px;
             max-width: 100%;
             border-radius: 24px;
+            margin-top: auto;
+            margin-bottom: auto;
           }
           .logo-text { font-size: 2.2rem; }
-          .auth-page { padding: 20px 16px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
         }
       `}</style>
 
-      {/* Background Slideshow */}
       <div className="slideshow-container">
         {images.map((img, index) => (
           <div
@@ -368,7 +395,7 @@ const Signup = ({ setUser }: SignupProps) => {
         <div className="auth-page">
           {modalView === 'forgot' && (
             <div className="modal-overlay" onClick={() => setModalView('none')}>
-              <div className="auth-card" onClick={e => e.stopPropagation()}>
+              <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`} onClick={e => e.stopPropagation()}>
                 <div className="bank-icon-header">🔑</div>
                 <h1 style={{fontSize: '1.5rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Access</h1>
                 <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px'}}>Enter your email for a recovery link.</p>
@@ -386,7 +413,7 @@ const Signup = ({ setUser }: SignupProps) => {
             </div>
           )}
 
-          <div className="auth-card">
+          <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`}>
             <div className="bank-icon-header">🏛️</div>
             
             <div className="auth-header">
