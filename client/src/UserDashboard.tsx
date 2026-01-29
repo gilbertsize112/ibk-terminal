@@ -364,13 +364,44 @@ const UserDashboard = () => {
       {/* SIDEBAR (Desktop) */}
       <aside className="sidebar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px', padding: '0 10px' }}>
-          <div style={{ width: '28px', height: '28px', background: '#3b82f6', borderRadius: '6px' }}></div>
+          <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', borderRadius: '6px' }}></div>
           <span style={{ fontSize: '18px', fontWeight: 800 }}>IBK BANK</span>
         </div>
-        <div className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><span>🏠</span> Overview</div>
-        <div className="nav-item" onClick={() => navigate('/transfer')}><span>💸</span> Payments</div>
-        <div className={`nav-item ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}><span>🛡️</span> Security</div>
-        <div style={{ marginTop: 'auto' }} className="nav-item" onClick={handleLogout}><span>🚪</span> Logout</div>
+
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', paddingLeft: '16px' }}>Main Menu</div>
+          
+          <div className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><span>🏠</span> Overview</div>
+          <div className="nav-item" onClick={() => navigate('/transfer')}><span>💸</span> Payments</div>
+          <div className="nav-item"><span>💳</span> My Cards</div>
+          <div className={`nav-item ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}><span>🛡️</span> Security</div>
+          <div className="nav-item"><span>📊</span> Statements</div>
+
+          {/* Credit Score Widget */}
+          <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+             <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>Credit Score</div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ height: '4px', flex: 1, background: '#1e293b', borderRadius: '2px', overflow: 'hidden' }}>
+                   <div style={{ width: '82%', height: '100%', background: '#22c55e' }}></div>
+                </div>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#22c55e' }}>782</span>
+             </div>
+          </div>
+        </div>
+
+        {/* User Profile Section at Bottom */}
+        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 10px', marginBottom: '8px' }}>
+             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}>
+                {user?.name?.[0]}
+             </div>
+             <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Premium</div>
+             </div>
+          </div>
+          <div className="nav-item" style={{ color: '#ef4444' }} onClick={handleLogout}><span>🚪</span> Logout</div>
+        </div>
       </aside>
 
       {/* MOBILE NAV (Bottom) */}
