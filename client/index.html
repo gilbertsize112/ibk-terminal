@@ -11,8 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="IBK Bank" />
     <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="manifest" href="/manifest.json" />
-
+    
     <title>IBK Bank</title>
 
     <style>
@@ -184,14 +183,7 @@
         }, 4000); 
       });
 
-      // Service Worker Registration
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('IBK App Ready!'))
-            .catch(err => console.log('Registration failed:', err));
-        });
-      }
+      // ✅ REMOVED SERVICE WORKER REGISTRATION TO STOP APP BEHAVIOR ON PC
     </script>
   </body>
 </html>

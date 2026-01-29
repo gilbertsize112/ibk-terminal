@@ -27,6 +27,11 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bank_app';
 
+// NEW: Warm-up / Ping route for Cron Jobs
+app.get('/api/ping', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'active', message: 'Keep-alive successful' });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);   // For Signup & Login
 app.use('/api/user', userRoutes);   // For Balance/Transactions

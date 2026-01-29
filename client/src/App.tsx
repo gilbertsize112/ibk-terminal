@@ -6,7 +6,7 @@ import AdminDashboard from './AdminDashboard'
 import UserDashboard from './UserDashboard' 
 import TransferMoney from './TransferMoney'
 import TransactionReceipt from './TransactionReceipt'
-import InstallPrompt from './InstallPrompt' 
+// import InstallPrompt from './InstallPrompt'  <-- You can remove this import
 import './App.css'
 
 function App() {
@@ -15,6 +15,11 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. SUPPRESS BROWSER INSTALL PROMPT (For PC)
+    const handlePrompt = (e: any) => e.preventDefault();
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+
+    // 2. CHECK AUTH SESSION
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     
@@ -26,6 +31,8 @@ function App() {
       }
     }
     setLoading(false);
+
+    return () => window.removeEventListener('beforeinstallprompt', handlePrompt);
   }, []);
 
   if (loading) return null;
@@ -33,7 +40,7 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <InstallPrompt />
+        {/* ✅ REMOVED <InstallPrompt /> FROM HERE */}
 
         <Routes>
           {/* 1. AUTH ROUTES (Only show if NOT logged in) */}
