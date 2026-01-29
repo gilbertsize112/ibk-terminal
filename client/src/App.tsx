@@ -6,12 +6,11 @@ import AdminDashboard from './AdminDashboard'
 import UserDashboard from './UserDashboard' 
 import TransferMoney from './TransferMoney'
 import TransactionReceipt from './TransactionReceipt'
-// ✅ Import the new component
 import InstallPrompt from './InstallPrompt' 
 import './App.css'
 
 function App() {
-  const [isLogin, setIsLogin] = useState(false); 
+  const [isLogin, setIsLogin] = useState(true); // Default to true so people see Login first
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +19,11 @@ function App() {
     const token = localStorage.getItem('token');
     
     if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.clear();
+      }
     }
     setLoading(false);
   }, []);
@@ -30,56 +33,56 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {/* ✅ The Install Prompt floats globally here */}
         <InstallPrompt />
 
         <Routes>
-          {/* AUTH LOGIC */}
+          {/* 1. AUTH ROUTES (Only show if NOT logged in) */}
           {!user ? (
-            <Route path="*" element={
-              <div className="auth-container">
-                {isLogin ? (
-                  <Login 
-                    onSwitchToSignup={() => setIsLogin(false)} 
-                    setUser={setUser} 
-                  />
-                ) : (
-                  <Signup setUser={setUser} /> 
-                )
-                }
-                
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <p style={{ color: '#64748b' }}>
-                    {isLogin ? "Don't have an account?" : "Already have an account?"}
-                    <button 
-                      onClick={() => setIsLogin(!isLogin)}
-                      style={{ 
-                        marginLeft: '10px', 
-                        background: 'none', 
-                        border: 'none', 
-                        color: '#004da0', 
-                        textDecoration: 'underline', 
-                        fontWeight: 'bold',
-                        cursor: 'pointer' 
-                      }}
-                    >
-                      {isLogin ? 'Sign Up' : 'Login'}
-                    </button>
-                  </p>
-                </div>
-              </div>
-            } />
-          ) : (
             <>
-              {/* DASHBOARD ROUTES */}
+              <Route path="/" element={
+                <div className="auth-container">
+                  {isLogin ? (
+                    <Login 
+                      onSwitchToSignup={() => setIsLogin(false)} 
+                      setUser={setUser} 
+                    />
+                  ) : (
+                    <Signup setUser={setUser} /> 
+                  )}
+                  
+                  <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                    <p style={{ color: '#64748b' }}>
+                      {isLogin ? "Don't have an account?" : "Already have an account?"}
+                      <button 
+                        onClick={() => setIsLogin(!isLogin)}
+                        style={{ 
+                          marginLeft: '10px', background: 'none', border: 'none', 
+                          color: '#004da0', textDecoration: 'underline', 
+                          fontWeight: 'bold', cursor: 'pointer' 
+                        }}
+                      >
+                        {isLogin ? 'Sign Up' : 'Login'}
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              } />
+              {/* If they try to go to /dashboard while logged out, send them to Login */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </>
+          ) : (
+            /* 2. PROTECTED ROUTES (Only show if logged in) */
+            <>
               <Route path="/dashboard" element={
                 user.role === 'admin' ? <AdminDashboard /> : <UserDashboard />
               } />
-
               <Route path="/transfer" element={<TransferMoney />} />
-
               <Route path="/receipt" element={<TransactionReceipt />} />
-
+              
+              {/* If they hit the root "/" while logged in, send them to dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              
+              {/* Catch all other typos and send to dashboard */}
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}
