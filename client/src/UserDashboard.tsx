@@ -66,6 +66,58 @@ const UserDashboard = () => {
     </div>
   );
 
+  // ✅ ACCOUNT SUSPENDED VIEW
+  if (user?.isFrozen) {
+    return (
+      <div style={{
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: '#020617',
+        color: '#f8fafc',
+        textAlign: 'center',
+        padding: '20px',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{
+          background: '#070c1b', 
+          padding: '40px', 
+          borderRadius: '24px', 
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          maxWidth: '500px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚠️</div>
+          <h2 style={{ fontSize: '28px', color: '#ef4444', fontWeight: 800, margin: '0 0 10px 0', fontFamily: 'Plus Jakarta Sans' }}>Account Suspended</h2>
+          <p style={{ color: '#94a3b8', lineHeight: '1.6', margin: '20px 0', fontSize: '15px' }}>
+            Your account (Acc: <span style={{color: '#3b82f6', fontFamily: 'Space Mono'}}>{user.accountNumber}</span>) has been temporarily restricted by the IBK Compliance Team. 
+            All outgoing transactions and fund access have been disabled.
+          </p>
+          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '14px' }}>
+            Please contact <strong style={{color: 'white'}}>support@ibk-terminal.com</strong> to initiate the verification process.
+          </div>
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              marginTop: '30px', 
+              padding: '14px 28px', 
+              borderRadius: '12px', 
+              border: 'none', 
+              background: '#ef4444', 
+              color: 'white', 
+              fontWeight: 700,
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            SECURE LOGOUT
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="user-dashboard">
       <style>{`

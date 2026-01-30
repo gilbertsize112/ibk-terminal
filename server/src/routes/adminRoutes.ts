@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { User } from '../models/User.js';
-import { Transaction } from '../models/Transaction.js'; // 1. Import the Transaction model
+import { Transaction } from '../models/Transaction.js';
 
 const router = Router();
 
@@ -10,11 +10,48 @@ const router = Router();
  */
 router.get('/users', async (req: Request, res: Response) => {
   try {
-    const users = await User.find({}, 'name email accountNumber balance');
+    // Added 'isFrozen' to the selection to ensure the frontend knows the status
+    const users = await User.find({}, 'name email accountNumber balance isFrozen');
     res.status(200).json(users);
   } catch (error) {
     console.error("Fetch Users Error:", error);
     res.status(500).json({ message: "Failed to synchronize user registry" });
+  }
+});
+
+/**
+ * @route   PATCH /api/admin/user-status
+ * @desc    Freeze/Unfreeze User: Toggle account access status
+ */
+router.patch('/user-status', async (req: Request, res: Response) => {
+  try {
+    const { userId, isFrozen } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Target User ID is required" });
+    }
+
+    // Update the isFrozen status in the database
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isFrozen: isFrozen },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found in the network" });
+    }
+
+    const statusLabel = isFrozen ? "FROZEN" : "ACTIVE";
+
+    res.status(200).json({ 
+      message: `Account for ${user.name} is now ${statusLabel}`,
+      isFrozen: user.isFrozen 
+    });
+
+  } catch (error) {
+    console.error("Status Toggle Error:", error);
+    res.status(500).json({ message: "Failed to update account security status" });
   }
 });
 
@@ -48,12 +85,11 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
     }
 
     // 3. LOG THE TRANSACTION (The professional part)
-    // This creates the history that John Doe will see on his dashboard
     const auditTrail = new Transaction({
       userId: user._id,
       type: 'credit',
       amount: numericAmount,
-      description: 'Admin Funding Injection', // Shows up on user statement
+      description: 'Admin Funding Injection', 
       status: 'completed'
     });
 
@@ -63,7 +99,7 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
     res.status(200).json({ 
       message: `Successfully credited $${numericAmount} to ${user.name}`, 
       newBalance: user.balance,
-      transactionId: auditTrail._id // Return the receipt ID for confirmation
+      transactionId: auditTrail._id 
     });
 
   } catch (error) {

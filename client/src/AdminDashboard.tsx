@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// ✅ Added Interface to stop TypeScript "red lines"
+// ✅ Updated Interface to match the Backend Schema (isFrozen)
 interface User {
   _id: string;
   name: string;
   email: string;
   accountNumber?: string;
-  status?: string;
+  isFrozen: boolean; // Changed from status to isFrozen (boolean)
   balance?: number;
 }
 
@@ -44,22 +44,26 @@ const AdminDashboard = () => {
     fetchUsers();
   }, []);
 
-  const handleToggleUserStatus = async (userId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'frozen' ? 'active' : 'frozen';
-    if (!window.confirm(`Are you sure you want to set this user to ${newStatus}?`)) return;
+  // ✅ Logic updated to use boolean toggle and 'isFrozen' field name
+  const handleToggleUserStatus = async (userId: string, currentlyFrozen: boolean) => {
+    const newStatus = !currentlyFrozen; 
+    const actionLabel = newStatus ? 'frozen' : 'active';
+    
+    if (!window.confirm(`Are you sure you want to set this user to ${actionLabel}?`)) return;
 
     try {
       const token = localStorage.getItem('token');
       await axios.patch(`${API_BASE_URL}/api/admin/user-status`, {
         userId,
-        status: newStatus
+        isFrozen: newStatus // Sending the boolean to the backend
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert(`User status successfully updated to ${newStatus}.`);
+      alert(`User status successfully updated to ${actionLabel}.`);
       fetchUsers(); 
     } catch (err) {
+      console.error("Update Error:", err);
       alert("Error updating user status.");
     }
   };
@@ -340,8 +344,9 @@ const AdminDashboard = () => {
                     </td>
                     <td data-label="Account" style={{fontFamily: 'monospace', color: '#00a0e9'}}>{user.accountNumber || 'PENDING'}</td>
                     <td data-label="Status">
-                      <span className={`status-badge ${user.status === 'frozen' ? 'status-frozen' : 'status-active'}`}>
-                        {user.status || 'active'}
+                      {/* ✅ Updated to use isFrozen for the badge class and text */}
+                      <span className={`status-badge ${user.isFrozen ? 'status-frozen' : 'status-active'}`}>
+                        {user.isFrozen ? 'frozen' : 'active'}
                       </span>
                     </td>
                     <td data-label="Balance" style={{fontWeight: 700, color: '#059669'}}>${user.balance?.toLocaleString() || '0.00'}</td>
@@ -350,8 +355,10 @@ const AdminDashboard = () => {
                           setSelectedUser({id: user._id, name: user.name});
                           setShowLoadModal(true);
                       }}>Credit</button>
-                      <button className="btn-block" onClick={() => handleToggleUserStatus(user._id, user.status || 'active')}>
-                        {user.status === 'frozen' ? 'Unfreeze' : 'Freeze'}
+                      
+                      {/* ✅ Updated to pass the current boolean isFrozen to the handler */}
+                      <button className="btn-block" onClick={() => handleToggleUserStatus(user._id, user.isFrozen)}>
+                        {user.isFrozen ? 'Unfreeze' : 'Freeze'}
                       </button>
                     </td>
                   </tr>

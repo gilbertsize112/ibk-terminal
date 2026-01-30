@@ -7,6 +7,14 @@ const userSchema = new Schema({
   accountNumber: { type: String, unique: true, required: true },
   balance: { type: Number, default: 0 },
   
+  /**
+   * Security & Status Fields
+   */
+  isFrozen: { 
+    type: Boolean, 
+    default: false 
+  },
+  
   role: { 
     type: String, 
     enum: ['user', 'admin'], 
