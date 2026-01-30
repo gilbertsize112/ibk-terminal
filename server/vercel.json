@@ -2,19 +2,19 @@
   "version": 2,
   "builds": [
     {
-      "src": "server/src/index.ts",
+      "src": "src/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server/src/index.ts",
+      "dest": "src/index.ts",
       "methods": ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"]
     },
     {
       "src": "/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "src/index.ts"
     }
   ],
   "crons": [
