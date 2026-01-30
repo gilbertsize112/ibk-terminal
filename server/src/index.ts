@@ -14,8 +14,8 @@ const app = express();
 app.use(cors({
   origin: [
     'https://ibk-finance.vercel.app', // Your new live frontend
-    'http://localhost:5173',          // Your local dev environment
-    'http://localhost:3000'           // Alternative local port
+    'http://localhost:5173',           // Your local dev environment
+    'http://localhost:3000'            // Alternative local port
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -6,10 +6,15 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "src/index.ts"
+      "src": "/api/(.*)",
+      "dest": "src/index.ts",
+      "methods": ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/index.ts"
     }
   ],
   "crons": [
