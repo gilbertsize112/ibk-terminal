@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { User } from '../models/User';
-import { Transaction } from '../models/Transaction';
+import { User } from '../models/User.js';
+import { Transaction } from '../models/Transaction.js';
 
 const router = Router();
 
@@ -10,7 +10,7 @@ const router = Router();
  */
 router.get('/users', async (req: Request, res: Response) => {
   try {
-    // Fetches essential user data including isFrozen status
+    // Added 'isFrozen' to the selection to ensure the frontend knows the status
     const users = await User.find({}, 'name email accountNumber balance isFrozen');
     res.status(200).json(users);
   } catch (error) {
@@ -63,6 +63,7 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
   try {
     const { userId, amount } = req.body;
 
+    // 1. Validation
     if (!userId) {
       return res.status(400).json({ message: "Target User ID is required" });
     }
@@ -72,7 +73,7 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid credit amount" });
     }
 
-    // Update the User Balance
+    // 2. Update the User Balance
     const user = await User.findByIdAndUpdate(
       userId,
       { $inc: { balance: numericAmount } }, 
@@ -83,7 +84,7 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found in the network" });
     }
 
-    // Log the transaction history
+    // 3. LOG THE TRANSACTION (The professional part)
     const auditTrail = new Transaction({
       userId: user._id,
       type: 'credit',
@@ -94,6 +95,7 @@ router.post('/load-wallet', async (req: Request, res: Response) => {
 
     await auditTrail.save();
 
+    // 4. Final Response
     res.status(200).json({ 
       message: `Successfully credited $${numericAmount} to ${user.name}`, 
       newBalance: user.balance,

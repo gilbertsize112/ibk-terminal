@@ -2,16 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Bank App Backend",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
-  "engines": {
-    "node": ">=20.0.0"
-  },
   "scripts": {
     "dev": "node --loader ts-node/esm --no-warnings --watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "vercel-build": "tsc"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
