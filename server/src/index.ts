@@ -26,14 +26,17 @@ app.use(express.json());
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bank_app';
 
-// 1. Bulletproof Ping Route
-// This matches /api/ping, /ping, or even /src/index/api/ping
+// 1. 🧪 DEBUGGING MIDDLEWARE (The "Truth" Seeker)
+// This logs exactly what Vercel is handing to Express
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.url.endsWith('/ping')) {
+  console.log(`🔍 Incoming Request: ${req.method} ${req.url}`);
+  
+  // If the path has 'ping' anywhere in it, respond immediately
+  if (req.url.includes('ping')) {
     return res.status(200).json({ 
       status: 'active',
       receivedUrl: req.url,
-      method: req.method
+      info: "If you see this, the server is ALIVE. The 404 was a path mismatch."
     });
   }
   next();
@@ -56,11 +59,11 @@ mongoose.connect(MONGO_URI)
 
 // 3. Global 404 handler with Path Debugging
 app.use((req: Request, res: Response) => {
-  console.log(`404 error at: ${req.method} ${req.url}`);
+  console.log(`❌ 404 error at: ${req.method} ${req.url}`);
   res.status(404).json({ 
     error: 'Route not found',
-    path: req.url,
-    message: "Check Vercel logs to see the actual path received by Express."
+    receivedPath: req.url,
+    suggestion: "Check your Vercel logs to see if a prefix was added to the URL."
   });
 });
 
