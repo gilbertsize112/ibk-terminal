@@ -10,13 +10,14 @@ dotenv.config();
 
 const app = express();
 
-// Cache the connection to prevent "ReplicaSetNoPrimary" and Timeout errors
+/**
+ * 🛡️ MONGOOSE SINGLETON CACHE
+ * Prevents "Socket Timeout" and "Too many connections" on Vercel
+ */
 let isConnected = false;
 
-// Added production-specific timeout parameters to the URI fallback
 const MONGO_URI = process.env.MONGO_URI || 
-                  process.env.MONGODB_URI || 
-                  'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority&connectTimeoutMS=30000&socketTimeoutMS=45000';
+                  'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority&connectTimeoutMS=30000&socketTimeoutMS=45000&maxIdleTimeMS=60000';
 
 app.use(cors({
   origin: ['https://ibk-finance.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
@@ -27,22 +28,24 @@ app.use(cors({
 
 app.use(express.json());
 
-// 🛡️ Enhanced Serverless Connection Helper
+/**
+ * 🛠️ Robust Database Connection
+ */
 async function connectToDatabase() {
   if (isConnected && mongoose.connection.readyState === 1) {
     return;
   }
 
-  // CRITICAL for Vercel: Fail fast if the DB is unreachable 
-  // instead of buffering and timing out the function.
+  // CRITICAL: Disable buffering to avoid the 3-minute hang
   mongoose.set('bufferCommands', false);
 
   console.log('🔄 Connecting to MongoDB Atlas...');
   try {
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 15000, // Wait 15s for Atlas 
-      connectTimeoutMS: 30000,        // 30s for the initial connection
-      socketTimeoutMS: 45000,         // 45s for inactivity
+      serverSelectionTimeoutMS: 15000, // Fail after 15s if Atlas is unreachable
+      connectTimeoutMS: 30000,        // 30s limit for initial handshake
+      socketTimeoutMS: 45000,         // Close inactive sockets
+      heartbeatFrequencyMS: 10000     // Keep the connection alive
     });
     
     isConnected = true;
@@ -54,9 +57,11 @@ async function connectToDatabase() {
   }
 }
 
-// ⚡ Request Middleware
+/**
+ * ⚡ Request Middleware
+ */
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-  // Priority 1: Instant Ping (Does not wait for DB)
+  // 1. Instant Ping for Health Checks
   if (req.url.toLowerCase().includes('ping')) {
     return res.status(200).json({ 
       status: 'active',
@@ -65,16 +70,14 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // Priority 2: Ensure DB is connected for all other requests
+  // 2. Database Handshake
   try {
     await connectToDatabase();
     next();
   } catch (err: any) {
-    // If DB fails, send a clear error so Vercel doesn't just hang
     res.status(503).json({ 
       error: "Database Unavailable", 
-      message: err.message,
-      hint: "Check if MongoDB Atlas is under heavy load or IP whitelist is correct."
+      message: err.message 
     });
   }
 });
@@ -86,12 +89,12 @@ app.use(['/api/admin', '/admin'], adminRoutes);
 
 app.get('/', (req, res) => res.status(200).send('Bank Server API Online'));
 
-// 404 Catch-all
+// 404 Handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
-// 🚀 Start locally only
+// 🚀 Local Development Listener
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(Number(PORT), () => {
