@@ -10,12 +10,13 @@ dotenv.config();
 
 const app = express();
 
-// Global variable to cache the MongoDB connection across serverless invocations
+// Cache the connection to prevent "ReplicaSetNoPrimary" errors in serverless
 let isConnected = false;
 
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bank_app';
+const MONGO_URI = process.env.MONGO_URI || 
+                  process.env.MONGODB_URI || 
+                  'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority';
 
-// CORS Configuration
 app.use(cors({
   origin: ['https://ibk-finance.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -25,77 +26,68 @@ app.use(cors({
 
 app.use(express.json());
 
-// 1. 🛡️ IMPROVED SERVERLESS DB CONNECTION
+// 🛡️ Robust Connection Helper
 async function connectToDatabase() {
   if (isConnected && mongoose.connection.readyState === 1) {
     return;
   }
 
-  console.log('🔄 Attempting MongoDB connection...');
+  console.log('🔄 Connecting to MongoDB Atlas...');
   try {
-    const db = await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 8000, // Slightly longer for cold starts
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000, // 10s wait for Atlas re-election
       socketTimeoutMS: 45000,
     });
-    isConnected = db.connections[0].readyState === 1;
-    console.log('✅ Connected to MongoDB');
+    isConnected = true;
+    console.log('✅ MongoDB Connected Successfully');
   } catch (err: any) {
-    console.error('❌ MongoDB connection error:', err.message);
-    throw err; // Let the middleware handle the response
+    console.error('❌ MongoDB Connection Error:', err.message);
+    throw err; 
   }
 }
 
-// 2. ⚡ UNIVERSAL REQUEST HANDLER
+// ⚡ Request Middleware: Ensures DB is ready and handles Ping
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-  // A. Log every single request for debugging
-  console.log(`🔍 Incoming: ${req.method} ${req.url}`);
-
-  // B. Handle PING immediately (Before DB or Routes)
-  // This solves the /api/ping vs /ping mismatch discovered in logs
+  // Priority 1: Handle Ping immediately to verify server status
   if (req.url.toLowerCase().includes('ping')) {
     return res.status(200).json({ 
       status: 'active',
-      receivedUrl: req.url,
-      dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      serverTime: new Date().toISOString()
+      db: mongoose.connection.readyState === 1 ? 'connected' : 'connecting...',
+      timestamp: new Date().toISOString()
     });
   }
 
-  // C. Connect to DB for all other requests
+  // Priority 2: Ensure DB is connected for all other requests
   try {
     await connectToDatabase();
     next();
   } catch (err: any) {
     res.status(500).json({ 
-      error: "Database Connection Failed", 
-      message: err.message,
-      suggestion: "Check MongoDB Atlas IP Whitelist (0.0.0.0/0)"
+      error: "Database Connection Error", 
+      message: "Server is live but could not reach the database. Check Atlas Whitelist." 
     });
   }
 });
 
-// 3. Route Mounting
+// Routes
 app.use(['/api/auth', '/auth'], authRoutes);   
 app.use(['/api/user', '/user'], userRoutes);   
 app.use(['/api/admin', '/admin'], adminRoutes); 
 
-app.get('/', (req, res) => {
-  res.status(200).send('Bank Server API Online');
-});
+app.get('/', (req, res) => res.status(200).send('Bank Server API Online'));
 
-// 4. Debugging 404 Handler
+// 404 Catch-all
 app.use((req: Request, res: Response) => {
-  console.log(`❌ 404 Failure: ${req.url}`);
-  res.status(404).json({ 
-    error: 'Not Found',
-    path: req.url,
-    hint: "If the path looks correct, check your vercel.json rewrites." 
-  });
+  res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
+// 🚀 START SERVER LOCALLY ONLY
+// Vercel handles the listener automatically in production
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(Number(PORT), () => console.log(`🚀 Port ${PORT}`));
+  app.listen(Number(PORT), () => {
+    console.log(`🚀 Local server running on port ${PORT}`);
+  });
 }
 
 export default app;
