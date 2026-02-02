@@ -27,22 +27,23 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bank_app';
 
-// 1. Updated Ping Route (Flexible Path)
+// 1. Flexible Ping Route
+// Handles both /api/ping and /ping to avoid Vercel routing 404s
 app.get(['/api/ping', '/ping'], (req: Request, res: Response) => {
   res.status(200).json({ 
     status: 'active',
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || 'production',
     timestamp: new Date().toISOString()
   });
 });
 
 // 2. Flexible Route Mounting
-// This ensures routes work even if Vercel rewrites strip the /api prefix
+// Using arrays for paths ensures the routes hit even if the prefix is stripped
 app.use(['/api/auth', '/auth'], authRoutes);   
 app.use(['/api/user', '/user'], userRoutes);   
 app.use(['/api/admin', '/admin'], adminRoutes); 
 
-// Base Route
+// Base Root Route
 app.get('/', (req: Request, res: Response) => {
   res.send('Bank Server API is running correctly...');
 });
@@ -52,7 +53,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// 3. Enhanced Global 404 handler for debugging
+// 3. Global 404 handler for debugging Vercel pathing
 app.use((req: Request, res: Response) => {
   console.log(`404 detected: ${req.method} ${req.url}`);
   res.status(404).json({ 
@@ -63,12 +64,12 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Port listener (Only for local development)
+// Local listener (Skipped on Vercel)
 if (process.env.NODE_ENV !== 'production') {
   app.listen(Number(PORT), () => {
     console.log(`🚀 Local Server ready on port ${PORT}`);
   });
 }
 
-// Crucial for Vercel: Export the app
+// Crucial: Export for Vercel
 export default app;
