@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-// Singleton connection state for Vercel
+// Global variable to cache the MongoDB connection across serverless invocations
 let isConnected = false;
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bank_app';
@@ -25,60 +25,71 @@ app.use(cors({
 
 app.use(express.json());
 
-// 1. 🛡️ SERVERLESS DB CONNECTION MIDDLEWARE
-// Ensures MongoDB is connected before any route is processed
-app.use(async (req: Request, res: Response, next: NextFunction) => {
+// 1. 🛡️ IMPROVED SERVERLESS DB CONNECTION
+async function connectToDatabase() {
   if (isConnected && mongoose.connection.readyState === 1) {
-    return next();
+    return;
   }
 
+  console.log('🔄 Attempting MongoDB connection...');
   try {
-    console.log('🔄 Attempting MongoDB connection...');
     const db = await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 8000, // Slightly longer for cold starts
       socketTimeoutMS: 45000,
     });
     isConnected = db.connections[0].readyState === 1;
     console.log('✅ Connected to MongoDB');
-    next();
   } catch (err: any) {
     console.error('❌ MongoDB connection error:', err.message);
-    // Don't block /ping even if DB fails, so we can still see the server is live
-    if (req.url.includes('ping')) return next();
-    
-    res.status(500).json({ error: "Database Connection Failed", detail: err.message });
+    throw err; // Let the middleware handle the response
   }
-});
+}
 
-// 2. ⚡ AGGRESSIVE PING HANDLER
-// Catches /ping, /api/ping, etc. based on your Runtime Logs discovery
-app.use((req: Request, res: Response, next: NextFunction) => {
+// 2. ⚡ UNIVERSAL REQUEST HANDLER
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  // A. Log every single request for debugging
+  console.log(`🔍 Incoming: ${req.method} ${req.url}`);
+
+  // B. Handle PING immediately (Before DB or Routes)
+  // This solves the /api/ping vs /ping mismatch discovered in logs
   if (req.url.toLowerCase().includes('ping')) {
-    console.log(`🔍 Ping hit: ${req.url}`);
     return res.status(200).json({ 
       status: 'active',
       receivedUrl: req.url,
       dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      info: "Express is officially processing requests." 
+      serverTime: new Date().toISOString()
     });
   }
-  next();
+
+  // C. Connect to DB for all other requests
+  try {
+    await connectToDatabase();
+    next();
+  } catch (err: any) {
+    res.status(500).json({ 
+      error: "Database Connection Failed", 
+      message: err.message,
+      suggestion: "Check MongoDB Atlas IP Whitelist (0.0.0.0/0)"
+    });
+  }
 });
 
-// 3. Flexible Route Mounting
+// 3. Route Mounting
 app.use(['/api/auth', '/auth'], authRoutes);   
 app.use(['/api/user', '/user'], userRoutes);   
 app.use(['/api/admin', '/admin'], adminRoutes); 
 
-app.get('/', (req, res) => res.send('Bank Server API Online'));
+app.get('/', (req, res) => {
+  res.status(200).send('Bank Server API Online');
+});
 
 // 4. Debugging 404 Handler
 app.use((req: Request, res: Response) => {
-  console.log(`❌ 404 on path: ${req.url}`);
+  console.log(`❌ 404 Failure: ${req.url}`);
   res.status(404).json({ 
     error: 'Not Found',
     path: req.url,
-    msg: "If you see this, Express is live but the path is not matching routes." 
+    hint: "If the path looks correct, check your vercel.json rewrites." 
   });
 });
 
