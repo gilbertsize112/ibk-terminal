@@ -10,12 +10,13 @@ dotenv.config();
 
 const app = express();
 
-// Cache the connection to prevent "ReplicaSetNoPrimary" errors in serverless
+// Cache the connection to prevent "ReplicaSetNoPrimary" and Timeout errors
 let isConnected = false;
 
+// Added production-specific timeout parameters to the URI fallback
 const MONGO_URI = process.env.MONGO_URI || 
                   process.env.MONGODB_URI || 
-                  'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority';
+                  'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority&connectTimeoutMS=30000&socketTimeoutMS=45000';
 
 app.use(cors({
   origin: ['https://ibk-finance.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
@@ -26,29 +27,36 @@ app.use(cors({
 
 app.use(express.json());
 
-// 🛡️ Robust Connection Helper
+// 🛡️ Enhanced Serverless Connection Helper
 async function connectToDatabase() {
   if (isConnected && mongoose.connection.readyState === 1) {
     return;
   }
 
+  // CRITICAL for Vercel: Fail fast if the DB is unreachable 
+  // instead of buffering and timing out the function.
+  mongoose.set('bufferCommands', false);
+
   console.log('🔄 Connecting to MongoDB Atlas...');
   try {
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000, // 10s wait for Atlas re-election
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 15000, // Wait 15s for Atlas 
+      connectTimeoutMS: 30000,        // 30s for the initial connection
+      socketTimeoutMS: 45000,         // 45s for inactivity
     });
+    
     isConnected = true;
     console.log('✅ MongoDB Connected Successfully');
   } catch (err: any) {
+    isConnected = false;
     console.error('❌ MongoDB Connection Error:', err.message);
     throw err; 
   }
 }
 
-// ⚡ Request Middleware: Ensures DB is ready and handles Ping
+// ⚡ Request Middleware
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-  // Priority 1: Handle Ping immediately to verify server status
+  // Priority 1: Instant Ping (Does not wait for DB)
   if (req.url.toLowerCase().includes('ping')) {
     return res.status(200).json({ 
       status: 'active',
@@ -62,9 +70,11 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     await connectToDatabase();
     next();
   } catch (err: any) {
-    res.status(500).json({ 
-      error: "Database Connection Error", 
-      message: "Server is live but could not reach the database. Check Atlas Whitelist." 
+    // If DB fails, send a clear error so Vercel doesn't just hang
+    res.status(503).json({ 
+      error: "Database Unavailable", 
+      message: err.message,
+      hint: "Check if MongoDB Atlas is under heavy load or IP whitelist is correct."
     });
   }
 });
@@ -81,8 +91,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
-// 🚀 START SERVER LOCALLY ONLY
-// Vercel handles the listener automatically in production
+// 🚀 Start locally only
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(Number(PORT), () => {
