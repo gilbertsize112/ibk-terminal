@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -10,12 +10,11 @@ dotenv.config();
 
 const app = express();
 
-// ✅ UPDATED MIDDLEWARE: Explicitly allow your frontend
 app.use(cors({
   origin: [
-    'https://ibk-finance.vercel.app', // Your new live frontend
-    'http://localhost:5173',           // Your local dev environment
-    'http://localhost:3000'            // Alternative local port
+    'https://ibk-finance.vercel.app', 
+    'http://localhost:5173',          
+    'http://localhost:3000'            
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -25,17 +24,17 @@ app.use(cors({
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/bank_app';
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bank_app';
 
-// NEW: Warm-up / Ping route for Cron Jobs
+// Ping route
 app.get('/api/ping', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'active', message: 'Keep-alive successful' });
+  res.status(200).json({ status: 'active' });
 });
 
 // Routes
-app.use('/api/auth', authRoutes);   // For Signup & Login
-app.use('/api/user', userRoutes);   // For Balance/Transactions
-app.use('/api/admin', adminRoutes); // Admin Dashboard actions
+app.use('/api/auth', authRoutes);   
+app.use('/api/user', userRoutes);   
+app.use('/api/admin', adminRoutes); 
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Bank Server API is running...');
@@ -43,19 +42,19 @@ app.get('/', (req: Request, res: Response) => {
 
 // MongoDB Connection
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-  });
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// This allows the app to still run locally
+// Global 404 handler - This will help us debug
+app.use((req: Request, res: Response) => {
+  console.log(`404 attempt: ${req.method} ${req.url}`);
+  res.status(404).json({ error: `Path ${req.url} not found on this server` });
+});
+
 if (process.env.NODE_ENV !== 'production') {
   app.listen(Number(PORT), () => {
     console.log(`🚀 Local Server ready on port ${PORT}`);
   });
 }
 
-// CRITICAL FOR VERCEL: Export the app
 export default app;
