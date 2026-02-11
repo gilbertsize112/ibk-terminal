@@ -17,7 +17,7 @@ const TransactionReceipt = () => {
     hour12: true
   });
 
-  // Extracting details from navigation state
+  // Extracting details from navigation state with heavy fallback protection
   const { details } = location.state || { 
     details: {
       senderName: "N/A",
@@ -123,7 +123,6 @@ const TransactionReceipt = () => {
           overflow: hidden;
         }
 
-        /* WATERMARK */
         .receipt-card::before {
           content: "FEDERAL RESERVE SYSTEM";
           position: absolute;
@@ -291,7 +290,6 @@ const TransactionReceipt = () => {
         }
       `}</style>
 
-      {/* DASHBOARD ICON BUTTON */}
       <button className="home-icon-btn" onClick={() => navigate('/dashboard')}>
         🏠
       </button>
@@ -314,7 +312,7 @@ const TransactionReceipt = () => {
         <div className="amount-section">
           <span className="label">Amount</span>
           <div style={{ fontSize: '36px', fontWeight: 800, color: '#0f172a', margin: '4px 0', letterSpacing: '-1.5px' }}>
-            ${Number(details.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            ${(Number(details?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="security-seal">Verified Secure</div>
         </div>
