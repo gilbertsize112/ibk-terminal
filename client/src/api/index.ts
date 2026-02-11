@@ -1,14 +1,15 @@
 import axios from 'axios';
 
-// ✅ FIXED: Removed the extra double quotes that were causing the %22%22 error
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api` 
-  : '/api'; // Just use '/api' as the fallback
+// ✅ Since everything is in ONE project, we use a relative path
+// This prevents the %22%22 error entirely
+const API_BASE_URL = '/api'; 
 
-const API = axios.create({ baseURL: API_BASE_URL });
+const API = axios.create({ 
+    baseURL: API_BASE_URL 
+});
 
-// This will now show "Connecting to API at: /api" instead of "Connecting to API at: ""/api"
-console.log("Connecting to API at:", API_BASE_URL);
+// This will show "Connecting to API at: /api" in your console
+console.log("System Mode: Unified (Frontend + Backend)");
 
 API.interceptors.request.use((req) => {
     const token = localStorage.getItem('token');
