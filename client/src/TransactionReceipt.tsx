@@ -17,7 +17,8 @@ const TransactionReceipt = () => {
     hour12: true
   });
 
-  // Extracting details from navigation state with heavy fallback protection
+  // Extracting details from navigation state
+  // Added extra safety: if location.state is missing, we use the fallback object immediately
   const { details } = location.state || { 
     details: {
       senderName: "N/A",
@@ -123,6 +124,7 @@ const TransactionReceipt = () => {
           overflow: hidden;
         }
 
+        /* WATERMARK */
         .receipt-card::before {
           content: "FEDERAL RESERVE SYSTEM";
           position: absolute;
@@ -290,6 +292,7 @@ const TransactionReceipt = () => {
         }
       `}</style>
 
+      {/* DASHBOARD ICON BUTTON */}
       <button className="home-icon-btn" onClick={() => navigate('/dashboard')}>
         🏠
       </button>
@@ -312,6 +315,7 @@ const TransactionReceipt = () => {
         <div className="amount-section">
           <span className="label">Amount</span>
           <div style={{ fontSize: '36px', fontWeight: 800, color: '#0f172a', margin: '4px 0', letterSpacing: '-1.5px' }}>
+            {/* THE CRITICAL FIX IS BELOW: Added (details?.amount || 0) */}
             ${(Number(details?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="security-seal">Verified Secure</div>
@@ -320,32 +324,32 @@ const TransactionReceipt = () => {
         <div className="data-grid">
           <div className="data-row">
             <span className="label">Date (US)</span>
-            <span className="value">{details.date}</span>
+            <span className="value">{details?.date || usTime}</span>
           </div>
           <div className="data-row">
             <span className="label">Ref ID</span>
-            <span className="value" style={{ fontFamily: 'monospace', letterSpacing: '-0.5px' }}>{details.transactionId}</span>
+            <span className="value" style={{ fontFamily: 'monospace', letterSpacing: '-0.5px' }}>{details?.transactionId || "N/A"}</span>
           </div>
           <div className="data-row">
             <span className="label">Sender</span>
-            <span className="value">{details.senderName}</span>
+            <span className="value">{details?.senderName || "N/A"}</span>
           </div>
           <div className="data-row">
             <span className="label">Source Account</span>
-            <span className="value" style={{ fontFamily: 'monospace' }}>{details.senderAcc}</span>
+            <span className="value" style={{ fontFamily: 'monospace' }}>{details?.senderAcc || "N/A"}</span>
           </div>
           
           <div className="data-row" style={{ marginTop: '10px', borderTop: '1px solid #f8fafc', paddingTop: '10px' }}>
             <span className="label">Beneficiary</span>
-            <span className="value" style={{ color: '#3b82f6', fontWeight: 800 }}>{details.recipientName}</span>
+            <span className="value" style={{ color: '#3b82f6', fontWeight: 800 }}>{details?.recipientName || "N/A"}</span>
           </div>
           <div className="data-row">
             <span className="label">Target Account</span>
-            <span className="value" style={{ fontFamily: 'monospace' }}>{details.recipientAcc}</span>
+            <span className="value" style={{ fontFamily: 'monospace' }}>{details?.recipientAcc || "N/A"}</span>
           </div>
           <div className="data-row">
             <span className="label">Memo</span>
-            <span className="value">{details.memo || "N/A"}</span>
+            <span className="value">{details?.memo || "N/A"}</span>
           </div>
           
           <div className="data-row" style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '16px', marginTop: '4px' }}>
