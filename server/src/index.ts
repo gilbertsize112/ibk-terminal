@@ -114,6 +114,11 @@ const startServer = async () => {
   }
 };
 
+/**
+ * 🌍 VERCEL COMPATIBILITY
+ * In development, we start the server manually.
+ * In production (Vercel), we export the app for serverless execution.
+ */
 if (process.env.NODE_ENV !== 'production') {
   startServer();
 }
