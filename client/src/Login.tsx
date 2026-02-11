@@ -41,8 +41,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         email: formData.email.toLowerCase().trim()
       };
 
-      // ✅ DYNAMIC URL: Uses Vercel's variable in production, localhost in development
-      const API_BASE_URL = import.meta.env.VITE_API_URL || '""';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
       const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, loginPayload);
       
