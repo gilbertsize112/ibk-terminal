@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-// ✅ Dynamically choose the URL based on the environment
+// ✅ FIXED: Removed the extra double quotes that were causing the %22%22 error
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api` 
-  : '""/api';
+  : '/api'; // Just use '/api' as the fallback
 
 const API = axios.create({ baseURL: API_BASE_URL });
 
-// Log this to your browser console so you can see if it's working
+// This will now show "Connecting to API at: /api" instead of "Connecting to API at: ""/api"
 console.log("Connecting to API at:", API_BASE_URL);
 
 API.interceptors.request.use((req) => {
