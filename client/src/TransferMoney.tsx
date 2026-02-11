@@ -28,7 +28,7 @@ const TransferMoney = () => {
   const [pinError, setPinError] = useState(false); 
   const [isNavigating, setIsNavigating] = useState(false); // New state to prevent redirect loops
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '""';
 
   useEffect(() => {
     const fetchProfile = async () => {
