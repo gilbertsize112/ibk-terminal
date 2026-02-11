@@ -165,7 +165,6 @@ const TransferMoney = () => {
       setShowConfirm(false);
 
       // Final Redirect to Receipt with complete state object
-      // UPDATED PATH: navigate to /dashboard/receipt because of nested routes in App.tsx
       navigate('/dashboard/receipt', { 
         state: { 
           details: {

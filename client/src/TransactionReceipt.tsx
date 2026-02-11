@@ -270,7 +270,7 @@ const TransactionReceipt = () => {
           gap: 8px;
         }
 
-        .korean-text-small {
+        .sub-text-small {
           font-size: 10px;
           opacity: 0.8;
           font-weight: 500;
@@ -371,17 +371,17 @@ const TransactionReceipt = () => {
         <button className="btn btn-share" onClick={handleShare}>
            <span style={{fontSize: '18px'}}>📤</span>
            <span>SHARE</span>
-           <span className="korean-text-small">DIGITAL COPY</span>
+           <span className="sub-text-small">DIGITAL COPY</span>
         </button>
         <button className="btn btn-primary" onClick={handlePrint}>
            <span style={{fontSize: '18px'}}>🖨️</span>
            <span>SAVE PDF</span>
-           <span className="korean-text-small">PRINT RECORD</span>
+           <span className="sub-text-small">PRINT RECORD</span>
         </button>
         <button className="btn btn-outline" onClick={() => navigate('/dashboard')}>
            <span style={{fontSize: '18px'}}>🏠</span>
            <span>RETURN HOME</span>
-           <span className="korean-text-small">BACK TO DASHBOARD</span>
+           <span className="sub-text-small">BACK TO DASHBOARD</span>
         </button>
       </div>
     </div>

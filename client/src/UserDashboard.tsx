@@ -30,9 +30,15 @@ const UserDashboard = () => {
     window.addEventListener('resize', () => setSidebarOpen(false));
   }, []);
 
+  // ✅ IMPROVED: Sync activeTab with the URL immediately
   useEffect(() => {
-    if (location.pathname.includes('/transfer')) setActiveTab('transfer');
-    else if (location.pathname.includes('/cards')) setActiveTab('cards');
+    if (location.pathname.endsWith('/transfer')) {
+      setActiveTab('transfer');
+    } else if (location.pathname.endsWith('/cards')) {
+      setActiveTab('cards');
+    } else if (location.pathname.endsWith('/dashboard')) {
+      setActiveTab('overview');
+    }
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -111,6 +117,9 @@ const UserDashboard = () => {
   if (loading) return <div style={{ height: '100vh', background: '#020617', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><div style={{ width: '50px', height: '50px', border: '3px solid rgba(59,130,246,0.1)', borderTop: '3px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /><style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style></div>;
 
   if (user?.isFrozen) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}><div style={{ background: '#070c1b', padding: '40px 20px', borderRadius: '24px', border: '1px solid rgba(239,68,68,0.3)', maxWidth: '500px', width: '100%', textAlign: 'center' }}><div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div><h2 style={{ fontSize: '28px', color: '#ef4444', fontWeight: 800, margin: '0 0 20px 0' }}>Account Suspended</h2><p style={{ color: '#94a3b8', lineHeight: '1.6' }}>Contact support@ibk-terminal.com to verify your account.</p><button onClick={handleLogout} style={{ marginTop: '30px', padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%' }}>LOGOUT</button></div></div>;
+
+  // ✅ DETERMINING SUB-ROUTE VIEW: This prevents the "Blue Screen" logic error
+  const isSubRoute = location.pathname.includes('/transfer') || location.pathname.includes('/cards') || location.pathname.includes('/receipt');
 
   return (
     <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, sans-serif', display: 'flex', width: '100%' }}>
@@ -245,7 +254,8 @@ const UserDashboard = () => {
       </nav>
 
       <main className="main-content">
-        {activeTab === 'transfer' || activeTab === 'cards' ? <Outlet context={{ user }} /> : <>
+        {/* ✅ FIXED: Logic prioritizes the sub-route if the URL contains it */}
+        {isSubRoute ? <Outlet context={{ user }} /> : <>
           <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
             {activeTab === 'overview' ? `Welcome, ${user?.name?.split(' ')[0]}!` : activeTab === 'transactions' ? 'Transactions' : 'Security'}
           </h1>
