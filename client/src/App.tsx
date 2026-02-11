@@ -6,17 +6,16 @@ import AdminDashboard from './AdminDashboard'
 import UserDashboard from './UserDashboard' 
 import TransferMoney from './TransferMoney'
 import TransactionReceipt from './TransactionReceipt'
-import MyCards from './MyCards' // ✅ Added this import
-// import InstallPrompt from './InstallPrompt'  <-- You can remove this import
+import MyCards from './MyCards' 
 import './App.css'
 
 function App() {
-  const [isLogin, setIsLogin] = useState(true); // Default to true so people see Login first
+  const [isLogin, setIsLogin] = useState(true); 
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. SUPPRESS BROWSER INSTALL PROMPT (For PC)
+    // 1. SUPPRESS BROWSER INSTALL PROMPT
     const handlePrompt = (e: any) => e.preventDefault();
     window.addEventListener('beforeinstallprompt', handlePrompt);
 
@@ -41,8 +40,6 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {/* ✅ REMOVED <InstallPrompt /> FROM HERE */}
-
         <Routes>
           {/* 1. AUTH ROUTES (Only show if NOT logged in) */}
           {!user ? (
@@ -58,6 +55,7 @@ function App() {
                     <Signup setUser={setUser} /> 
                   )}
                   
+                  {/* Keep the toggle button design from your original code */}
                   <div style={{ marginTop: '20px', textAlign: 'center' }}>
                     <p style={{ color: '#64748b' }}>
                       {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -75,39 +73,38 @@ function App() {
                   </div>
                 </div>
               } />
-              {/* If they try to go to /dashboard while logged out, send them to Login */}
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
             /* 2. PROTECTED ROUTES (Only show if logged in) */
             <>
-              {/* Admin Route stays independent */}
+              {/* ADMIN SPECIFIC ROUTE */}
               <Route path="/admin" element={
                 user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />
               } />
 
-              {/* NESTED ROUTING FOR USER:
-                  This ensures TransferMoney, Receipt, and MyCards render INSIDE the UserDashboard frame
-              */}
+              {/* USER SPECIFIC ROUTE */}
               <Route path="/dashboard" element={
-                user.role === 'admin' ? <AdminDashboard /> : <UserDashboard />
+                user.role === 'admin' ? <Navigate to="/admin" /> : <UserDashboard />
               }>
-                {/* These sub-routes render where the <Outlet /> is placed in UserDashboard */}
                 <Route path="transfer" element={<TransferMoney />} />
                 <Route path="receipt" element={<TransactionReceipt />} />
-                <Route path="cards" element={<MyCards />} /> {/* ✅ Added this route */}
+                <Route path="cards" element={<MyCards />} />
               </Route>
 
-              {/* Support old paths by redirecting to the nested versions */}
+              {/* Support old paths and redirects */}
               <Route path="/transfer" element={<Navigate to="/dashboard/transfer" />} />
               <Route path="/receipt" element={<Navigate to="/dashboard/receipt" />} />
-              <Route path="/cards" element={<Navigate to="/dashboard/cards" />} /> {/* ✅ Added redirect */}
+              <Route path="/cards" element={<Navigate to="/dashboard/cards" />} />
               
-              {/* If they hit the root "/" while logged in, send them to dashboard */}
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+              {/* Smart Redirect: If admin hits root, go to /admin. If user hits root, go to /dashboard */}
+              <Route path="/" element={
+                user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />
+              } />
               
-              {/* Catch all other typos and send to dashboard */}
-              <Route path="*" element={<Navigate to="/dashboard" />} />
+              <Route path="*" element={
+                user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />
+              } />
             </>
           )}
         </Routes>

@@ -29,7 +29,8 @@ const AdminDashboard = () => {
   const [amount, setAmount] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || '""';
+  // FIXED: Removed the extra double quotes that were causing path issues
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
   useEffect(() => {
     fetchUsers();
@@ -41,9 +42,17 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUsers(data);
+      
+      // SAFETY CHECK: Ensure data is an array before setting state
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.error("Expected array but got:", data);
+        setUsers([]); // Fallback to empty array to prevent crash
+      }
     } catch (err) {
       console.error("Fetch error:", err);
+      setUsers([]); // Fallback on error
     } finally {
       setLoading(false);
     }
@@ -94,9 +103,11 @@ const AdminDashboard = () => {
     window.location.replace('/');
   };
 
-  const totalBalance = users.reduce((sum, user) => sum + (user.balance || 0), 0);
-  const activeUsers = users.filter(user => !user.isFrozen).length;
-  const frozenUsers = users.filter(user => user.isFrozen).length;
+  // CRASH PROTECTION: Added (users || []) safety checks to prevent "i.reduce is not a function"
+  const safeUsers = Array.isArray(users) ? users : [];
+  const totalBalance = safeUsers.reduce((sum, user) => sum + (user.balance || 0), 0);
+  const activeUsers = safeUsers.filter(user => !user.isFrozen).length;
+  const frozenUsers = safeUsers.filter(user => user.isFrozen).length;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0f1a', color: '#e2e8f0', padding: '16px', paddingBottom: '40px' }}>
@@ -195,13 +206,13 @@ const AdminDashboard = () => {
           <div className="grid">
             <div className="card">
               <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>Total Users</div>
-              <div className="stat">{users.length}</div>
+              <div className="stat">{safeUsers.length}</div>
               <div style={{ fontSize: '12px', color: '#94a3b8' }}>{activeUsers} active • {frozenUsers} frozen</div>
             </div>
             <div className="card">
               <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>Total Balance</div>
               <div className="stat" style={{ color: '#059669' }}>${totalBalance.toLocaleString()}</div>
-              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Avg: ${(totalBalance / users.length || 0).toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Avg: ${(totalBalance / (safeUsers.length || 1)).toLocaleString()}</div>
             </div>
             <div className="card">
               <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>System Status</div>
@@ -215,7 +226,7 @@ const AdminDashboard = () => {
             <h3 style={{ marginBottom: '12px' }}>User Registry</h3>
             {loading ? (
               <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>Loading...</p>
-            ) : users.length > 0 ? (
+            ) : safeUsers.length > 0 ? (
               <div className="table-wrapper">
                 <table>
                   <thead>
@@ -229,7 +240,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(user => (
+                    {safeUsers.map(user => (
                       <tr key={user._id}>
                         <td style={{ fontWeight: 600 }}>{user.name}</td>
                         <td style={{ fontSize: '12px' }}>{user.email}</td>
