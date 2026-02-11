@@ -155,7 +155,7 @@ const TransferMoney = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Mark that we are now in the navigation phase to prevent the profile useEffect from kicking us out
+      // Mark that we are now in the navigation phase
       setIsNavigating(true);
 
       const generatedId = response.data.transactionId || "TXN-" + Math.random().toString(36).toUpperCase().substring(2, 12);
@@ -164,14 +164,17 @@ const TransferMoney = () => {
       setShowKeypad(false);
       setShowConfirm(false);
 
-      // Final Redirect to Receipt with complete state object
+      // SAFETY FIX: We use a local constant for recipientName to ensure it's not undefined during navigation
+      const finalRecipientName = transferData?.recipientName || "Valued Client";
+
+      // FINAL REDIRECT: Updated to match the nested route in your App.tsx
       navigate('/dashboard/receipt', { 
         state: { 
           details: {
-            senderName: user?.name,
-            senderAcc: user?.accountNumber,
+            senderName: user?.name || "Sender",
+            senderAcc: user?.accountNumber || "N/A",
             recipientAcc: recipientAccount,
-            recipientName: transferData?.recipientName,
+            recipientName: finalRecipientName,
             amount: Number(amount),
             memo: memo,
             transactionId: generatedId,
