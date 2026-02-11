@@ -31,9 +31,14 @@ const authenticateToken = (req: any, res: any, next: any) => {
  */
 router.get('/profile', authenticateToken, async (req: any, res: any) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-password +transactionPin');
     if (!user) return res.status(404).json({ message: "User account not found" });
-    res.status(200).json(user);
+
+    const userObj: any = user.toObject();
+    userObj.hasPin = !!user.transactionPin;
+    delete userObj.transactionPin;
+
+    res.status(200).json(userObj);
   } catch (error) {
     console.error("Profile Fetch Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -48,7 +53,6 @@ router.get('/transactions', authenticateToken, async (req: any, res: any) => {
     const history = await Transaction.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
       .limit(10);
-
     res.status(200).json(history);
   } catch (error) {
     console.error("Transaction History Error:", error);
@@ -57,50 +61,92 @@ router.get('/transactions', authenticateToken, async (req: any, res: any) => {
 });
 
 /**
+ * @route   GET /api/user/verify/:accountNumber
+ */
+router.get('/verify/:accountNumber', authenticateToken, async (req: any, res: any) => {
+  try {
+    const { accountNumber } = req.params;
+    const recipient = await User.findOne({ accountNumber }).select('name');
+    if (!recipient) {
+      return res.status(404).json({ message: "Recipient account number not recognized" });
+    }
+    res.status(200).json({ name: recipient.name });
+  } catch (error) {
+    console.error("Verification Error:", error);
+    res.status(500).json({ message: "Security lookup failed" });
+  }
+});
+
+/**
+ * @route   POST /api/user/setup-pin
+ * @desc    Initialize or Update a user's 4-digit transaction security PIN
+ */
+router.post('/setup-pin', authenticateToken, async (req: any, res: any) => {
+  try {
+    const { pin } = req.body;
+
+    if (!/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ message: "Security PIN must be exactly 4 numeric digits" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "Account not found" });
+
+    user.transactionPin = pin; 
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Transaction PIN established successfully" 
+    });
+  } catch (error) {
+    console.error("PIN Setup Error:", error);
+    res.status(500).json({ message: "Internal security failure during PIN setup" });
+  }
+});
+
+/**
  * @route   POST /api/user/transfer
- * @desc    Transfer funds using a database session for safety
  */
 router.post('/transfer', authenticateToken, async (req: any, res: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { recipientAccountNumber, amount } = req.body;
+    const { recipientAccountNumber, amount, pin } = req.body;
     const senderId = req.user.id;
     const numericAmount = Number(amount);
 
-    // 1. Validation
     if (isNaN(numericAmount) || numericAmount <= 0) {
       return res.status(400).json({ message: "Please enter a valid amount" });
     }
 
-    // 2. Find Sender and verify funds (using session)
-    const sender = await User.findById(senderId).session(session);
+    const sender = await User.findById(senderId).select('+transactionPin').session(session);
     if (!sender) throw new Error("Sender not found");
+
+    if (!sender.transactionPin || sender.transactionPin !== pin) {
+      return res.status(403).json({ message: "Invalid Transaction PIN. Access Denied." });
+    }
     
     if (sender.balance < numericAmount) {
       return res.status(400).json({ message: "Insufficient funds for this transfer" });
     }
 
-    // 3. Find Recipient (using session)
     const recipient = await User.findOne({ accountNumber: recipientAccountNumber }).session(session);
     if (!recipient) {
       return res.status(404).json({ message: "Recipient account number not recognized" });
     }
 
-    // 4. Prevent self-transfer
     if (sender.accountNumber === recipientAccountNumber) {
       return res.status(400).json({ message: "Cannot transfer funds to yourself" });
     }
 
-    // 5. Atomic Update
     sender.balance -= numericAmount;
     recipient.balance += numericAmount;
 
     await sender.save({ session });
     await recipient.save({ session });
 
-    // 6. Create Transaction Records (Receipts for both)
     const senderDebit = new Transaction({
       userId: sender._id,
       type: 'debit',
@@ -120,7 +166,6 @@ router.post('/transfer', authenticateToken, async (req: any, res: any) => {
     await senderDebit.save({ session });
     await recipientCredit.save({ session });
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
@@ -130,7 +175,6 @@ router.post('/transfer', authenticateToken, async (req: any, res: any) => {
     });
 
   } catch (error: any) {
-    // If anything fails, abort the whole process
     await session.abortTransaction();
     session.endSession();
     console.error("Transfer Logic Error:", error);

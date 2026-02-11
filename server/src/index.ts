@@ -12,15 +12,14 @@ const app = express();
 
 /**
  * 🛡️ MONGOOSE SINGLETON CACHE
- * Prevents "Socket Timeout" and "Too many connections" on Vercel
  */
 let isConnected = false;
 
-const MONGO_URI = process.env.MONGO_URI || 
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 
                   'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority&connectTimeoutMS=30000&socketTimeoutMS=45000&maxIdleTimeMS=60000';
 
 app.use(cors({
-  origin: ['https://ibk-finance.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: ['https://ibk-finance.vercel.app', 'https://ibkbank.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -36,16 +35,16 @@ async function connectToDatabase() {
     return;
   }
 
-  // CRITICAL: Disable buffering to avoid the 3-minute hang
+  // Disable buffering to prevent long hangs on Vercel
   mongoose.set('bufferCommands', false);
 
   console.log('🔄 Connecting to MongoDB Atlas...');
   try {
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 15000, // Fail after 15s if Atlas is unreachable
-      connectTimeoutMS: 30000,        // 30s limit for initial handshake
-      socketTimeoutMS: 45000,         // Close inactive sockets
-      heartbeatFrequencyMS: 10000     // Keep the connection alive
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000
     });
     
     isConnected = true;
@@ -65,12 +64,12 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
   if (req.url.toLowerCase().includes('ping')) {
     return res.status(200).json({ 
       status: 'active',
-      db: mongoose.connection.readyState === 1 ? 'connected' : 'connecting...',
+      db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
       timestamp: new Date().toISOString()
     });
   }
 
-  // 2. Database Handshake
+  // 2. Database Handshake for Serverless Cold Starts
   try {
     await connectToDatabase();
     next();
@@ -94,12 +93,29 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
-// 🚀 Local Development Listener
+/**
+ * 🚀 Startup Logic
+ * Optimized to prevent "bufferCommands" errors by connecting BEFORE listening.
+ */
+const startServer = async () => {
+  try {
+    const PORT = process.env.PORT || 5000;
+    
+    // Connect to DB first so it's ready for requests
+    await connectToDatabase();
+    
+    app.listen(Number(PORT), () => {
+      console.log(`🚀 Server fully ready on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Critical: Could not start server because DB connection failed.");
+    
+    if (process.env.NODE_ENV === 'production') process.exit(1);
+  }
+};
+
 if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(Number(PORT), () => {
-    console.log(`🚀 Local server running on port ${PORT}`);
-  });
+  startServer();
 }
 
 export default app;

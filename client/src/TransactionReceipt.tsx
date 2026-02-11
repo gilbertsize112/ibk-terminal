@@ -22,6 +22,7 @@ const TransactionReceipt = () => {
       senderName: "N/A",
       senderAcc: "N/A",
       recipientAcc: "N/A",
+      recipientName: "N/A",
       amount: 0,
       memo: "N/A",
       date: usTime,
@@ -31,7 +32,7 @@ const TransactionReceipt = () => {
 
   // Mobile Share Functionality (iOS/Android Native Share)
   const handleShare = async () => {
-    const shareText = `Official Transfer Receipt\nID: ${details.transactionId}\nAmount: $${details.amount}\nTo: ${details.recipientAcc}\nStatus: Settled`;
+    const shareText = `Official Transfer Receipt\nID: ${details.transactionId}\nAmount: $${details.amount}\nTo: ${details.recipientName}\nStatus: Settled`;
     
     if (navigator.share) {
       try {
@@ -73,29 +74,36 @@ const TransactionReceipt = () => {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 40px 15px;
+          padding: calc(20px + env(safe-area-inset-top)) 15px 40px 15px;
           color: white;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           box-sizing: border-box;
           position: relative;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .home-icon-btn {
           position: absolute;
-          top: 20px;
+          top: calc(15px + env(safe-area-inset-top));
           right: 20px;
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           color: white;
-          font-size: 18px;
+          font-size: 20px;
           z-index: 100;
+          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .home-icon-btn:active {
+          transform: scale(0.9);
+          background: rgba(255, 255, 255, 0.1);
         }
 
         .receipt-card {
@@ -109,21 +117,21 @@ const TransactionReceipt = () => {
           padding: 30px 24px;
           position: relative;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-          animation: scaleIn 0.5s ease-out;
+          animation: scaleIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
           box-sizing: border-box;
           overflow: hidden;
         }
 
-        /* IBK KOREAN WATERMARK */
+        /* WATERMARK */
         .receipt-card::before {
-          content: "IBK 기업은행";
+          content: "FEDERAL RESERVE SYSTEM";
           position: absolute;
           top: 55%;
           left: 50%;
           transform: translate(-50%, -50%) rotate(-30deg);
-          font-size: 44px;
+          font-size: 24px;
           font-weight: 900;
-          color: rgba(0, 102, 179, 0.03);
+          color: rgba(15, 23, 42, 0.03);
           white-space: nowrap;
           pointer-events: none;
           z-index: 0;
@@ -136,14 +144,14 @@ const TransactionReceipt = () => {
         }
 
         .success-icon {
-          width: 64px;
-          height: 64px;
+          width: 68px;
+          height: 68px;
           background: #10b981;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+          box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
           position: relative;
           z-index: 2;
         }
@@ -157,10 +165,11 @@ const TransactionReceipt = () => {
 
         .ibk-logo {
           font-weight: 900;
-          font-size: 20px;
-          color: #0066b3;
+          font-size: 22px;
+          color: #0f172a;
           letter-spacing: -0.5px;
           display: block;
+          text-transform: uppercase;
         }
 
         .amount-section {
@@ -185,7 +194,7 @@ const TransactionReceipt = () => {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
         }
 
         .label { 
@@ -193,70 +202,91 @@ const TransactionReceipt = () => {
           font-size: 10px; 
           text-transform: uppercase; 
           font-weight: 700; 
-          letter-spacing: 0.5px;
+          letter-spacing: 0.8px;
           padding-top: 2px;
         }
 
         .value { 
           color: #0f172a; 
           font-weight: 600; 
-          font-size: 13px; 
+          font-size: 14px; 
           text-align: right;
           max-width: 60%;
           word-break: break-word;
+          line-height: 1.4;
         }
 
         .security-seal {
           display: inline-block;
           border: 1px solid #10b981;
           color: #10b981;
-          padding: 3px 10px;
-          border-radius: 5px;
+          padding: 4px 12px;
+          border-radius: 6px;
           font-size: 10px;
           font-weight: 800;
           margin-top: 12px;
           text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .action-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 8px;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
           width: 100%;
           max-width: 400px;
-          margin-top: 25px;
+          margin-top: 30px;
+          padding-bottom: env(safe-area-inset-bottom);
         }
 
         .btn {
-          padding: 12px 16px;
-          border-radius: 12px;
+          padding: 16px 12px;
+          border-radius: 16px;
           font-weight: 700;
-          font-size: 12px;
+          font-size: 13px;
           cursor: pointer;
           border: none;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          flex: 1;
-          min-width: 110px;
+          gap: 4px;
+          transition: all 0.2s ease;
         }
 
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-share { background: #10b981; color: white; }
-        .btn-outline { background: rgba(255,255,255,0.08); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+        .btn:active {
+          transform: scale(0.96);
+          opacity: 0.9;
+        }
+
+        .btn-primary { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .btn-share { background: #10b981; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-outline { 
+          background: rgba(255,255,255,0.08); 
+          color: #f8fafc; 
+          border: 1px solid rgba(255,255,255,0.1); 
+          grid-column: span 2;
+          flex-direction: row;
+          gap: 8px;
+        }
 
         .korean-text-small {
-          font-size: 9px;
+          font-size: 10px;
           opacity: 0.8;
-          font-weight: 400;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         @media print {
           .btn, .action-buttons, .home-icon-btn { display: none !important; }
           .receipt-page { background: white; padding: 0; }
           .receipt-card { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+        }
+
+        @media (max-width: 360px) {
+          .value { font-size: 12px; }
+          .receipt-card { padding: 20px 16px; }
         }
       `}</style>
 
@@ -268,21 +298,21 @@ const TransactionReceipt = () => {
       <div className="receipt-card" ref={receiptRef}>
         <div className="success-wrapper">
           <div className="success-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6L9 17L4 12" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'checkmark 0.6s ease forwards 0.2s' }} />
             </svg>
           </div>
         </div>
 
         <div className="receipt-header">
-          <span className="ibk-logo">IBK Bank</span>
-          <h2 style={{ margin: '4px 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Transfer Receipt</h2>
-          <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700 }}>송금 확인서</span>
+          <span className="ibk-logo">IBK BANK</span>
+          <h2 style={{ margin: '4px 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Transfer Receipt</h2>
+          <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>Electronic Funds Transfer (EFT)</span>
         </div>
 
         <div className="amount-section">
           <span className="label">Amount</span>
-          <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', margin: '4px 0', letterSpacing: '-1px' }}>
+          <div style={{ fontSize: '36px', fontWeight: 800, color: '#0f172a', margin: '4px 0', letterSpacing: '-1.5px' }}>
             ${Number(details.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="security-seal">Verified Secure</div>
@@ -295,55 +325,63 @@ const TransactionReceipt = () => {
           </div>
           <div className="data-row">
             <span className="label">Ref ID</span>
-            <span className="value" style={{ fontFamily: 'monospace' }}>{details.transactionId}</span>
+            <span className="value" style={{ fontFamily: 'monospace', letterSpacing: '-0.5px' }}>{details.transactionId}</span>
           </div>
           <div className="data-row">
             <span className="label">Sender</span>
             <span className="value">{details.senderName}</span>
           </div>
           <div className="data-row">
-            <span className="label">Account</span>
+            <span className="label">Source Account</span>
             <span className="value" style={{ fontFamily: 'monospace' }}>{details.senderAcc}</span>
           </div>
+          
+          <div className="data-row" style={{ marginTop: '10px', borderTop: '1px solid #f8fafc', paddingTop: '10px' }}>
+            <span className="label">Beneficiary</span>
+            <span className="value" style={{ color: '#3b82f6', fontWeight: 800 }}>{details.recipientName}</span>
+          </div>
           <div className="data-row">
-            <span className="label">Recipient</span>
-            <span className="value" style={{ color: '#3b82f6' }}>{details.recipientAcc}</span>
+            <span className="label">Target Account</span>
+            <span className="value" style={{ fontFamily: 'monospace' }}>{details.recipientAcc}</span>
           </div>
           <div className="data-row">
             <span className="label">Memo</span>
             <span className="value">{details.memo || "N/A"}</span>
           </div>
           
-          <div className="data-row" style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '15px', marginTop: '5px' }}>
+          <div className="data-row" style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '16px', marginTop: '4px' }}>
             <span className="label" style={{ color: '#10b981' }}>Status</span>
             <div style={{ textAlign: 'right' }}>
-               <span className="value" style={{ color: '#10b981', display: 'block' }}>SENT</span>
-               <span style={{ fontSize: '9px', color: '#10b981', fontWeight: 600 }}>정상 송금 완료</span>
+               <span className="value" style={{ color: '#10b981', display: 'block', fontSize: '15px' }}>SETTLED</span>
+               <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>TRANSACTION COMPLETE</span>
             </div>
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
-          <p style={{ fontSize: '9px', color: '#94a3b8', lineHeight: '1.4', margin: 0 }}>
-            Official record generated by IBK International.
+        <div style={{ textAlign: 'center', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+          <p style={{ fontSize: '10px', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+            This is an official record generated by US International Banking Rails.
             <br/>
-            본 문서는 IBK 기업은행에서 발행된 공식 송금 영수증입니다.
+            Member FDIC. All transactions are end-to-end encrypted.
           </p>
         </div>
       </div>
 
       <div className="action-buttons">
         <button className="btn btn-share" onClick={handleShare}>
-           <span>📤 SHARE</span>
-           <span className="korean-text-small">공유</span>
+           <span style={{fontSize: '18px'}}>📤</span>
+           <span>SHARE</span>
+           <span className="korean-text-small">DIGITAL COPY</span>
         </button>
         <button className="btn btn-primary" onClick={handlePrint}>
-           <span>🖨️ PDF</span>
-           <span className="korean-text-small">저장</span>
+           <span style={{fontSize: '18px'}}>🖨️</span>
+           <span>SAVE PDF</span>
+           <span className="korean-text-small">PRINT RECORD</span>
         </button>
         <button className="btn btn-outline" onClick={() => navigate('/dashboard')}>
-           <span>🏠 HOME</span>
-           <span className="korean-text-small">홈</span>
+           <span style={{fontSize: '18px'}}>🏠</span>
+           <span>RETURN HOME</span>
+           <span className="korean-text-small">BACK TO DASHBOARD</span>
         </button>
       </div>
     </div>

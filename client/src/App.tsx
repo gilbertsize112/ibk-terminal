@@ -6,6 +6,7 @@ import AdminDashboard from './AdminDashboard'
 import UserDashboard from './UserDashboard' 
 import TransferMoney from './TransferMoney'
 import TransactionReceipt from './TransactionReceipt'
+import MyCards from './MyCards' // ✅ Added this import
 // import InstallPrompt from './InstallPrompt'  <-- You can remove this import
 import './App.css'
 
@@ -80,11 +81,27 @@ function App() {
           ) : (
             /* 2. PROTECTED ROUTES (Only show if logged in) */
             <>
+              {/* Admin Route stays independent */}
+              <Route path="/admin" element={
+                user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />
+              } />
+
+              {/* NESTED ROUTING FOR USER:
+                  This ensures TransferMoney, Receipt, and MyCards render INSIDE the UserDashboard frame
+              */}
               <Route path="/dashboard" element={
                 user.role === 'admin' ? <AdminDashboard /> : <UserDashboard />
-              } />
-              <Route path="/transfer" element={<TransferMoney />} />
-              <Route path="/receipt" element={<TransactionReceipt />} />
+              }>
+                {/* These sub-routes render where the <Outlet /> is placed in UserDashboard */}
+                <Route path="transfer" element={<TransferMoney />} />
+                <Route path="receipt" element={<TransactionReceipt />} />
+                <Route path="cards" element={<MyCards />} /> {/* ✅ Added this route */}
+              </Route>
+
+              {/* Support old paths by redirecting to the nested versions */}
+              <Route path="/transfer" element={<Navigate to="/dashboard/transfer" />} />
+              <Route path="/receipt" element={<Navigate to="/dashboard/receipt" />} />
+              <Route path="/cards" element={<Navigate to="/dashboard/cards" />} /> {/* ✅ Added redirect */}
               
               {/* If they hit the root "/" while logged in, send them to dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" />} />

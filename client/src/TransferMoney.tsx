@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-// import { generateReceiptPDF } from './ReceiptGenerator'; // Uncomment when ready
 
 interface User {
   _id: string;
@@ -9,6 +8,7 @@ interface User {
   email: string;
   accountNumber: string;
   balance: number;
+  hasPin: boolean;
 }
 
 const TransferMoney = () => {
@@ -16,20 +16,25 @@ const TransferMoney = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   
-  // Form State
   const [recipientAccount, setRecipientAccount] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('Funds Transfer');
 
-  // Logic State
   const [showConfirm, setShowConfirm] = useState(false);
   const [transferData, setTransferData] = useState<any>(null);
 
+  const [showKeypad, setShowKeypad] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState(false); 
+  const [isNavigating, setIsNavigating] = useState(false); // New state to prevent redirect loops
+
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  // Fetch the logged-in user's profile on load
   useEffect(() => {
     const fetchProfile = async () => {
+      // If we are already heading to the receipt, stop fetching/redirecting here
+      if (isNavigating) return;
+
       try {
         const token = localStorage.getItem('token');
         if (!token) return navigate('/');
@@ -40,22 +45,41 @@ const TransferMoney = () => {
         setUser(data);
       } catch (err) {
         console.error("Error fetching profile:", err);
-        navigate('/');
+        if (!isNavigating) navigate('/');
       }
     };
     fetchProfile();
-  }, [navigate, API_BASE_URL]);
+  }, [navigate, API_BASE_URL, isNavigating]);
 
-  const handleInitiate = (e: React.FormEvent) => {
+  const handleKeyPress = (num: string) => {
+    if (pin.length < 4) {
+      setPinError(false); 
+      setPin(prev => prev + num);
+    }
+  };
+
+  const handleBackspace = () => {
+    setPinError(false);
+    setPin(prev => prev.slice(0, -1));
+  };
+
+  useEffect(() => {
+    if (pin.length === 4) {
+      const timer = setTimeout(() => {
+        executeFinalAction();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [pin]);
+
+  const handleInitiate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // UPDATED: Added safety check to ensure user data is loaded
     if (!user) {
       alert("System synchronizing. Please wait a moment.");
       return;
     }
 
-    // UPDATED: Force balance and amount to Numbers for accurate comparison
     const currentBalance = Number(user.balance);
     const transferAmount = Number(amount);
 
@@ -64,7 +88,6 @@ const TransferMoney = () => {
       return;
     }
 
-    // UPDATED: Now correctly compares numbers to fix "Insufficient liquidity" bug
     if (currentBalance < transferAmount) {
       alert(`Insufficient liquidity in source account. Available: $${currentBalance.toLocaleString()}`);
       return;
@@ -75,42 +98,81 @@ const TransferMoney = () => {
         return;
     }
 
-    // Set data for the Confirmation Modal
-    setTransferData({
-      senderName: user.name,
-      senderAcc: user.accountNumber,
-      recipientAcc: recipientAccount,
-      amount: transferAmount,
-      memo: memo, // UPDATED: Added memo to the confirmation data
-      date: new Date().toLocaleString()
-    });
-    setShowConfirm(true);
-  };
-
-  const executeTransfer = async () => {
     setLoading(true);
+
     try {
       const token = localStorage.getItem('token');
-      
-      // Using the User-specific route we updated earlier
-      await axios.post(`${API_BASE_URL}/api/user/transfer`, {
+      const { data } = await axios.get(`${API_BASE_URL}/api/user/verify/${recipientAccount}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setTransferData({
+        senderName: user.name,
+        senderAcc: user.accountNumber,
+        recipientAcc: recipientAccount,
+        recipientName: data.name,
+        amount: transferAmount,
+        memo: memo,
+        date: new Date().toLocaleString()
+      });
+      setShowConfirm(true);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || "Recipient account number not recognized";
+      alert(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeFinalAction = async () => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+
+    try {
+      // 1. PIN SETUP (Only if user doesn't have one)
+      if (!user?.hasPin) {
+        try {
+          await axios.post(`${API_BASE_URL}/api/user/setup-pin`, { pin }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUser(prev => prev ? { ...prev, hasPin: true } : null);
+        } catch (setupErr: any) {
+          console.error("PIN Setup Failed:", setupErr);
+          setPinError(true);
+          setPin('');
+          setLoading(false);
+          return; 
+        }
+      }
+
+      // 2. TRANSFER EXECUTION
+      const response = await axios.post(`${API_BASE_URL}/api/user/transfer`, {
         recipientAccountNumber: recipientAccount,
         amount: Number(amount),
-        memo
+        memo,
+        pin 
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // --- CRITICAL UPDATE: GENERATE ID AND NAVIGATE TO RECEIPT ---
-      const generatedId = "TXN-" + Math.random().toString(36).toUpperCase().substring(2, 12);
+      // Mark that we are now in the navigation phase to prevent the profile useEffect from kicking us out
+      setIsNavigating(true);
+
+      const generatedId = response.data.transactionId || "TXN-" + Math.random().toString(36).toUpperCase().substring(2, 12);
       
-      // We navigate FIRST and pass the state
-      navigate('/receipt', { 
+      // Explicitly close UI elements
+      setShowKeypad(false);
+      setShowConfirm(false);
+
+      // Final Redirect to Receipt with complete state object
+      // UPDATED PATH: navigate to /dashboard/receipt because of nested routes in App.tsx
+      navigate('/dashboard/receipt', { 
         state: { 
           details: {
             senderName: user?.name,
             senderAcc: user?.accountNumber,
             recipientAcc: recipientAccount,
+            recipientName: transferData?.recipientName,
             amount: Number(amount),
             memo: memo,
             transactionId: generatedId,
@@ -119,21 +181,16 @@ const TransferMoney = () => {
         } 
       });
 
-      // Then we close the modal (this prevents the dashboard redirect conflict)
-      setShowConfirm(false);
-      
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Transfer failed: Unauthorized or System Error.";
+      console.error("Transfer error:", err);
+      const message = err.response?.data?.message || "";
       
-      // Direct feedback for "Recipient not recognized" or Session Expired
-      if (err.response?.status === 401 || errorMessage.toLowerCase().includes("expired")) {
-        alert("SESSION EXPIRED: Please log in again for security.");
-        localStorage.removeItem('token');
-        navigate('/');
+      if (message.toLowerCase().includes("pin")) {
+        setPinError(true);
       } else {
-        alert(errorMessage);
-        setShowConfirm(false); // Close modal so user can fix the account number
+        alert(message || "Transfer failed. Please check your connection.");
       }
+      setPin(''); 
     } finally {
       setLoading(false);
     }
@@ -142,9 +199,16 @@ const TransferMoney = () => {
   return (
     <div className="transfer-page">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
         }
 
         @keyframes slideInRight {
@@ -164,222 +228,344 @@ const TransferMoney = () => {
           100% { border-color: rgba(59, 130, 246, 0.2); }
         }
 
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-
         @keyframes modalEnter {
-          0% { transform: scale(0.8) translateY(40px); opacity: 0; }
+          0% { transform: scale(0.9) translateY(40px); opacity: 0; }
           100% { transform: scale(1) translateY(0); opacity: 1; }
         }
 
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
-          50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.5); }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-8px); }
+          75% { transform: translateX(8px); }
+        }
+
+        .shake-err {
+          animation: shake 0.2s ease-in-out 0s 2;
         }
 
         .transfer-page {
-          padding: 40px 20px;
-          background: radial-gradient(circle at top right, #0f172a, #020617);
+          padding: 20px 20px 60px 20px;
+          padding-top: max(40px, env(safe-area-inset-top));
+          background: #020617;
+          background-image: 
+            radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 100% 100%, rgba(30, 58, 138, 0.1) 0%, transparent 40%);
           min-height: 100vh;
-          color: #e2e8f0;
+          color: #f8fafc;
           font-family: 'Inter', sans-serif;
           display: flex;
           flex-direction: column;
           align-items: center;
           box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .transfer-card {
           width: 100%;
           max-width: 550px;
           background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(12px);
-          padding: 40px;
-          border-radius: 28px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          padding: 48px;
+          border-radius: 32px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
           animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
           box-sizing: border-box;
+          position: relative;
+        }
+
+        .transfer-card::before {
+          content: "";
+          position: absolute;
+          top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
         }
 
         .input-group {
-          margin-bottom: 24px;
+          margin-bottom: 28px;
           position: relative;
         }
 
         .custom-input {
           width: 100%;
-          padding: 16px;
-          border-radius: 14px;
-          background: rgba(2, 6, 23, 0.8);
-          border: 1px solid #1e293b;
+          padding: 18px;
+          border-radius: 16px;
+          background: #070c1b;
+          border: 1px solid rgba(255,255,255,0.05);
           color: white;
-          font-size: 15px;
-          transition: all 0.3s ease;
+          font-size: 16px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-sizing: border-box;
           outline: none;
+          appearance: none;
         }
 
         .custom-input:focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
           background: #020617;
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
         }
 
         .source-display {
           width: 100%;
-          padding: 16px;
-          border-radius: 14px;
-          background: linear-gradient(90deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5));
-          border: 1px solid rgba(59, 130, 246, 0.3);
+          padding: 18px;
+          border-radius: 16px;
+          background: rgba(59, 130, 246, 0.03);
+          border: 1px solid rgba(59, 130, 246, 0.2);
           color: #94a3b8;
           font-size: 14px;
+          font-weight: 500;
           margin-bottom: 24px;
           animation: pulseBorder 3s infinite;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
 
         .primary-btn {
           width: 100%;
-          padding: 18px;
-          border-radius: 14px;
-          background: linear-gradient(90deg, #3b82f6, #2563eb, #3b82f6);
-          background-size: 200% 100%;
+          padding: 20px;
+          border-radius: 16px;
+          background: #3b82f6;
           color: white;
           border: none;
           font-weight: 700;
           cursor: pointer;
           font-size: 16px;
           letter-spacing: 0.5px;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          touch-action: manipulation;
+        }
+
+        .primary-btn:active {
+          transform: scale(0.98);
+          opacity: 0.9;
         }
 
         .primary-btn:hover:not(:disabled) {
-          background-position: 100% 0;
-          transform: translateY(-2px);
-          box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4);
+          background: #2563eb;
         }
 
         .primary-btn:disabled {
-          opacity: 0.6;
+          background: #1e293b;
+          color: #475569;
           cursor: not-allowed;
-          filter: grayscale(0.5);
+          box-shadow: none;
         }
 
         .back-link {
           align-self: flex-start;
           max-width: 550px;
           width: 100%;
-          margin: 0 auto 24px auto;
+          margin: 0 auto 30px auto;
           color: #64748b;
           text-decoration: none;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           font-size: 14px;
-          font-weight: 600;
-          transition: color 0.2s;
+          font-weight: 700;
+          transition: 0.2s;
           cursor: pointer;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          touch-action: manipulation;
         }
 
-        .back-link:hover { color: #3b82f6; }
+        .back-link:hover { color: #f8fafc; }
 
         .max-btn {
           position: absolute;
-          right: 12px;
+          right: 14px;
           top: 50%;
           transform: translateY(-50%);
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
           color: #3b82f6;
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 10px;
+          padding: 8px 14px;
+          border-radius: 10px;
+          font-size: 11px;
           font-weight: 800;
           cursor: pointer;
-          transition: 0.2s;
-        }
-
-        .max-btn:hover {
-          background: #3b82f6;
-          color: white;
+          transition: 0.3s;
+          touch-action: manipulation;
         }
 
         .modal-container {
           position: fixed;
           inset: 0;
-          background: rgba(2, 6, 23, 0.95);
-          backdrop-filter: blur(12px);
+          background: rgba(2, 6, 23, 0.9);
+          backdrop-filter: blur(15px);
+          -webkit-backdrop-filter: blur(15px);
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 5000;
+          z-index: 10000;
           padding: 20px;
+          overflow-y: auto;
         }
 
-        .modal-animate {
-          animation: modalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1), glow 4s infinite;
+        .confirm-card {
+          width: 100%;
+          max-width: 480px;
+          background: #0f172a;
+          padding: 40px;
+          border-radius: 32px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          text-align: center;
+          animation: modalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 50px 100px rgba(0,0,0,0.8);
         }
 
         .confirm-item {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 14px;
+          margin-bottom: 18px;
           animation: slideInRight 0.6s ease forwards;
           opacity: 0;
         }
 
+        .step-indicator {
+           display: flex;
+           gap: 8px;
+           margin-bottom: 32px;
+           justify-content: center;
+        }
+        .step { width: 30px; height: 4px; border-radius: 2px; background: #1e293b; }
+        .step.active { background: #3b82f6; }
+
+        .keypad-sheet {
+          position: fixed;
+          bottom: 0; left: 0; right: 0;
+          background: #0f172a;
+          border-top: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 40px 40px 0 0;
+          padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px;
+          z-index: 20000;
+          animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        .pin-dots {
+          display: flex;
+          gap: 20px;
+          margin: 30px 0;
+        }
+
+        .dot {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          border: 2px solid #334155;
+          transition: all 0.2s;
+        }
+
+        .dot.filled {
+          background: #3b82f6;
+          border-color: #3b82f6;
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+          transform: scale(1.2);
+        }
+
+        .dot.error {
+          border-color: #ef4444;
+          background: rgba(239, 68, 68, 0.2);
+        }
+
+        .key-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          width: 100%;
+        }
+
+        .key {
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 20px;
+          font-size: 24px;
+          font-weight: 700;
+          color: white;
+          cursor: pointer;
+          transition: 0.1s;
+          touch-action: manipulation;
+          -webkit-user-select: none;
+        }
+
+        .key:active {
+          background: #3b82f6;
+          transform: scale(0.92);
+        }
+
         @media (max-width: 640px) {
-          .transfer-page { padding: 20px; }
-          .transfer-card { padding: 25px; border-radius: 20px; }
-          .primary-btn { padding: 16px; }
+          .transfer-page { padding: 20px 16px 40px 16px; padding-top: max(30px, env(safe-area-inset-top)); }
+          .transfer-card { padding: 32px 24px; border-radius: 24px; }
+          .primary-btn { padding: 18px; }
+          .key { height: 60px; }
         }
       `}</style>
 
-      {/* Back Button */}
       <div className="back-link" onClick={() => navigate('/dashboard')}>
-        <span>←</span> Back to Overview
+        <span style={{fontSize: '18px'}}>‹</span> Return to Dashboard
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: '40px', animation: 'fadeIn 0.6s ease' }}>
-        <h2 style={{ fontSize: '32px', fontWeight: 800, margin: '0 0 8px 0', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <header style={{ textAlign: 'center', marginBottom: '40px', animation: 'fadeIn 0.6s ease' }}>
+        <div className="step-indicator">
+            <div className="step active"></div>
+            <div className="step active"></div>
+            <div className="step"></div>
+        </div>
+        <h2 style={{ fontSize: '32px', fontWeight: 800, margin: '0 0 12px 0', fontFamily: 'Plus Jakarta Sans', letterSpacing: '-1px' }}>
           Transfer Protocol
         </h2>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Secure peer-to-peer asset movement.</p>
-      </div>
+        <p style={{ color: '#94a3b8', fontSize: '15px', maxWidth: '320px', margin: '0 auto', lineHeight: '1.4' }}>Secure peer-to-peer asset movement over encrypted banking rails.</p>
+      </header>
 
       <div className="transfer-card">
         <form onSubmit={handleInitiate}>
           
           <div className="input-group">
-            <label style={{ display: 'block', marginBottom: '10px', fontSize: '11px', fontWeight: 800, color: '#3b82f6', letterSpacing: '1px' }}>SOURCE ACCOUNT (SENDER)</label>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '11px', fontWeight: 800, color: '#3b82f6', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Source Account</label>
             <div className="source-display">
-               {user ? `${user.name} • ${user.accountNumber}` : 'Establishing secure connection...'}
+               <span>{user ? user.name : 'Loading...'}</span>
+               <span style={{fontFamily: 'Space Mono', color: 'white'}}>{user?.accountNumber}</span>
             </div>
           </div>
 
           <div className="input-group">
-            <label style={{ display: 'block', marginBottom: '10px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>TARGET ACCOUNT NUMBER</label>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Target Account Number</label>
             <input 
               type="text"
+              inputMode="numeric"
               className="custom-input"
               placeholder="Enter 10-digit destination"
               value={recipientAccount}
               onChange={(e) => setRecipientAccount(e.target.value)}
               required
+              style={{ fontFamily: 'Space Mono' }}
             />
           </div>
 
           <div className="input-group">
-            <label style={{ display: 'block', marginBottom: '10px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>AMOUNT (USD)</label>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Amount (USD)</label>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 700 }}>$</span>
+              <span style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: '#3b82f6', fontWeight: 800, fontSize: '20px' }}>$</span>
               <input 
                 type="number"
+                inputMode="decimal"
                 className="custom-input"
-                style={{ paddingLeft: '32px', paddingRight: '60px', fontSize: '20px', fontWeight: 700 }}
+                style={{ paddingLeft: '38px', paddingRight: '70px', fontSize: '24px', fontWeight: 800, fontFamily: 'Plus Jakarta Sans' }}
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -393,10 +579,13 @@ const TransferMoney = () => {
                 MAX
               </button>
             </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#475569', textAlign: 'right' }}>
+                Available: <span style={{color: '#94a3b8'}}>${user?.balance.toLocaleString()}</span>
+            </div>
           </div>
 
-          <div className="input-group">
-            <label style={{ display: 'block', marginBottom: '10px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>TRANSACTION MEMO</label>
+          <div className="input-group" style={{marginBottom: '40px'}}>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Transaction Memo</label>
             <input 
               type="text"
               className="custom-input"
@@ -406,57 +595,101 @@ const TransferMoney = () => {
             />
           </div>
 
-          <button type="submit" className="primary-btn">
-            INITIATE SECURE TRANSFER
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? 'VERIFYING...' : 'INITIATE SECURE TRANSFER'}
           </button>
+
+          <div style={{marginTop: '24px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#475569', fontSize: '11px', fontWeight: 700}}>
+             <span style={{fontSize: '14px'}}>🔒</span> END-TO-END ENCRYPTED TRANSACTION
+          </div>
         </form>
       </div>
 
-      {/* --- CONFIRMATION MODAL --- */}
       {showConfirm && (
         <div className="modal-container">
-          <div className="modal-animate" style={{ width: '100%', maxWidth: '450px', background: '#0f172a', padding: '40px', borderRadius: '32px', border: '1px solid #3b82f6', textAlign: 'center' }}>
-            <div style={{ fontSize: '60px', marginBottom: '20px', animation: 'float 3s infinite ease-in-out' }}>🛡️</div>
-            <h2 style={{ margin: '0 0 10px 0', fontSize: '26px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Authorize Transfer</h2>
-            <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '32px' }}>Verification required for ledger synchronization.</p>
+          <div className="confirm-card">
+            <div style={{ fontSize: '56px', marginBottom: '20px', animation: 'float 3s infinite ease-in-out' }}>🛡️</div>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '-1px', fontFamily: 'Plus Jakarta Sans' }}>Authorize Transfer</h2>
+            <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: '1.5' }}>Please verify the transaction details below. This action cannot be undone.</p>
             
-            <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '24px', borderRadius: '24px', textAlign: 'left', marginBottom: '32px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+            <div style={{ background: 'rgba(2, 6, 23, 0.4)', padding: '24px', borderRadius: '24px', textAlign: 'left', marginBottom: '28px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
               
+              <div className="confirm-item" style={{ animationDelay: '0.1s' }}>
+                <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Origin</span>
+                <span style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc' }}>{transferData?.senderName}</span>
+              </div>
+
               <div className="confirm-item" style={{ animationDelay: '0.2s' }}>
-                <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Origin</span>
-                <span style={{ fontWeight: 600, fontSize: '14px', color: '#f8fafc' }}>{transferData?.senderName}</span>
+                <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Destination</span>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 800, fontSize: '13px', color: '#3b82f6' }}>{transferData?.recipientName}</div>
+                    <div style={{ fontWeight: 700, fontSize: '11px', color: '#64748b', fontFamily: 'Space Mono' }}>{transferData?.recipientAcc}</div>
+                </div>
               </div>
 
               <div className="confirm-item" style={{ animationDelay: '0.3s' }}>
-                <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Destination</span>
-                <span style={{ fontWeight: 600, fontSize: '14px', color: '#3b82f6' }}>ID: {transferData?.recipientAcc}</span>
+                <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Reference</span>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: '#94a3b8' }}>{transferData?.memo}</span>
               </div>
 
-              <div className="confirm-item" style={{ animationDelay: '0.4s' }}>
-                <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Description</span>
-                <span style={{ fontWeight: 500, fontSize: '14px', color: '#94a3b8', fontStyle: 'italic' }}>"{transferData?.memo}"</span>
-              </div>
-
-              <div className="confirm-item" style={{ animationDelay: '0.5s', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '12px' }}>
-                <span style={{ color: '#fff', fontSize: '14px', fontWeight: 800 }}>Transfer Total</span>
-                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px' }}>${transferData?.amount.toLocaleString()}</span>
+              <div className="confirm-item" style={{ animationDelay: '0.4s', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '16px' }}>
+                <span style={{ color: '#fff', fontSize: '13px', fontWeight: 800 }}>Total Amount</span>
+                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${transferData?.amount.toLocaleString()}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button 
                 onClick={() => setShowConfirm(false)}
-                style={{ flex: 1, padding: '18px', borderRadius: '16px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #1e293b', color: '#94a3b8', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>
-                CANCEL
+                style={{ flex: 1, padding: '18px', borderRadius: '16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>
+                DECLINE
               </button>
               <button 
-                onClick={executeTransfer}
+                onClick={() => setShowKeypad(true)}
                 disabled={loading}
                 className="primary-btn"
                 style={{ flex: 2, padding: '18px' }}>
                 {loading ? 'ENCRYPTING...' : 'CONFIRM & SEND'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showKeypad && (
+        <div className="modal-container" style={{ alignItems: 'flex-end', padding: 0 }}>
+          <div className="keypad-sheet">
+            <div style={{ width: '40px', height: '5px', background: '#334155', borderRadius: '10px', marginBottom: '20px' }} onClick={() => setShowKeypad(false)}></div>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'white', margin: 0 }}>
+              {user?.hasPin ? "Enter Transaction PIN" : "Create Transaction PIN"}
+            </h3>
+            
+            {pinError ? (
+              <p style={{ color: '#ef4444', fontSize: '14px', marginTop: '8px', marginBottom: '0', fontWeight: 700 }}>
+                  Invalid PIN. Please try again.
+              </p>
+            ) : (
+              <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px', marginBottom: '0' }}>
+                {user?.hasPin ? "Authorize this asset movement" : "Set a 4-digit code for future transfers"}
+              </p>
+            )}
+
+            <div className={`pin-dots ${pinError ? 'shake-err' : ''}`}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={`dot ${pin.length > i ? 'filled' : ''} ${pinError ? 'error' : ''}`}></div>
+              ))}
+            </div>
+
+            <div className="key-grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                <div key={num} className="key" onClick={() => handleKeyPress(num.toString())}>{num}</div>
+              ))}
+              <div className="key" style={{ background: 'transparent', border: 'none' }} onClick={() => setShowKeypad(false)}>✕</div>
+              <div className="key" onClick={() => handleKeyPress('0')}>0</div>
+              <div className="key" style={{ background: 'transparent', border: 'none' }} onClick={handleBackspace}>⌫</div>
+            </div>
+
+            <p style={{ marginTop: '24px', color: '#475569', fontSize: '10px', fontWeight: 800, letterSpacing: '1px' }}>SECURE KEYBOARD BY GEMINI RAILS</p>
           </div>
         </div>
       )}

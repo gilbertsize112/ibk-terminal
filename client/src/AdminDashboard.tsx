@@ -1,30 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// ✅ Updated Interface to match the Backend Schema (isFrozen)
 interface User {
   _id: string;
   name: string;
   email: string;
   accountNumber?: string;
-  isFrozen: boolean; // Changed from status to isFrozen (boolean)
+  isFrozen: boolean;
   balance?: number;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  ssn?: string;
+  accountType?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  kycStatus?: string;
 }
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoadModal, setShowLoadModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{id: string, name: string} | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [amount, setAmount] = useState('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const handleLogout = () => {
-    localStorage.clear(); 
-    window.location.replace('/'); 
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -40,30 +49,21 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  // ✅ Logic updated to use boolean toggle and 'isFrozen' field name
   const handleToggleUserStatus = async (userId: string, currentlyFrozen: boolean) => {
-    const newStatus = !currentlyFrozen; 
-    const actionLabel = newStatus ? 'frozen' : 'active';
-    
-    if (!window.confirm(`Are you sure you want to set this user to ${actionLabel}?`)) return;
+    const newStatus = !currentlyFrozen;
+    if (!window.confirm(`Are you sure you want to set this user to ${newStatus ? 'frozen' : 'active'}?`)) return;
 
     try {
       const token = localStorage.getItem('token');
       await axios.patch(`${API_BASE_URL}/api/admin/user-status`, {
         userId,
-        isFrozen: newStatus // Sending the boolean to the backend
+        isFrozen: newStatus
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      alert(`User status successfully updated to ${actionLabel}.`);
-      fetchUsers(); 
+      alert(`User status successfully updated.`);
+      fetchUsers();
     } catch (err) {
-      console.error("Update Error:", err);
       alert("Error updating user status.");
     }
   };
@@ -75,323 +75,259 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API_BASE_URL}/api/admin/load-wallet`, {
-        userId: selectedUser.id,
+        userId: selectedUser._id,
         amount: Number(amount)
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      alert(`Funds successfully injected into ${selectedUser.name}'s account.`);
+      alert(`Funds successfully injected.`);
       setShowLoadModal(false);
       setAmount('');
-      fetchUsers(); 
+      fetchUsers();
     } catch (err) {
-      alert("Unauthorized or server error.");
+      alert("Error injecting funds.");
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.replace('/');
+  };
+
+  const totalBalance = users.reduce((sum, user) => sum + (user.balance || 0), 0);
+  const activeUsers = users.filter(user => !user.isFrozen).length;
+  const frozenUsers = users.filter(user => user.isFrozen).length;
+
   return (
-    <div className="dashboard-wrapper admin-container">
+    <div style={{ minHeight: '100vh', background: '#0a0f1a', color: '#e2e8f0', padding: '16px', paddingBottom: '40px' }}>
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(15px); }
-          to { opacity: 1; transform: translateY(0); }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { width: 100%; height: 100%; overflow-x: hidden; }
+        
+        button { cursor: pointer; min-height: 48px; border-radius: 8px; font-weight: 600; transition: all 0.3s; touch-action: manipulation; -webkit-appearance: none; font-size: 16px; }
+        .btn-primary { background: #004da0; color: white; border: none; padding: 12px 20px; }
+        .btn-primary:active { background: #0080d0; transform: scale(0.98); }
+        .btn-danger { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; padding: 12px 20px; }
+        .btn-danger:active { background: rgba(239,68,68,0.4); transform: scale(0.98); }
+        
+        input, select { padding: 14px; border: 1px solid #3b82f6; border-radius: 8px; background: rgba(15,23,42,0.9); color: white; width: 100%; -webkit-appearance: none; -moz-appearance: none; appearance: none; font-size: 16px; }
+        input:focus, select:focus { outline: none; border-color: #0096ff; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        input::placeholder { color: #64748b; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(59,130,246,0.2); font-size: 14px; }
+        th { background: rgba(15,23,42,0.9); font-weight: 700; color: #64748b; }
+        tr:active td { background: rgba(59,130,246,0.12); }
+        
+        .card { background: rgba(30,41,59,0.5); border: 1px solid rgba(59,130,246,0.2); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .modal-content { background: rgba(15,23,42,0.95); padding: 20px; border-radius: 16px 16px 0 0; max-width: 600px; width: 100%; border: 1px solid rgba(59,130,246,0.3); max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .stat { font-size: 24px; font-weight: 800; margin: 12px 0; color: #00a0e9; }
+        
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; }
+        h3 { font-size: 16px; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        
+        @supports (-webkit-touch-callout: none) {
+          body { padding-top: env(safe-area-inset-top); }
+          button, input, select { min-height: 48px; font-size: 16px; }
         }
-
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(0, 77, 160, 0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(0, 77, 160, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(0, 77, 160, 0); }
+        
+        @media (max-width: 640px) {
+          .grid { grid-template-columns: 1fr; gap: 12px; }
+          .card { padding: 12px; margin-bottom: 12px; }
+          .modal { align-items: center; padding: 10px; }
+          .modal-content { border-radius: 12px; max-height: 85vh; width: 95%; }
+          table { font-size: 12px; }
+          th, td { padding: 8px; }
+          h1 { font-size: 20px; }
+          h2 { font-size: 18px; }
+          .stat { font-size: 20px; }
+          button { padding: 10px 16px; font-size: 14px; min-height: 44px; }
+          .btn-table { padding: 6px 10px; font-size: 11px; min-height: 40px; }
+          input, select { padding: 12px; font-size: 16px; }
+          .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
         }
-
-        .admin-container {
-          display: flex;
-          width: 100%;
-          min-height: 100vh;
-          background: #060a11; 
-          font-family: 'Inter', sans-serif;
-          color: #e2e8f0;
-          overflow-x: hidden;
-          margin: 0;
-          padding: 0;
+        
+        @media (max-width: 480px) {
+          padding: 12px;
+          .grid { grid-template-columns: 1fr; gap: 10px; }
+          .card { padding: 12px; margin-bottom: 12px; }
+          table { font-size: 11px; }
+          th, td { padding: 6px; }
+          h1 { font-size: 18px; }
+          .stat { font-size: 18px; }
+          button { padding: 8px 12px; font-size: 12px; min-height: 42px; }
+          .btn-table { padding: 4px 8px; font-size: 10px; min-height: 36px; }
+          .action-group { display: flex; gap: 4px; }
+          .table-wrapper { font-size: 10px; }
         }
-
-        .sidebar {
-          width: 280px;
-          background: rgba(15, 23, 42, 0.98);
-          backdrop-filter: blur(15px);
-          border-right: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 40px 20px;
-          display: flex;
-          flex-direction: column;
-          position: fixed; 
-          left: 0; top: 0; bottom: 0;
-          z-index: 2000;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .main-content {
-          flex: 1;
-          margin-left: 280px; 
-          padding: 40px;
-          animation: fadeIn 0.8s ease-out;
-          min-height: 100vh;
-          box-sizing: border-box;
-          width: calc(100% - 280px);
-        }
-
-        .mobile-header {
-          display: none;
-          width: 100%;
-          padding: 15px 20px;
-          background: #0f172a;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          justify-content: space-between;
-          align-items: center;
-          position: sticky;
-          top: 0;
-          z-index: 1500;
-          box-sizing: border-box;
-        }
-
-        .hamburger {
-          background: none;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          padding: 8px;
-        }
-
-        .hamburger span {
-          display: block;
-          width: 22px;
-          height: 2px;
-          background: white;
-          border-radius: 2px;
-        }
-
-        @media (max-width: 1024px) {
-          .sidebar {
-            transform: translateX(-100%);
-          }
-          .sidebar.active {
-            transform: translateX(0);
-          }
-          .main-content {
-            margin-left: 0;
-            width: 100%;
-            padding: 20px;
-          }
-          .mobile-header {
-            display: flex;
-          }
-          .desktop-only-header {
-            display: none !important;
-          }
-          
-          table, thead, tbody, th, td, tr { display: block; }
-          thead tr { display: none; }
-          tr { 
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 16px; 
-            margin-bottom: 15px; 
-            background: rgba(30, 41, 59, 0.3);
-            padding: 10px;
-          }
-          td { 
-            border: none; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 12px 5px; 
-            text-align: right; 
-          }
-          td:before { 
-            content: attr(data-label);
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            font-size: 10px;
-            margin-right: 15px;
-          }
-        }
-
-        .nav-item {
-          padding: 14px 18px;
-          border-radius: 12px;
-          margin-bottom: 8px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: #94a3b8;
-        }
-
-        .nav-item.active {
-          background: linear-gradient(135deg, #004da0 0%, #003366 100%);
-          color: white;
-        }
-
-        .stat-grid {
-          display: grid; 
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-          gap: 20px;
-        }
-
-        .stat-card {
-          background: rgba(30, 41, 59, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 24px;
-          border-radius: 20px;
-        }
-
-        .btn-load { background: #004da0; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; }
-        .btn-block { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 16px; border-radius: 10px; font-weight: 600; margin-left: 5px; cursor: pointer; }
-
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .status-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .status-frozen { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
       `}</style>
 
-      {/* MOBILE TOP BAR */}
-      <div className="mobile-header">
-        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-          <div style={{width: '25px', height: '25px', background: '#004da0', borderRadius: '4px'}}></div>
-          <span style={{fontWeight: 800, fontSize: '18px'}}>IBK</span>
-        </div>
-        <button className="hamburger" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          <span></span><span></span><span></span>
-        </button>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <h1>Admin Dashboard</h1>
+        <button className="btn-danger" onClick={handleLogout} style={{ padding: '10px 16px', fontSize: '14px' }}>Logout</button>
       </div>
 
-      {/* Side Overlay */}
-      {isSidebarOpen && (
-        <div 
-          style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1900}} 
-          onClick={() => setIsSidebarOpen(false)}
-        />
+      {/* Navigation */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        {['dashboard', 'users'].map(tab => (
+          <button
+            key={tab}
+            className={activeTab === tab ? 'btn-primary' : 'btn-danger'}
+            onClick={() => setActiveTab(tab)}
+            style={{ textTransform: 'capitalize', padding: '10px 16px', fontSize: '14px' }}
+          >
+            {tab === 'dashboard' ? '📊' : '👥'} {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Dashboard Tab */}
+      {activeTab === 'dashboard' && (
+        <>
+          {/* Stats */}
+          <div className="grid">
+            <div className="card">
+              <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>Total Users</div>
+              <div className="stat">{users.length}</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>{activeUsers} active • {frozenUsers} frozen</div>
+            </div>
+            <div className="card">
+              <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>Total Balance</div>
+              <div className="stat" style={{ color: '#059669' }}>${totalBalance.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Avg: ${(totalBalance / users.length || 0).toLocaleString()}</div>
+            </div>
+            <div className="card">
+              <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700 }}>System Status</div>
+              <div className="stat" style={{ color: '#10b981' }}>Online</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Operational</div>
+            </div>
+          </div>
+
+          {/* Users Table */}
+          <div className="card">
+            <h3 style={{ marginBottom: '12px' }}>User Registry</h3>
+            {loading ? (
+              <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>Loading...</p>
+            ) : users.length > 0 ? (
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Account</th>
+                      <th>Balance</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map(user => (
+                      <tr key={user._id}>
+                        <td style={{ fontWeight: 600 }}>{user.name}</td>
+                        <td style={{ fontSize: '12px' }}>{user.email}</td>
+                        <td style={{ fontFamily: 'monospace', fontSize: '10px' }}>{user.accountNumber || 'PENDING'}</td>
+                        <td style={{ color: '#059669', fontWeight: 600 }}>${user.balance?.toLocaleString() || '0'}</td>
+                        <td>
+                          <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 600, background: user.isFrozen ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: user.isFrozen ? '#ef4444' : '#10b981', whiteSpace: 'nowrap' }}>
+                            {user.isFrozen ? '❄️ Frozen' : '✅ Active'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-group">
+                            <button className="btn-primary btn-table" onClick={() => { setSelectedUser(user); setShowLoadModal(true); }}>💰</button>
+                            <button className="btn-danger btn-table" onClick={() => handleToggleUserStatus(user._id, user.isFrozen)}>{user.isFrozen ? '🔥' : '❄️'}</button>
+                            <button className="btn-primary btn-table" onClick={() => { setSelectedUser(user); setShowUserModal(true); }}>👁️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ color: '#64748b', textAlign: 'center', padding: '24px' }}>No users found</p>
+            )}
+          </div>
+        </>
       )}
 
-      {/* Sidebar with Active Class */}
-      <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px'}}>
-          <div style={{width: '35px', height: '35px', background: '#004da0', borderRadius: '8px', animation: 'pulse 2s infinite'}}></div>
-          <h1 style={{fontSize: '22px', fontWeight: 800, margin: 0, letterSpacing: '-1px'}}>IBK <span style={{color: '#64748b', fontWeight: 400}}>Terminal</span></h1>
-        </div>
-        
-        <nav style={{flex: 1}}>
-          <div className="nav-item active" onClick={() => setIsSidebarOpen(false)}><span>📊</span> Dashboard</div>
-          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>👥</span> User Records</div>
-          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>🛡️</span> Security</div>
-          <div className="nav-item" onClick={() => setIsSidebarOpen(false)}><span>⚙️</span> Settings</div>
-        </nav>
+      {/* User Modal */}
+      {showUserModal && selectedUser && (
+        <div className="modal" onClick={() => setShowUserModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2>{selectedUser.name}</h2>
+              <button onClick={() => setShowUserModal(false)} style={{ background: 'transparent', color: '#64748b', border: 'none', fontSize: '20px', padding: '4px' }}>×</button>
+            </div>
+            
+            <div style={{ background: 'rgba(15,23,42,0.9)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Email:</span> {selectedUser.email}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Phone:</span> {selectedUser.phoneNumber || 'N/A'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>SSN:</span> {selectedUser.ssn || '****'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Account:</span> {selectedUser.accountNumber || 'PENDING'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Type:</span> {selectedUser.accountType || 'Savings'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Balance:</span> <span style={{ color: '#059669', fontWeight: 600 }}>${selectedUser.balance?.toLocaleString()}</span></div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Status:</span> {selectedUser.isFrozen ? '❄️ Frozen' : '✅ Active'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Address:</span> {selectedUser.address ? `${selectedUser.address}, ${selectedUser.city}` : 'N/A'}</div>
+                <div><span style={{ color: '#64748b', fontWeight: 600 }}>Member:</span> {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}</div>
+              </div>
+            </div>
 
-        <div className="logout-btn" style={{marginTop: 'auto', padding: '15px', borderRadius: '14px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', textAlign: 'center', fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(239,68,68,0.2)'}} onClick={handleLogout}>
-          SECURE LOGOUT
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <header className="desktop-only-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px'}}>
-          <div>
-            <h2 style={{fontSize: '32px', margin: 0, fontWeight: 800}}>Executive Panel</h2>
-            <p style={{color: '#64748b', margin: '5px 0 0 0'}}>Welcome back, Authorized Administrator.</p>
-          </div>
-          <div style={{textAlign: 'right'}}>
-            <div style={{fontWeight: 700}}>Daniel Gilbert</div>
-            <div style={{fontSize: '12px', color: '#059669'}}>● System Online</div>
-          </div>
-        </header>
-
-        <div className="stat-grid">
-          <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>TOTAL NETWORK USERS</p>
-            <h3 style={{fontSize: '32px', margin: 0, fontWeight: 800}}>{users.length}</h3>
-          </div>
-          <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>SYSTEM LIQUIDITY</p>
-            <h3 style={{fontSize: '32px', margin: 0, color: '#00a0e9', fontWeight: 800}}>$842,000</h3>
-          </div>
-          <div className="stat-card">
-            <p style={{color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px'}}>ACTIVE SESSIONS</p>
-            <h3 style={{fontSize: '32px', margin: 0, color: '#059669', fontWeight: 800}}>12</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button className="btn-primary" onClick={() => { setShowUserModal(false); setShowLoadModal(true); }} style={{ width: '100%' }}>💰 Inject Funds</button>
+              <button className={selectedUser.isFrozen ? 'btn-primary' : 'btn-danger'} onClick={() => { setShowUserModal(false); handleToggleUserStatus(selectedUser._id, selectedUser.isFrozen); }} style={{ width: '100%' }}>
+                {selectedUser.isFrozen ? '🔥 Unfreeze' : '❄️ Freeze'}
+              </button>
+              <button className="btn-danger" onClick={() => setShowUserModal(false)} style={{ width: '100%' }}>Close</button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="user-table-card" style={{marginTop: '30px', background: 'rgba(30, 41, 59, 0.3)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', overflow: 'hidden'}}>
-          <div style={{padding: '20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700}}>
-            Global User Registry
-          </div>
-          <div style={{width: '100%', overflowX: 'auto'}}>
-            <table style={{width: '100%', borderCollapse: 'collapse'}}>
-              <thead>
-                <tr>
-                  <th style={{padding: '20px', textAlign: 'left', color: '#64748b', fontSize: '12px'}}>IDENTIFIER</th>
-                  <th style={{padding: '20px', textAlign: 'left', color: '#64748b', fontSize: '12px'}}>ACCOUNT NO.</th>
-                  <th style={{padding: '20px', textAlign: 'left', color: '#64748b', fontSize: '12px'}}>STATUS</th>
-                  <th style={{padding: '20px', textAlign: 'left', color: '#64748b', fontSize: '12px'}}>NET BALANCE</th>
-                  <th style={{padding: '20px', textAlign: 'left', color: '#64748b', fontSize: '12px'}}>MANAGEMENT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length > 0 ? users.map((user) => (
-                  <tr key={user._id}>
-                    <td data-label="Identifier">
-                      <div style={{fontWeight: 600}}>{user.name}</div>
-                      <div style={{fontSize: '11px', color: '#64748b'}}>{user.email}</div>
-                    </td>
-                    <td data-label="Account" style={{fontFamily: 'monospace', color: '#00a0e9'}}>{user.accountNumber || 'PENDING'}</td>
-                    <td data-label="Status">
-                      {/* ✅ Updated to use isFrozen for the badge class and text */}
-                      <span className={`status-badge ${user.isFrozen ? 'status-frozen' : 'status-active'}`}>
-                        {user.isFrozen ? 'frozen' : 'active'}
-                      </span>
-                    </td>
-                    <td data-label="Balance" style={{fontWeight: 700, color: '#059669'}}>${user.balance?.toLocaleString() || '0.00'}</td>
-                    <td data-label="Action">
-                      <button className="btn-load" onClick={() => {
-                          setSelectedUser({id: user._id, name: user.name});
-                          setShowLoadModal(true);
-                      }}>Credit</button>
-                      
-                      {/* ✅ Updated to pass the current boolean isFrozen to the handler */}
-                      <button className="btn-block" onClick={() => handleToggleUserStatus(user._id, user.isFrozen)}>
-                        {user.isFrozen ? 'Unfreeze' : 'Freeze'}
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={5} style={{textAlign: 'center', color: '#64748b', padding: '40px'}}>
-                      {loading ? "Decrypting records..." : "Registry empty."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
-
+      {/* Load Money Modal */}
       {showLoadModal && (
-        <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '20px'}} onClick={() => setShowLoadModal(false)}>
-          <div style={{width: '100%', maxWidth: '400px', padding: '30px', borderRadius: '24px', background: '#1e293b'}} onClick={e => e.stopPropagation()}>
-            <h2 style={{margin: '0 0 10px 0', fontSize: '24px'}}>Fund Injection</h2>
-            <p style={{color: '#94a3b8', marginBottom: '25px'}}>Target: <span style={{color: 'white'}}>{selectedUser?.name}</span></p>
+        <div className="modal" onClick={() => setShowLoadModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: '12px' }}>Inject Funds</h2>
+            <p style={{ color: '#94a3b8', marginBottom: '16px', fontSize: '14px' }}>Target: <span style={{ color: 'white', fontWeight: 600 }}>{selectedUser?.name}</span></p>
+            
             <form onSubmit={handleLoadMoney}>
-              <input 
-                type="number" 
-                style={{width: '100%', padding: '15px', borderRadius: '12px', fontSize: '18px', marginBottom: '20px', boxSizing: 'border-box', background: '#0f172a', border: '1px solid #334155', color: 'white'}}
+              <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Amount ($)</label>
+              <input
+                type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Amount ($)"
+                placeholder="0.00"
                 required
+                min="0"
+                step="0.01"
+                style={{ marginBottom: '12px' }}
               />
-              <div style={{display: 'flex', gap: '10px'}}>
-                <button type="button" onClick={() => setShowLoadModal(false)} style={{flex: 1, padding: '15px', borderRadius: '12px', background: 'transparent', border: '1px solid #334155', color: 'white', cursor: 'pointer'}}>Abort</button>
-                <button type="submit" style={{flex: 2, padding: '15px', borderRadius: '12px', background: '#004da0', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer'}}>Execute</button>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '16px' }}>
+                {[100, 500, 1000, 5000].map(quick => (
+                  <button type="button" key={quick} onClick={() => setAmount(quick.toString())} className="btn-danger" style={{ padding: '10px', fontSize: '13px' }}>
+                    ${quick}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ background: 'rgba(239,68,68,0.1)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '12px', color: '#ef4444' }}>
+                ⚠️ This action cannot be reversed.
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                <button type="submit" className="btn-primary" style={{ width: '100%' }}>Execute</button>
+                <button type="button" className="btn-danger" onClick={() => setShowLoadModal(false)} style={{ width: '100%' }}>Cancel</button>
               </div>
             </form>
           </div>
