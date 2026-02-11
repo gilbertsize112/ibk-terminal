@@ -17,6 +17,7 @@ const TransactionReceipt = () => {
     hour12: true
   });
 
+  // Extracting details from navigation state
   const { details } = location.state || { 
     details: {
       senderName: "N/A",

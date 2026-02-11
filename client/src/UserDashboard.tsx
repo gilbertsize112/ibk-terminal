@@ -32,11 +32,13 @@ const UserDashboard = () => {
 
   // ✅ IMPROVED: Sync activeTab with the URL immediately
   useEffect(() => {
-    if (location.pathname.endsWith('/transfer')) {
+    if (location.pathname.includes('/transfer')) {
       setActiveTab('transfer');
-    } else if (location.pathname.endsWith('/cards')) {
+    } else if (location.pathname.includes('/cards')) {
       setActiveTab('cards');
-    } else if (location.pathname.endsWith('/dashboard')) {
+    } else if (location.pathname.includes('/receipt')) {
+      setActiveTab('transactions');
+    } else if (location.pathname === '/dashboard') {
       setActiveTab('overview');
     }
   }, [location.pathname]);
@@ -52,7 +54,6 @@ const UserDashboard = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      // Note: We use the full path because profile/transactions are sub-routes of user
       const profileRes = await axios.get(`${API_BASE_URL}/user/profile`, config);
       setUser(profileRes.data);
       try {
@@ -68,7 +69,10 @@ const UserDashboard = () => {
 
   useEffect(() => { fetchDashboardData(); }, []);
 
-  const filteredTransactions = transactions.filter(tx => new Date(tx.createdAt).getMonth() === selectedMonth);
+  const filteredTransactions = transactions.filter(tx => {
+    if (!tx.createdAt) return false;
+    return new Date(tx.createdAt).getMonth() === selectedMonth;
+  });
 
   const handlePinChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;
@@ -118,8 +122,8 @@ const UserDashboard = () => {
 
   if (user?.isFrozen) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}><div style={{ background: '#070c1b', padding: '40px 20px', borderRadius: '24px', border: '1px solid rgba(239,68,68,0.3)', maxWidth: '500px', width: '100%', textAlign: 'center' }}><div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div><h2 style={{ fontSize: '28px', color: '#ef4444', fontWeight: 800, margin: '0 0 20px 0' }}>Account Suspended</h2><p style={{ color: '#94a3b8', lineHeight: '1.6' }}>Contact support@ibk-terminal.com to verify your account.</p><button onClick={handleLogout} style={{ marginTop: '30px', padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%' }}>LOGOUT</button></div></div>;
 
-  // ✅ DETERMINING SUB-ROUTE VIEW: This prevents the "Blue Screen" logic error
-  const isSubRoute = location.pathname.includes('/transfer') || location.pathname.includes('/cards') || location.pathname.includes('/receipt');
+  // ✅ FIXED LOGIC: If we are not on the base /dashboard path, we show the Outlet (Transfer/Cards/Receipt)
+  const isViewingSubPage = location.pathname !== '/dashboard';
 
   return (
     <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, sans-serif', display: 'flex', width: '100%' }}>
@@ -148,12 +152,6 @@ const UserDashboard = () => {
         .month-pill.active { background: #3b82f6; color: white; }
         .top-section { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 40px; }
         
-        /* Mobile Specific UI */
-        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; background: rgba(7,12,27,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: env(safe-area-inset-top) 20px 16px 20px; z-index: 999; align-items: center; justify-content: space-between; height: auto; }
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.98); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1); padding: 12px 12px calc(12px + env(safe-area-inset-bottom)) 12px; justify-content: space-around; z-index: 1000; height: auto; }
-        .mobile-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; gap: 6px; cursor: pointer; flex: 1; transition: 0.2s; }
-        .mobile-item.active { color: #3b82f6; transform: translateY(-2px); }
-        
         @media (max-width: 1024px) { 
           .sidebar { position: fixed; left: 0; transform: translateX(-100%); height: 100vh; transition: 0.3s; z-index: 1001; box-shadow: 20px 0 50px rgba(0,0,0,0.7); } 
           .sidebar.active { transform: translateX(0); } 
@@ -174,9 +172,13 @@ const UserDashboard = () => {
           .tx-row { flex-direction: row; align-items: center; padding: 12px; } 
           .tx-card { padding: 16px; }
           button { min-height: 46px; font-size: 14px; } 
-          input { padding: 12px; font-size: 16px; } /* Prevent iOS Zoom on focus */
+          input { padding: 12px; font-size: 16px; } 
           .main-content { padding: 85px 12px 100px 12px; } 
         }
+        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; background: rgba(7,12,27,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: env(safe-area-inset-top) 20px 16px 20px; z-index: 999; align-items: center; justify-content: space-between; height: auto; }
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.98); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1); padding: 12px 12px calc(12px + env(safe-area-inset-bottom)) 12px; justify-content: space-around; z-index: 1000; height: auto; }
+        .mobile-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; gap: 6px; cursor: pointer; flex: 1; transition: 0.2s; }
+        .mobile-item.active { color: #3b82f6; transform: translateY(-2px); }
       `}</style>
 
       {/* Success Modal */}
@@ -194,7 +196,7 @@ const UserDashboard = () => {
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#64748b' }}>Description</span><span>{selectedTx.description || 'Transfer'}</span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#64748b' }}>Date</span><span>{new Date(selectedTx.createdAt).toLocaleString()}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}><span style={{ color: '#64748b' }}>Amount</span><span style={{ fontSize: '18px', fontWeight: 800, color: selectedTx.type === 'credit' ? '#22c55e' : 'white' }}>{selectedTx.type === 'credit' ? '+' : '-'}${selectedTx.amount.toLocaleString()}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}><span style={{ color: '#64748b' }}>Amount</span><span style={{ fontSize: '18px', fontWeight: 800, color: selectedTx.type === 'credit' ? '#22c55e' : 'white' }}>{selectedTx.type === 'credit' ? '+' : '-'}${(selectedTx.amount || 0).toLocaleString()}</span></div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <button className="btn-secondary" onClick={() => handleShareReceipt(selectedTx)}>🔗 Share</button>
@@ -204,7 +206,7 @@ const UserDashboard = () => {
         </div>
       )}
 
-      {/* Desktop Sidebar & Mobile Top Bar */}
+      {/* Sidebar */}
       <div className="mobile-top-bar">
         <button className="btn-secondary" style={{ minHeight: '40px', padding: '0 15px' }} onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
         <span style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '1px' }}>IBK BANK</span>
@@ -220,10 +222,10 @@ const UserDashboard = () => {
               className={`nav-item ${(i === 0 && activeTab === 'overview') || (i === 1 && activeTab === 'transfer') || (i === 2 && activeTab === 'transactions') || (i === 3 && activeTab === 'cards') || (i === 4 && activeTab === 'security') ? 'active' : ''}`} 
               onClick={() => { 
                 setSidebarOpen(false); 
-                if (i === 0) { setActiveTab('overview'); navigate('/dashboard'); } 
-                else if (i === 1) { setActiveTab('transfer'); navigate('/dashboard/transfer'); } 
+                if (i === 0) { navigate('/dashboard'); } 
+                else if (i === 1) { navigate('/dashboard/transfer'); } 
                 else if (i === 2) setActiveTab('transactions'); 
-                else if (i === 3) { setActiveTab('cards'); navigate('/dashboard/cards'); } 
+                else if (i === 3) { navigate('/dashboard/cards'); } 
                 else setActiveTab('security'); 
               }}
             >
@@ -241,10 +243,10 @@ const UserDashboard = () => {
             key={i} 
             className={`mobile-item ${(i === 0 && activeTab === 'overview') || (i === 1 && activeTab === 'transfer') || (i === 2 && activeTab === 'transactions') || (i === 3 && activeTab === 'cards') || (i === 4 && activeTab === 'security') ? 'active' : ''}`} 
             onClick={() => { 
-              if (i === 0) { setActiveTab('overview'); navigate('/dashboard'); } 
-              else if (i === 1) { setActiveTab('transfer'); navigate('/dashboard/transfer'); } 
+              if (i === 0) navigate('/dashboard'); 
+              else if (i === 1) navigate('/dashboard/transfer'); 
               else if (i === 2) setActiveTab('transactions'); 
-              else if (i === 3) { setActiveTab('cards'); navigate('/dashboard/cards'); } 
+              else if (i === 3) navigate('/dashboard/cards'); 
               else setActiveTab('security'); 
             }}
           >
@@ -254,117 +256,121 @@ const UserDashboard = () => {
       </nav>
 
       <main className="main-content">
-        {/* ✅ FIXED: Logic prioritizes the sub-route if the URL contains it */}
-        {isSubRoute ? <Outlet context={{ user }} /> : <>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
-            {activeTab === 'overview' ? `Welcome, ${user?.name?.split(' ')[0]}!` : activeTab === 'transactions' ? 'Transactions' : 'Security'}
-          </h1>
-          
-          {activeTab === 'overview' && (
-            <div className="top-section">
-              <div className="card-visual">
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 800, fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>IBK PREMIER</span>
-                  <div style={{ width: '40px', height: '30px', background: 'linear-gradient(135deg, #d4af37, #f9e195)', borderRadius: '6px' }} />
-                </div>
-                <div className="card-number">{user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• 7890'}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div>
-                    <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px' }}>CARD HOLDER</div>
-                    <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>{user?.name}</div>
+        {/* ✅ DYNAMIC ROUTING AREA */}
+        {isViewingSubPage ? (
+          <Outlet context={{ user }} />
+        ) : (
+          <>
+            <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
+              {activeTab === 'overview' ? `Welcome, ${user?.name?.split(' ')[0]}!` : activeTab === 'transactions' ? 'Transactions' : 'Security'}
+            </h1>
+            
+            {activeTab === 'overview' && (
+              <div className="top-section">
+                <div className="card-visual">
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 800, fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>IBK PREMIER</span>
+                    <div style={{ width: '40px', height: '30px', background: 'linear-gradient(135deg, #d4af37, #f9e195)', borderRadius: '6px' }} />
                   </div>
-                  <div style={{ fontSize: '14px', fontWeight: 900, fontStyle: 'italic' }}>VISA</div>
-                </div>
-              </div>
-
-              <div className="balance-panel">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '13px' }}>Total Available Balance</span>
-                  <button style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: '12px', minHeight: 'auto' }} onClick={() => setShowBalance(!showBalance)}>
-                    {showBalance ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                <h2 className="balance-amount">{showBalance ? `$${user?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <button className="btn-primary" onClick={() => { setActiveTab('transfer'); navigate('/dashboard/transfer'); }}>💸 Transfer</button>
-                  <button className="btn-secondary">💰 Deposit</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'transactions' && (
-            <div className="tx-card">
-              <div style={{ marginBottom: '15px' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Recent Activity</h3>
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
-                  {months.map((m, i) => <div key={m} className={`month-pill ${selectedMonth === i ? 'active' : ''}`} onClick={() => setSelectedMonth(i)}>{m}</div>)}
-                </div>
-              </div>
-              {filteredTransactions.length > 0 ? filteredTransactions.map(tx => (
-                <div key={tx._id} className="tx-row" onClick={() => setSelectedTx(tx)}>
-                  <div style={{ display: 'flex', gap: '12px', flex: 1, alignItems: 'center' }}>
-                    <div style={{ width: '44px', height: '44px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tx.type === 'credit' ? '#22c55e' : '#94a3b8', fontSize: '18px', flexShrink: 0 }}>
-                      {tx.type === 'credit' ? '↓' : '↑'}
+                  <div className="card-number">{user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• 7890'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                    <div>
+                      <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px' }}>CARD HOLDER</div>
+                      <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>{user?.name}</div>
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description || 'Transfer'}</div>
-                      <div style={{ fontSize: '11px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontWeight: 800, color: tx.type === 'credit' ? '#22c55e' : 'white', fontSize: '15px' }}>
-                      {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString()}
-                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 900, fontStyle: 'italic' }}>VISA</div>
                   </div>
                 </div>
-              )) : (
-                <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
-                  No transactions in {months[selectedMonth]}
-                </div>
-              )}
-            </div>
-          )}
 
-          {activeTab === 'security' && (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px', marginBottom: '30px' }}>
-                {[{label: '2FA Auth', status: user?.hasPin}, {label: 'AES-256', status: true}, {label: 'Session', status: true}].map((s, i) => (
-                  <div key={i} style={{ background: '#070c1b', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ color: '#3b82f6', fontSize: '10px', fontWeight: 700, marginBottom: '8px' }}>SECURITY</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>{s.label}</div>
-                    <div style={{ color: s.status ? '#22c55e' : '#f59e0b', fontSize: '11px' }}>{s.status ? '✓ Active' : '⚠ Setup'}</div>
+                <div className="balance-panel">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>Total Available Balance</span>
+                    <button style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: '12px', minHeight: 'auto' }} onClick={() => setShowBalance(!showBalance)}>
+                      {showBalance ? 'Hide' : 'Show'}
+                    </button>
                   </div>
-                ))}
-              </div>
-              <div style={{ background: '#070c1b', padding: '30px 20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '500px', margin: '0 auto' }}>
-                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔐</div>
-                  <h3 style={{ fontSize: '18px', margin: 0, fontWeight: 700, marginBottom: '6px' }}>Transaction PIN</h3>
-                  <p style={{ color: '#64748b', fontSize: '13px' }}>Required for transfers and withdrawals.</p>
+                  <h2 className="balance-amount">{showBalance ? `$${(user?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <button className="btn-primary" onClick={() => navigate('/dashboard/transfer')}>💸 Transfer</button>
+                    <button className="btn-secondary">💰 Deposit</button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
-                  {pin.map((d, i) => (
-                    <input 
-                      key={i} 
-                      id={`pin-${i}`} 
-                      type="password" 
-                      style={{ width: '50px', height: '50px', fontSize: '20px', textAlign: 'center' }} 
-                      value={d} 
-                      maxLength={1} 
-                      onChange={(e) => handlePinChange(i, e.target.value)} 
-                      inputMode="numeric" 
-                      pattern="[0-9]*"
-                    />
+              </div>
+            )}
+
+            {activeTab === 'transactions' && (
+              <div className="tx-card">
+                <div style={{ marginBottom: '15px' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Recent Activity</h3>
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+                    {months.map((m, i) => <div key={m} className={`month-pill ${selectedMonth === i ? 'active' : ''}`} onClick={() => setSelectedMonth(i)}>{m}</div>)}
+                  </div>
+                </div>
+                {filteredTransactions.length > 0 ? filteredTransactions.map(tx => (
+                  <div key={tx._id} className="tx-row" onClick={() => setSelectedTx(tx)}>
+                    <div style={{ display: 'flex', gap: '12px', flex: 1, alignItems: 'center' }}>
+                      <div style={{ width: '44px', height: '44px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tx.type === 'credit' ? '#22c55e' : '#94a3b8', fontSize: '18px', flexShrink: 0 }}>
+                        {tx.type === 'credit' ? '↓' : '↑'}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description || 'Transfer'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontWeight: 800, color: tx.type === 'credit' ? '#22c55e' : 'white', fontSize: '15px' }}>
+                        {tx.type === 'credit' ? '+' : '-'}${(tx.amount || 0).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
+                    No transactions in {months[selectedMonth]}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'security' && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+                  {[{label: '2FA Auth', status: user?.hasPin}, {label: 'AES-256', status: true}, {label: 'Session', status: true}].map((s, i) => (
+                    <div key={i} style={{ background: '#070c1b', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ color: '#3b82f6', fontSize: '10px', fontWeight: 700, marginBottom: '8px' }}>SECURITY</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>{s.label}</div>
+                      <div style={{ color: s.status ? '#22c55e' : '#f59e0b', fontSize: '11px' }}>{s.status ? '✓ Active' : '⚠ Setup'}</div>
+                    </div>
                   ))}
                 </div>
-                <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%' }}>
-                  {isUpdating ? 'ENCRYPTING...' : 'UPDATE PIN'}
-                </button>
-              </div>
-            </>
-          )}
-        </>}
+                <div style={{ background: '#070c1b', padding: '30px 20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '500px', margin: '0 auto' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔐</div>
+                    <h3 style={{ fontSize: '18px', margin: 0, fontWeight: 700, marginBottom: '6px' }}>Transaction PIN</h3>
+                    <p style={{ color: '#64748b', fontSize: '13px' }}>Required for transfers and withdrawals.</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
+                    {pin.map((d, i) => (
+                      <input 
+                        key={i} 
+                        id={`pin-${i}`} 
+                        type="password" 
+                        style={{ width: '50px', height: '50px', fontSize: '20px', textAlign: 'center' }} 
+                        value={d} 
+                        maxLength={1} 
+                        onChange={(e) => handlePinChange(i, e.target.value)} 
+                        inputMode="numeric" 
+                        pattern="[0-9]*"
+                      />
+                    ))}
+                  </div>
+                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%' }}>
+                    {isUpdating ? 'ENCRYPTING...' : 'UPDATE PIN'}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
       </main>
     </div>
   );

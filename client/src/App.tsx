@@ -57,7 +57,6 @@ function App() {
                     <Signup setUser={setUser} /> 
                   )}
                   
-                  {/* Toggle button design kept exactly as provided */}
                   <div style={{ marginTop: '20px', textAlign: 'center' }}>
                     <p style={{ color: '#64748b' }}>
                       {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -75,7 +74,6 @@ function App() {
                   </div>
                 </div>
               } />
-              {/* If not logged in, any random path redirects to login page */}
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
@@ -86,27 +84,29 @@ function App() {
                 user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />
               } />
 
-              {/* USER SPECIFIC ROUTE - Nested structure maintained */}
+              {/* USER SPECIFIC ROUTE - Nested structure maintained for the Outlet */}
               <Route path="/dashboard" element={
                 user.role === 'admin' ? <Navigate to="/admin" /> : <UserDashboard />
               }>
+                {/* These components render inside the UserDashboard's <Outlet /> */}
                 <Route path="transfer" element={<TransferMoney />} />
                 <Route path="receipt" element={<TransactionReceipt />} />
                 <Route path="cards" element={<MyCards />} />
               </Route>
 
-              {/* Support old paths and redirects */}
-              <Route path="/transfer" element={<Navigate to="/dashboard/transfer" />} />
-              <Route path="/receipt" element={<Navigate to="/dashboard/receipt" />} />
-              <Route path="/cards" element={<Navigate to="/dashboard/cards" />} />
+              {/* Legacy/Top-level Redirects to maintain Nested Structure */}
+              <Route path="/transfer" element={<Navigate to="/dashboard/transfer" replace />} />
+              <Route path="/receipt" element={<Navigate to="/dashboard/receipt" replace />} />
+              <Route path="/cards" element={<Navigate to="/dashboard/cards" replace />} />
               
-              {/* Smart Redirect: If admin hits root, go to /admin. If user hits root, go to /dashboard */}
+              {/* Smart Redirect: Root Pathing */}
               <Route path="/" element={
-                user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />
+                user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />
               } />
               
+              {/* Catch-all for logged in users */}
               <Route path="*" element={
-                user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />
+                user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />
               } />
             </>
           )}

@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 
 const MyCards = () => {
   // 1. ADDED SAFETY CHECK: Provide a fallback if context is missing
-  const context = useOutletContext<{ user: any }>() || { user: { name: "Guest User", accountNumber: "0000000000" } };
+  const context = useOutletContext<{ user: any }>() || { user: { name: "Guest User", accountNumber: "4412882100928892" } };
   const { user } = context;
 
   const [isLocked, setIsLocked] = useState(false);
@@ -16,6 +16,11 @@ const MyCards = () => {
   return (
     <div className="cards-container" style={{ padding: '20px', animation: 'fadeIn 0.5s ease', color: '#fff' }}>
       <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         .card-perspective {
           perspective: 1500px;
           margin-bottom: 40px;
@@ -124,7 +129,7 @@ const MyCards = () => {
               <span>Show Details</span>
               <button 
                 onClick={() => setShowFullDetails(!showFullDetails)}
-                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}
+                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 {showFullDetails ? 'HIDE' : 'SHOW'}
               </button>
@@ -134,7 +139,7 @@ const MyCards = () => {
               <span>Freeze Status</span>
               <button 
                 onClick={() => setIsLocked(!isLocked)}
-                style={{ background: isLocked ? '#ef4444' : '#1e293b', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}
+                style={{ background: isLocked ? '#ef4444' : '#1e293b', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 {isLocked ? 'UNFREEZE' : 'FREEZE'}
               </button>
