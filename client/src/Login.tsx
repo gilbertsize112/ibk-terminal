@@ -41,7 +41,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       };
 
       // ✅ FIX: Use the imported 'login' function from your ./api file
-      // This ensures we don't have URL issues and includes your Interceptors
       const { data } = await login(loginPayload);
       
       // DEBUG LOG: Open your browser console (F12) to see this!
@@ -51,11 +50,9 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Update the Global state in App.tsx
-      setUser(data.user);
-
-      // REDIRECTION LOGIC:
-      // We check the role returned from your Backend. 
+      /** * ⚠️ CRITICAL UPDATE: 
+       * We update the local view states FIRST, then notify the global state.
+       */
       if (data.user && data.user.role === 'admin') {
         console.log("Switching to Admin View...");
         setIsAdminView(true);
@@ -63,6 +60,9 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         console.log("Switching to User View...");
         setIsUserView(true);
       }
+
+      // Update the Global state in App.tsx
+      setUser(data.user);
       
     } catch (err: any) {
       console.error("Login Error:", err);
@@ -80,6 +80,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
   };
 
   // VIEW LOGIC (This happens before the return below):
+  // If the user logs in successfully, we swap the entire UI for the dashboard
   if (isAdminView) {
     return <AdminDashboard />;
   }

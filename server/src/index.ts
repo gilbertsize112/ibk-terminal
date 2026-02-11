@@ -82,15 +82,22 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // Routes
+// Note: Ensure your file in ./routes/ is EXACTLY named userRoutes.ts (case sensitive)
 app.use(['/api/auth', '/auth'], authRoutes);   
 app.use(['/api/user', '/user'], userRoutes);   
 app.use(['/api/admin', '/admin'], adminRoutes); 
 
 app.get('/', (req, res) => res.status(200).send('Bank Server API Online'));
 
-// 404 Handler
+// 404 Handler - UPDATED TO LOG ERRORS
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: 'Not Found', path: req.url });
+  console.warn(`⚠️ 404 Attempted on: ${req.method} ${req.url}`);
+  res.status(404).json({ 
+    error: 'Not Found', 
+    path: req.url,
+    method: req.method,
+    suggestion: "Check if the frontend API_URL includes /api/user" 
+  });
 });
 
 /**
@@ -116,8 +123,6 @@ const startServer = async () => {
 
 /**
  * 🌍 VERCEL COMPATIBILITY
- * In development, we start the server manually.
- * In production (Vercel), we export the app for serverless execution.
  */
 if (process.env.NODE_ENV !== 'production') {
   startServer();

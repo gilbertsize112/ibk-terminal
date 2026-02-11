@@ -1,51 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { signup } from './api';
 import Login from './Login'; 
 import AdminDashboard from './AdminDashboard'; 
 
 const images = ['/k1.jpg', '/k2.jpg', '/k3.jpg', '/k4.jpg'];
 
+const countries = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+  "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+  "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+  "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+  "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+  "Fiji", "Finland", "France",
+  "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+  "Haiti", "Honduras", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast",
+  "Jamaica", "Japan", "Jordan",
+  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+  "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+  "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar",
+  "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+  "Oman",
+  "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+  "Qatar",
+  "Romania", "Russia", "Rwanda",
+  "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+  "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+  "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+  "Yemen",
+  "Zambia", "Zimbabwe"
+];
+
 interface SignupProps {
   setUser: (user: any) => void;
 }
 
 const Signup = ({ setUser }: SignupProps) => { 
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '',
+    country: '',
+    accountType: 'Savings',
+    password: '',
+    agreedToTerms: false
+  });
+
   const [loading, setLoading] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash] = useState(false); 
   const [currentImg, setCurrentImg] = useState(0);
   
-  // New States
   const [modalView, setModalView] = useState<'none' | 'forgot'>('none');
   const [resetEmail, setResetEmail] = useState('');
   const [isLoginView, setIsLoginView] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
 
-  // NEW: UI Enhancement States
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [isShaking, setIsShaking] = useState(false); // Vibration/Shake state
+  const [isShaking, setIsShaking] = useState(false); 
 
-  // Background Slideshow Logic (3 seconds)
+  // Searchable Country State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCountries = countries.filter(c => 
+    c.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  const selectCountry = (country: string) => {
+    setFormData({ ...formData, country });
+    setCountrySearch('');
+    setIsDropdownOpen(false);
+  };
+
   useEffect(() => {
     const imgInterval = setInterval(() => {
       setCurrentImg((prev) => (prev + 1) % images.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(imgInterval);
   }, []);
 
-  // 5 Second Splash Timer
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 5000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Password Strength Logic
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setFormData({ ...formData, password: val });
 
-    // Simple strength logic
     let strength = 0;
     if (val.length > 5) strength += 25;
     if (val.match(/[A-Z]/)) strength += 25;
@@ -55,14 +105,25 @@ const Signup = ({ setUser }: SignupProps) => {
   };
 
   const getStrengthColor = () => {
-    if (passwordStrength <= 25) return '#ef4444'; // Red
-    if (passwordStrength <= 50) return '#f59e0b'; // Orange
-    if (passwordStrength <= 75) return '#10b981'; // Green
-    return '#3b82f6'; // Blue (Exceptional)
+    if (passwordStrength <= 25) return '#ef4444'; 
+    if (passwordStrength <= 50) return '#f59e0b'; 
+    if (passwordStrength <= 75) return '#10b981'; 
+    return '#3b82f6'; 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.agreedToTerms) {
+      alert("Please agree to the Terms of Service to continue.");
+      return;
+    }
+
+    if (!formData.country) {
+      alert("Please select your country of residence.");
+      return;
+    }
+
     setLoading(true);
     try {
       const signupPayload = {
@@ -71,7 +132,9 @@ const Signup = ({ setUser }: SignupProps) => {
       };
 
       const { data } = await signup(signupPayload);
-      alert(`✅ Account Verified: ${data.accountNumber}`);
+      
+      // Updated message as requested
+      alert(`🎉 Congratulations account created! \nYour Account Number: ${data.accountNumber}`);
       
       if (data.role === 'admin') {
         setIsAdminView(true);
@@ -79,12 +142,11 @@ const Signup = ({ setUser }: SignupProps) => {
         setIsLoginView(true);
       }
     } catch (err: any) {
-      // Trigger Vibration Effect
       if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]); // Short double pulse
+        navigator.vibrate([100, 50, 100]); 
       }
       setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500); // Reset shake state
+      setTimeout(() => setIsShaking(false), 500); 
 
       alert(err.response?.data?.message || "Verification failed");
     } finally {
@@ -149,36 +211,8 @@ const Signup = ({ setUser }: SignupProps) => {
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(2, 6, 23, 0.95));
+          background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(2, 6, 23, 0.9));
           z-index: 1;
-        }
-
-        .splash-screen {
-          position: relative;
-          z-index: 10;
-          text-align: center;
-          color: white;
-          animation: fadeIn 1s ease-in;
-          padding: 20px;
-        }
-
-        .spinning-icon {
-          font-size: 60px;
-          margin-bottom: 20px;
-          display: inline-block;
-          animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-
-        .logo-text {
-          font-size: clamp(2.5rem, 8vw, 4rem);
-          font-weight: 800;
-          margin: 0;
-          letter-spacing: -1px;
         }
 
         .auth-page {
@@ -188,31 +222,28 @@ const Signup = ({ setUser }: SignupProps) => {
           height: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: center; /* Centered for Desktop */
+          justify-content: flex-start;
           align-items: center;
-          padding: 40px 24px;
+          padding: 40px 20px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
         }
 
         .auth-card {
-          background: rgba(255, 255, 255, 1);
+          background: #ffffff;
           width: 100%;
           max-width: 440px;
-          padding: 40px;
+          padding: 32px 24px;
           border-radius: 28px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border for desktop */
           text-align: center;
-          animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1);
           flex-shrink: 0;
-          margin: 20px 0; /* Ensures space on short desktop screens */
+          margin-bottom: 40px;
         }
 
-        /* Vibration/Shake Animation */
         .shake-effect {
           animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-          transform: translate3d(0, 0, 0);
           border: 1px solid #ef4444;
         }
 
@@ -224,8 +255,8 @@ const Signup = ({ setUser }: SignupProps) => {
         }
 
         @keyframes cardEntrance {
-          from { opacity: 0; transform: scale(0.9) translateY(20px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .bank-icon-header {
@@ -237,27 +268,31 @@ const Signup = ({ setUser }: SignupProps) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 20px;
+          margin: 0 auto 16px;
           font-size: 24px;
           box-shadow: 0 10px 15px -3px rgba(0, 77, 160, 0.3);
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0.4); }
-          70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 77, 160, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0); }
         }
 
         .floating-input {
           position: relative;
           width: 100%;
+          margin-bottom: 12px;
+          text-align: left;
         }
 
-        .floating-input input {
+        .floating-input label {
+          display: block;
+          font-size: 12px;
+          font-weight: 700;
+          color: #64748b;
+          margin-bottom: 6px;
+          margin-left: 4px;
+          text-transform: uppercase;
+        }
+
+        .floating-input input, .floating-input select {
           width: 100%;
-          padding: 16px 20px;
-          margin-bottom: 12px;
+          padding: 14px 16px;
           border-radius: 12px;
           border: 1px solid #e2e8f0;
           background: #f8fafc;
@@ -266,7 +301,62 @@ const Signup = ({ setUser }: SignupProps) => {
           transition: all 0.2s;
           box-sizing: border-box;
           color: #1e293b;
-          -webkit-appearance: none;
+          font-family: inherit;
+        }
+
+        .select-trigger {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          font-size: 16px;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .search-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          margin-top: 5px;
+          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+          z-index: 100;
+          max-height: 250px;
+          overflow-y: auto;
+          animation: slideIn 0.2s ease-out;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .search-input-field {
+          width: calc(100% - 20px) !important;
+          margin: 10px auto !important;
+          display: block;
+          padding: 10px !important;
+          border-radius: 8px !important;
+          font-size: 14px !important;
+        }
+
+        .country-option {
+          padding: 12px 16px;
+          cursor: pointer;
+          font-size: 14px;
+          color: #1e293b;
+          transition: background 0.2s;
+        }
+
+        .country-option:hover {
+          background: #f1f5f9;
         }
 
         .floating-input input:focus {
@@ -277,13 +367,13 @@ const Signup = ({ setUser }: SignupProps) => {
 
         .eye-toggle {
           position: absolute;
-          right: 15px;
-          top: 18px;
+          right: 12px;
+          bottom: 12px;
           cursor: pointer;
           color: #94a3b8;
           font-size: 18px;
           z-index: 5;
-          padding: 5px;
+          padding: 4px;
         }
 
         .strength-meter {
@@ -294,7 +384,6 @@ const Signup = ({ setUser }: SignupProps) => {
           margin: -4px 0 15px 0;
           overflow: hidden;
           display: ${formData.password.length > 0 ? 'block' : 'none'};
-          animation: fadeIn 0.3s ease;
         }
 
         .strength-bar {
@@ -302,9 +391,31 @@ const Signup = ({ setUser }: SignupProps) => {
           transition: all 0.4s ease;
         }
 
+        .checkbox-container {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          text-align: left;
+          margin: 15px 0;
+          cursor: pointer;
+        }
+
+        .checkbox-container input {
+          margin-top: 3px;
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+        }
+
+        .checkbox-container span {
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.4;
+        }
+
         .submit-btn.primary {
           width: 100%;
-          padding: 18px;
+          padding: 16px;
           border-radius: 12px;
           border: none;
           background: #004da0;
@@ -315,12 +426,11 @@ const Signup = ({ setUser }: SignupProps) => {
           transition: 0.2s;
           margin-top: 10px;
           letter-spacing: 0.5px;
-          -webkit-tap-highlight-color: transparent;
         }
 
-        .submit-btn.primary:active {
-          transform: scale(0.98);
-          background: #003a7a;
+        .submit-btn.primary:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
 
         .login-link-btn {
@@ -328,13 +438,12 @@ const Signup = ({ setUser }: SignupProps) => {
           border: none;
           color: #004da0;
           width: 100%;
-          padding: 16px;
+          padding: 14px;
           border-radius: 12px;
           font-weight: 700;
-          font-size: 15px;
+          font-size: 14px;
           cursor: pointer;
           margin-top: 8px;
-          transition: 0.2s;
         }
 
         .modal-overlay {
@@ -350,19 +459,13 @@ const Signup = ({ setUser }: SignupProps) => {
         }
 
         @media (max-width: 480px) {
-          .auth-page { 
-            justify-content: flex-start; /* Reset for mobile scroll */
-            padding: 20px 16px; 
-            padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
-          }
-          .auth-card {
-            padding: 32px 20px;
-            max-width: 100%;
+          .auth-page { padding: 20px 15px; }
+          .auth-card { 
+            padding: 24px 20px; 
             border-radius: 24px;
-            margin-top: auto;
-            margin-bottom: auto;
           }
-          .logo-text { font-size: 2.2rem; }
+          .bank-icon-header { width: 44px; height: 44px; font-size: 20px; }
+          h1 { font-size: 1.5rem !important; }
         }
       `}</style>
 
@@ -377,96 +480,154 @@ const Signup = ({ setUser }: SignupProps) => {
         <div className="overlay-gradient"></div>
       </div>
 
-      {showSplash ? (
-        <div className="splash-screen">
-          <div className="splash-content">
-            <div className="spinning-icon">🏦</div>
-            <h1 className="logo-text">IBK FINANCE</h1>
-            <h2 className="bank-subtitle" style={{color: 'rgba(255,255,255,0.7)', letterSpacing: '4px', fontSize: '14px', fontWeight: 600, marginTop: '10px'}}>INDUSTRIAL BANK OF KOREA</h2>
-            <div className="korean-badge" style={{background: '#00a0e9', padding: '5px 20px', borderRadius: '8px', display: 'inline-block', margin: '30px 0'}}>
-              <p className="korean-text" style={{fontWeight: 600, margin: 0, fontSize: '13px'}}>기업은행</p>
-            </div>
-            <div className="loading-dots">
-              <p style={{color: '#fff', opacity: 0.6, fontSize: '11px', letterSpacing: '1px'}}>SECURE CONNECTION ESTABLISHED</p>
+      <div className="auth-page">
+        {modalView === 'forgot' && (
+          <div className="modal-overlay" onClick={() => setModalView('none')}>
+            <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`} onClick={e => e.stopPropagation()}>
+              <div className="bank-icon-header">🔑</div>
+              <h1 style={{fontSize: '1.4rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Access</h1>
+              <p style={{color: '#64748b', fontSize: '13px', marginBottom: '24px'}}>Enter email for a recovery link.</p>
+              <form onSubmit={handleResetSubmit}>
+                <div className="floating-input">
+                  <input 
+                    type="email" placeholder="Email Address" required 
+                    value={resetEmail} onChange={(e) => setResetEmail(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="submit-btn primary">SEND LINK</button>
+                <p onClick={() => setModalView('none')} style={{marginTop: '20px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px'}}>GO BACK</p>
+              </form>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="auth-page">
-          {modalView === 'forgot' && (
-            <div className="modal-overlay" onClick={() => setModalView('none')}>
-              <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`} onClick={e => e.stopPropagation()}>
-                <div className="bank-icon-header">🔑</div>
-                <h1 style={{fontSize: '1.5rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Access</h1>
-                <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px'}}>Enter your email for a recovery link.</p>
-                <form onSubmit={handleResetSubmit}>
-                  <div className="floating-input">
-                    <input 
-                      type="email" placeholder="Email Address" required 
-                      value={resetEmail} onChange={(e) => setResetEmail(e.target.value)}
-                    />
-                  </div>
-                  <button type="submit" className="submit-btn primary">SEND LINK</button>
-                  <p onClick={() => setModalView('none')} style={{marginTop: '24px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px', padding: '10px'}}>GO BACK</p>
-                </form>
-              </div>
-            </div>
-          )}
+        )}
 
-          <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`}>
-            <div className="bank-icon-header">🏛️</div>
-            
-            <div className="auth-header">
-              <h1 style={{fontSize: '1.8rem', color: '#0f172a', margin: '0 0 8px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Create Account</h1>
-              <p style={{color: '#64748b', fontSize: '14px', marginBottom: '32px', fontWeight: 500}}>Join the global industrial network.</p>
+        <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`}>
+          <div className="bank-icon-header">🏦</div>
+          
+          <div className="auth-header">
+            <h1 style={{fontSize: '1.7rem', color: '#0f172a', margin: '0 0 4px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Open Account</h1>
+            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px', fontWeight: 500}}>Complete the form below to join our digital bank.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="floating-input">
+              <label>Full Name</label>
+              <input type="text" placeholder="e.g. John Doe" required 
+                onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
 
-            <form onSubmit={handleSubmit} className="auth-form">
-              <div className="floating-input">
-                <input type="text" placeholder="Full Name" required 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})} />
-              </div>
-              <div className="floating-input">
-                <input type="email" placeholder="Email Address" required 
-                  onChange={(e) => setFormData({...formData, email: e.target.value})} />
-              </div>
-              <div className="floating-input">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Secure Password" required 
-                  value={formData.password}
-                  onChange={handlePasswordChange} 
-                />
-                <span className="eye-toggle" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? "👁️‍🗨️" : "👁️"}
+            <div className="floating-input">
+              <label>Email Address</label>
+              <input type="email" placeholder="name@example.com" required 
+                onChange={(e) => setFormData({...formData, email: e.target.value})} />
+            </div>
+
+            <div className="floating-input">
+              <label>Phone Number</label>
+              <input type="tel" placeholder="+1 (555) 000-0000" required 
+                onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+            </div>
+
+            {/* Searchable Country Dropdown */}
+            <div className="floating-input" ref={dropdownRef}>
+              <label>Country of Residence</label>
+              <div 
+                className="select-trigger" 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                style={{ border: formData.country ? '1px solid #004da0' : '1px solid #e2e8f0' }}
+              >
+                <span style={{ color: formData.country ? '#1e293b' : '#94a3b8' }}>
+                  {formData.country || "Select your country"}
                 </span>
-              </div>
-
-              <div className="strength-meter">
-                <div 
-                  className="strength-bar" 
-                  style={{ width: `${passwordStrength}%`, backgroundColor: getStrengthColor() }}
-                ></div>
-              </div>
-
-              <div style={{textAlign: 'right', margin: '-4px 0 20px 0', fontSize: '13px', color: '#64748b', fontWeight: 500, cursor: 'pointer', padding: '10px 0'}} onClick={() => setModalView('forgot')}>
-                Forgot Password?
+                <span>{isDropdownOpen ? '▲' : '▼'}</span>
               </div>
               
-              <button type="submit" disabled={loading} className="submit-btn primary">
-                {loading ? "VERIFYING..." : "SIGN UP"}
-              </button>
-            </form>
-
-            <div style={{marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '24px'}}>
-              <p style={{color: '#64748b', fontSize: '13px', marginBottom: '16px', fontWeight: 500}}>Already an IBK Member?</p>
-              <button className="login-link-btn" type="button" onClick={() => setIsLoginView(true)}>
-                LOG IN
-              </button>
+              {isDropdownOpen && (
+                <div className="search-dropdown-menu">
+                  <input 
+                    autoFocus
+                    type="text" 
+                    className="search-input-field" 
+                    placeholder="Search country..." 
+                    value={countrySearch}
+                    onChange={(e) => setCountrySearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="options-list">
+                    {filteredCountries.length > 0 ? (
+                      filteredCountries.map((country) => (
+                        <div 
+                          key={country} 
+                          className="country-option"
+                          onClick={() => selectCountry(country)}
+                        >
+                          {country}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="country-option" style={{ color: '#94a3b8', cursor: 'default' }}>No country found</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            <div className="floating-input">
+              <label>Account Type</label>
+              <select 
+                value={formData.accountType}
+                onChange={(e) => setFormData({...formData, accountType: e.target.value})}
+                style={{ appearance: 'auto' }}
+              >
+                <option value="Savings">Savings Account</option>
+                <option value="Checking">Checking Account</option>
+                <option value="Business">Business Account</option>
+                <option value="Fixed Deposit">Fixed Deposit</option>
+              </select>
+            </div>
+
+            <div className="floating-input">
+              <label>Secure Password</label>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••" required 
+                value={formData.password}
+                onChange={handlePasswordChange} 
+              />
+              <span className="eye-toggle" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? "👁️‍🗨️" : "👁️"}
+              </span>
+            </div>
+
+            <div className="strength-meter">
+              <div 
+                className="strength-bar" 
+                style={{ width: `${passwordStrength}%`, backgroundColor: getStrengthColor() }}
+              ></div>
+            </div>
+
+            <label className="checkbox-container">
+              <input 
+                type="checkbox" 
+                checked={formData.agreedToTerms} 
+                onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})}
+              />
+              <span>I agree to the Digital Banking Terms and Privacy Policy.</span>
+            </label>
+            
+            <button type="submit" disabled={loading} className="submit-btn primary">
+              {loading ? "PROCESSING..." : "REGISTER ACCOUNT"}
+            </button>
+          </form>
+
+          <div style={{marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '20px'}}>
+            <p style={{color: '#64748b', fontSize: '13px', marginBottom: '12px', fontWeight: 500}}>Already have an account?</p>
+            <button className="login-link-btn" type="button" onClick={() => setIsLoginView(true)}>
+              SIGN IN
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

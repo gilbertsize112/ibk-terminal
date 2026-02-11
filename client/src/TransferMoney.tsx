@@ -583,7 +583,8 @@ const TransferMoney = () => {
               </button>
             </div>
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#475569', textAlign: 'right' }}>
-                Available: <span style={{color: '#94a3b8'}}>${user?.balance.toLocaleString()}</span>
+                {/* FIXED LINE BELOW: Added safe check for user?.balance */}
+                Available: <span style={{color: '#94a3b8'}}>${(user?.balance || 0).toLocaleString()}</span>
             </div>
           </div>
 
@@ -637,7 +638,8 @@ const TransferMoney = () => {
 
               <div className="confirm-item" style={{ animationDelay: '0.4s', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '16px' }}>
                 <span style={{ color: '#fff', fontSize: '13px', fontWeight: 800 }}>Total Amount</span>
-                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${Number(amount).toLocaleString()}</span>
+                {/* FIXED LINE BELOW: Added fallback for amount formatting */}
+                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${(Number(amount) || 0).toLocaleString()}</span>
               </div>
             </div>
 

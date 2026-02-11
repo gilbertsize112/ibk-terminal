@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+// ✅ IMPORT THE CLEAN API FUNCTIONS
+import { setupPin, fetchProfile, fetchTransactions } from './api/index';
 
 const UserDashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -19,18 +21,14 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ FIXED: Better API URL logic for Vercel/Production
-  const API_BASE_URL = import.meta.env.VITE_API_URL 
-    ? `${import.meta.env.VITE_API_URL}/api` 
-    : '/api';
-
   useEffect(() => {
     const isMobile = window.innerWidth < 1024;
     if (!isMobile) setSidebarOpen(false);
-    window.addEventListener('resize', () => setSidebarOpen(false));
+    const handleResize = () => setSidebarOpen(false);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ✅ IMPROVED: Sync activeTab with the URL immediately
   useEffect(() => {
     if (location.pathname.includes('/transfer')) {
       setActiveTab('transfer');
@@ -48,31 +46,52 @@ const UserDashboard = () => {
     window.location.replace('/');
   };
 
-  const fetchDashboardData = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { setLoading(false); return; }
-
-    try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const profileRes = await axios.get(`${API_BASE_URL}/user/profile`, config);
-      setUser(profileRes.data);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) { 
+        if (isMounted) setLoading(false); 
+        return; 
+      }
       try {
-        const transRes = await axios.get(`${API_BASE_URL}/user/transactions`, config);
-        setTransactions(transRes.data);
-      } catch (e) { setTransactions([]); }
-    } catch (err: any) {
-      if (err.response?.status === 403) handleLogout();
-    } finally {
-      setLoading(false);
-    }
+        // ✅ UPDATED: Using centralized API calls
+        const profileRes = await fetchProfile();
+        if (isMounted) {
+          const userData = profileRes.data?.user || profileRes.data;
+          setUser(userData);
+        }
+        try {
+          const transRes = await fetchTransactions();
+          if (isMounted) setTransactions(Array.isArray(transRes.data) ? transRes.data : transRes.data?.transactions || []);
+        } catch (e) { 
+          if (isMounted) setTransactions([]); 
+        }
+      } catch (err: any) {
+        if (err.response?.status === 403) handleLogout();
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchDashboardData();
+    return () => { isMounted = false; };
+  }, []);
+
+  const fetchDashboardDataManual = async () => {
+    try {
+      const profileRes = await fetchProfile();
+      setUser(profileRes.data?.user || profileRes.data);
+      const transRes = await fetchTransactions();
+      setTransactions(Array.isArray(transRes.data) ? transRes.data : transRes.data?.transactions || []);
+    } catch (err) {}
   };
 
-  useEffect(() => { fetchDashboardData(); }, []);
-
-  const filteredTransactions = transactions.filter(tx => {
-    if (!tx.createdAt) return false;
-    return new Date(tx.createdAt).getMonth() === selectedMonth;
-  });
+  const filteredTransactions = Array.isArray(transactions) 
+    ? transactions.filter(tx => {
+        if (!tx?.createdAt) return false;
+        return new Date(tx.createdAt).getMonth() === selectedMonth;
+      })
+    : [];
 
   const handlePinChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;
@@ -85,20 +104,23 @@ const UserDashboard = () => {
   const handleConfirmPin = async () => {
     const finalPin = pin.join('');
     if (finalPin.length !== 4) { alert("PIN must be 4 digits"); return; }
-
     setIsUpdating(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/user/setup-pin`, { pin: finalPin }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ CULPRIT FIXED: Now using the centralized setupPin function which has the correct /api/user/setup-pin path
+      const response = await setupPin(finalPin);
+      
       if (response.data.success) {
         setShowSuccess(true);
         setPin(['', '', '', '']);
-        setTimeout(() => { setShowSuccess(false); setActiveTab('overview'); navigate('/dashboard'); fetchDashboardData(); }, 2500);
+        setTimeout(() => { 
+          setShowSuccess(false); 
+          setActiveTab('overview'); 
+          navigate('/dashboard'); 
+          fetchDashboardDataManual(); 
+        }, 2500);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "PIN setup failed");
+      alert(error.response?.data?.message || "PIN setup failed. Check server connection.");
     } finally {
       setIsUpdating(false);
     }
@@ -120,9 +142,10 @@ const UserDashboard = () => {
 
   if (loading) return <div style={{ height: '100vh', background: '#020617', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><div style={{ width: '50px', height: '50px', border: '3px solid rgba(59,130,246,0.1)', borderTop: '3px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /><style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style></div>;
 
+  if (!user) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}><div>Connection Error. Please <button onClick={() => window.location.reload()} style={{color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline'}}>Refresh</button> or Logout.</div></div>;
+
   if (user?.isFrozen) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}><div style={{ background: '#070c1b', padding: '40px 20px', borderRadius: '24px', border: '1px solid rgba(239,68,68,0.3)', maxWidth: '500px', width: '100%', textAlign: 'center' }}><div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div><h2 style={{ fontSize: '28px', color: '#ef4444', fontWeight: 800, margin: '0 0 20px 0' }}>Account Suspended</h2><p style={{ color: '#94a3b8', lineHeight: '1.6' }}>Contact support@ibk-terminal.com to verify your account.</p><button onClick={handleLogout} style={{ marginTop: '30px', padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%' }}>LOGOUT</button></div></div>;
 
-  // ✅ FIXED LOGIC: If we are not on the base /dashboard path, we show the Outlet (Transfer/Cards/Receipt)
   const isViewingSubPage = location.pathname !== '/dashboard';
 
   return (
@@ -181,10 +204,8 @@ const UserDashboard = () => {
         .mobile-item.active { color: #3b82f6; transform: translateY(-2px); }
       `}</style>
 
-      {/* Success Modal */}
       {showSuccess && <div style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.95)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}><div style={{ fontSize: '60px' }}>✅</div><h2 style={{ marginTop: '30px', fontWeight: 800, color: 'white', letterSpacing: '2px' }}>SECURITY ESTABLISHED</h2><p style={{ color: '#94a3b8', marginTop: '10px' }}>Transaction PIN activated successfully.</p></div>}
 
-      {/* Transaction Details Modal */}
       {selectedTx && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setSelectedTx(null)}>
           <div style={{ background: '#0a0f1e', borderRadius: '24px', width: '100%', maxWidth: '420px', border: '1px solid rgba(255,255,255,0.1)', padding: '30px' }} onClick={e => e.stopPropagation()}>
@@ -206,7 +227,6 @@ const UserDashboard = () => {
         </div>
       )}
 
-      {/* Sidebar */}
       <div className="mobile-top-bar">
         <button className="btn-secondary" style={{ minHeight: '40px', padding: '0 15px' }} onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
         <span style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '1px' }}>IBK BANK</span>
@@ -236,7 +256,6 @@ const UserDashboard = () => {
         <button className="btn-secondary" onClick={handleLogout} style={{ width: '100%', marginTop: 'auto' }}>Logout</button>
       </aside>
 
-      {/* Mobile Bottom Navigation */}
       <nav className="mobile-nav">
         {['🏠', '💸', '📊', '💳', '🛡️'].map((emoji, i) => (
           <div 
@@ -256,13 +275,12 @@ const UserDashboard = () => {
       </nav>
 
       <main className="main-content">
-        {/* ✅ DYNAMIC ROUTING AREA */}
         {isViewingSubPage ? (
           <Outlet context={{ user }} />
         ) : (
           <>
             <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
-              {activeTab === 'overview' ? `Welcome, ${user?.name?.split(' ')[0]}!` : activeTab === 'transactions' ? 'Transactions' : 'Security'}
+              {activeTab === 'overview' ? `Welcome, ${user?.name?.split(' ')[0] || user?.fullName?.split(' ')[0] || 'User'}!` : activeTab === 'transactions' ? 'Transactions' : 'Security'}
             </h1>
             
             {activeTab === 'overview' && (
@@ -272,11 +290,15 @@ const UserDashboard = () => {
                     <span style={{ fontWeight: 800, fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>IBK PREMIER</span>
                     <div style={{ width: '40px', height: '30px', background: 'linear-gradient(135deg, #d4af37, #f9e195)', borderRadius: '6px' }} />
                   </div>
-                  <div className="card-number">{user?.accountNumber ? user.accountNumber.match(/.{1,4}/g).join(' ') : '•••• •••• •••• 7890'}</div>
+                  <div className="card-number">
+                    {user?.accountNumber 
+                      ? user.accountNumber.toString().match(/.{1,4}/g)?.join(' ') 
+                      : '•••• •••• •••• 7890'}
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <div>
                       <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px' }}>CARD HOLDER</div>
-                      <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>{user?.name}</div>
+                      <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>{user?.name || user?.fullName || 'VALUED CUSTOMER'}</div>
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 900, fontStyle: 'italic' }}>VISA</div>
                   </div>
