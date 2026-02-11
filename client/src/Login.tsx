@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import AdminDashboard from './AdminDashboard'; // Added Import
-import UserDashboard from './UserDashboard'; // Added Import for Standard Users
+import { login } from './api'; // Use your centralized API config
+import AdminDashboard from './AdminDashboard'; 
+import UserDashboard from './UserDashboard'; 
 
 const images = ['/k1.jpg', '/k2.jpg', '/k3.jpg', '/k4.jpg'];
-
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -35,15 +34,15 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Force email to lowercase before sending to match backend list
+      // ✅ FIX: Force email to lowercase and trim to match the Signup data in MongoDB
       const loginPayload = {
-        ...formData,
-        email: formData.email.toLowerCase().trim()
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password
       };
 
-      const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-
-      const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, loginPayload);
+      // ✅ FIX: Use the imported 'login' function from your ./api file
+      // This ensures we don't have URL issues and includes your Interceptors
+      const { data } = await login(loginPayload);
       
       // DEBUG LOG: Open your browser console (F12) to see this!
       console.log("Login Response Data:", data);
@@ -57,7 +56,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
 
       // REDIRECTION LOGIC:
       // We check the role returned from your Backend. 
-      // Ensure your Backend sends { user: { role: 'admin' } }
       if (data.user && data.user.role === 'admin') {
         console.log("Switching to Admin View...");
         setIsAdminView(true);
@@ -68,6 +66,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       
     } catch (err: any) {
       console.error("Login Error:", err);
+      // This handles the "Invalid credentials" message coming from your server
       alert(err.response?.data?.message || "Login failed. Please check your credentials or connection.");
     } finally {
       setLoading(false);
