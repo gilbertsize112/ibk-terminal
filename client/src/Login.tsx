@@ -55,16 +55,20 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       // Update the Global state in App.tsx
       setUser(data.user);
 
-      // REDIRECTION LOGIC (Local state fallback):
+      // REDIRECTION LOGIC:
+      // We check the role returned from your Backend. 
+      // Ensure your Backend sends { user: { role: 'admin' } }
       if (data.user && data.user.role === 'admin') {
+        console.log("Switching to Admin View...");
         setIsAdminView(true);
       } else {
+        console.log("Switching to User View...");
         setIsUserView(true);
       }
       
     } catch (err: any) {
       console.error("Login Error:", err);
-      alert(err.response?.data?.message || "Login failed - Connection Refused. Check if Backend is live.");
+      alert(err.response?.data?.message || "Login failed. Please check your credentials or connection.");
     } finally {
       setLoading(false);
     }
@@ -76,13 +80,13 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     setModalView('none');
   };
 
-  // VIEW LOGIC:
-  if (isUserView) {
-    return <UserDashboard />;
-  }
-
+  // VIEW LOGIC (This happens before the return below):
   if (isAdminView) {
     return <AdminDashboard />;
+  }
+
+  if (isUserView) {
+    return <UserDashboard />;
   }
 
   return (
@@ -157,7 +161,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         @media (max-width: 480px) {
           .auth-card {
             padding: 30px 24px;
-            max-width: 340px; /* Large and little bit small for mobile */
+            max-width: 340px; 
           }
         }
 
