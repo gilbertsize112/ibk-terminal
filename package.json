@@ -1,0 +1,13 @@
+{
+  "name": "ibk-bank-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install-all": "npm install && npm install --prefix client && npm install --prefix server",
+    "build": "cd client && npm install && npm run build && cd ../server && npm install && npm run build"
+  }
+}
