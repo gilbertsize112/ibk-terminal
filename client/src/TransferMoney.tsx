@@ -164,18 +164,18 @@ const TransferMoney = () => {
       setShowKeypad(false);
       setShowConfirm(false);
 
-      // SAFETY FIX: We use a local constant for recipientName to ensure it's not undefined during navigation
+      // SAFETY FIX: Check for recipientName one last time to prevent 'undefined' crash on receipt
       const finalRecipientName = transferData?.recipientName || "Valued Client";
 
-      // FINAL REDIRECT: Updated to match the nested route in your App.tsx
+      // FINAL REDIRECT: Passing strictly typed data to the receipt component
       navigate('/dashboard/receipt', { 
         state: { 
           details: {
-            senderName: user?.name || "Sender",
+            senderName: user?.name || "Member",
             senderAcc: user?.accountNumber || "N/A",
             recipientAcc: recipientAccount,
             recipientName: finalRecipientName,
-            amount: Number(amount),
+            amount: Number(amount), // Ensuring this is a number
             memo: memo,
             transactionId: generatedId,
             date: new Date().toLocaleString()
@@ -425,6 +425,7 @@ const TransferMoney = () => {
         .confirm-item {
           display: flex;
           justify-content: space-between;
+          align-items: center;
           margin-bottom: 18px;
           animation: slideInRight 0.6s ease forwards;
           opacity: 0;
@@ -612,7 +613,7 @@ const TransferMoney = () => {
           <div className="confirm-card">
             <div style={{ fontSize: '56px', marginBottom: '20px', animation: 'float 3s infinite ease-in-out' }}>🛡️</div>
             <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '-1px', fontFamily: 'Plus Jakarta Sans' }}>Authorize Transfer</h2>
-            <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: '1.5' }}>Please verify the transaction details below. This action cannot be undone.</p>
+            <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: '1.5' }}>Please verify the transaction details below.</p>
             
             <div style={{ background: 'rgba(2, 6, 23, 0.4)', padding: '24px', borderRadius: '24px', textAlign: 'left', marginBottom: '28px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
               
@@ -636,14 +637,14 @@ const TransferMoney = () => {
 
               <div className="confirm-item" style={{ animationDelay: '0.4s', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '16px' }}>
                 <span style={{ color: '#fff', fontSize: '13px', fontWeight: 800 }}>Total Amount</span>
-                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${transferData?.amount.toLocaleString()}</span>
+                <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${Number(amount).toLocaleString()}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button 
                 onClick={() => setShowConfirm(false)}
-                style={{ flex: 1, padding: '18px', borderRadius: '16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>
+                style={{ flex: 1, padding: '18px', borderRadius: '16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', fontWeight: 700, cursor: 'pointer' }}>
                 DECLINE
               </button>
               <button 
@@ -672,7 +673,7 @@ const TransferMoney = () => {
               </p>
             ) : (
               <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px', marginBottom: '0' }}>
-                {user?.hasPin ? "Authorize this asset movement" : "Set a 4-digit code for future transfers"}
+                {user?.hasPin ? "Authorize this asset movement" : "Set a 4-digit code"}
               </p>
             )}
 
