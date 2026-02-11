@@ -19,14 +19,16 @@ function App() {
     const handlePrompt = (e: any) => e.preventDefault();
     window.addEventListener('beforeinstallprompt', handlePrompt);
 
-    // 2. CHECK AUTH SESSION
+    // 2. CHECK AUTH SESSION (Hydration)
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     
     if (savedUser && token) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
       } catch (e) {
+        console.error("Session restoration failed", e);
         localStorage.clear();
       }
     }
@@ -55,7 +57,7 @@ function App() {
                     <Signup setUser={setUser} /> 
                   )}
                   
-                  {/* Keep the toggle button design from your original code */}
+                  {/* Toggle button design kept exactly as provided */}
                   <div style={{ marginTop: '20px', textAlign: 'center' }}>
                     <p style={{ color: '#64748b' }}>
                       {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -73,6 +75,7 @@ function App() {
                   </div>
                 </div>
               } />
+              {/* If not logged in, any random path redirects to login page */}
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
@@ -83,7 +86,7 @@ function App() {
                 user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />
               } />
 
-              {/* USER SPECIFIC ROUTE */}
+              {/* USER SPECIFIC ROUTE - Nested structure maintained */}
               <Route path="/dashboard" element={
                 user.role === 'admin' ? <Navigate to="/admin" /> : <UserDashboard />
               }>
