@@ -11,17 +11,18 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "server/src/index.ts"
+      "src": "/api/(.*)",
+      "dest": "server/src/index.ts"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "/client/assets/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "client/index.html"
+      "src": "/(.*)",
+      "dest": "/client/index.html"
     }
   ]
 }
