@@ -35,24 +35,21 @@ async function connectToDatabase() {
     return;
   }
 
-  // Disable buffering to prevent long hangs on Vercel
   mongoose.set('bufferCommands', false);
 
-  console.log('🔄 Connecting to MongoDB Atlas...');
   try {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      heartbeatFrequencyMS: 10000
-    });
-    
-    isConnected = true;
-    console.log('✅ MongoDB Connected Successfully');
+    if (mongoose.connection.readyState !== 1) {
+      console.log('🔄 Attempting MongoDB Connection...');
+      await mongoose.connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 15000,
+      });
+      isConnected = true;
+      console.log('✅ MongoDB Connected Successfully');
+    }
   } catch (err: any) {
     isConnected = false;
     console.error('❌ MongoDB Connection Error:', err.message);
-    throw err; 
+    if (process.env.NODE_ENV === 'production') throw err;
   }
 }
 
@@ -60,72 +57,53 @@ async function connectToDatabase() {
  * ⚡ Request Middleware
  */
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-  // 1. Instant Ping for Health Checks
   if (req.url.toLowerCase().includes('ping')) {
-    return res.status(200).json({ 
-      status: 'active',
-      db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      timestamp: new Date().toISOString()
-    });
+    return res.status(200).json({ status: 'active' });
   }
 
-  // 2. Database Handshake for Serverless Cold Starts
   try {
     await connectToDatabase();
     next();
   } catch (err: any) {
-    res.status(503).json({ 
-      error: "Database Unavailable", 
-      message: err.message 
-    });
+    res.status(503).json({ error: "Database Unavailable" });
   }
 });
 
 // Routes
-// Note: Ensure your file in ./routes/ is EXACTLY named userRoutes.ts (case sensitive)
 app.use(['/api/auth', '/auth'], authRoutes);   
 app.use(['/api/user', '/user'], userRoutes);   
 app.use(['/api/admin', '/admin'], adminRoutes); 
 
 app.get('/', (req, res) => res.status(200).send('Bank Server API Online'));
 
-// 404 Handler - UPDATED TO LOG ERRORS
+// 404 Handler
 app.use((req: Request, res: Response) => {
-  console.warn(`⚠️ 404 Attempted on: ${req.method} ${req.url}`);
-  res.status(404).json({ 
-    error: 'Not Found', 
-    path: req.url,
-    method: req.method,
-    suggestion: "Check if the frontend API_URL includes /api/user" 
-  });
+  res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
 /**
  * 🚀 Startup Logic
- * Optimized to prevent "bufferCommands" errors by connecting BEFORE listening.
- */
-const startServer = async () => {
-  try {
-    const PORT = process.env.PORT || 5000;
-    
-    // Connect to DB first so it's ready for requests
-    await connectToDatabase();
-    
-    app.listen(Number(PORT), () => {
-      console.log(`🚀 Server fully ready on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error("❌ Critical: Could not start server because DB connection failed.");
-    
-    if (process.env.NODE_ENV === 'production') process.exit(1);
-  }
-};
-
-/**
- * 🌍 VERCEL COMPATIBILITY
+ * 'global' check prevents multiple server instances during hot-reloads.
  */
 if (process.env.NODE_ENV !== 'production') {
-  startServer();
+  const PORT = process.env.PORT || 5000;
+  
+  const startLocalServer = async () => {
+    // Check if the server is already running in this process
+    if (!(global as any).hasStarted) {
+      try {
+        await connectToDatabase();
+        app.listen(Number(PORT), () => {
+          console.log(`🚀 Local Server confirmed on port ${PORT}`);
+          (global as any).hasStarted = true;
+        });
+      } catch (err) {
+        console.error("❌ Startup failed", err);
+      }
+    }
+  };
+
+  startLocalServer();
 }
 
 export default app;
