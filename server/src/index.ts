@@ -18,12 +18,33 @@ let isConnected = false;
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 
                   'mongodb+srv://ibk_admin:BankPass2026@cluster0.zsj4kdb.mongodb.net/bank_app?retryWrites=true&w=majority&connectTimeoutMS=30000&socketTimeoutMS=45000&maxIdleTimeMS=60000';
 
+// --- UPDATED CORS CONFIGURATION ---
+const allowedOrigins = [
+  'https://beacontrust-finance.vercel.app', 
+  'https://ibk-finance.vercel.app', 
+  'https://ibkbank.vercel.app', 
+  'http://localhost:5173', 
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: ['https://ibk-finance.vercel.app', 'https://ibkbank.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
+
+// Handle preflight requests globally
+app.options('*', cors()); 
 
 app.use(express.json());
 
@@ -83,13 +104,11 @@ app.use((req: Request, res: Response) => {
 
 /**
  * 🚀 Startup Logic
- * 'global' check prevents multiple server instances during hot-reloads.
  */
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   
   const startLocalServer = async () => {
-    // Check if the server is already running in this process
     if (!(global as any).hasStarted) {
       try {
         await connectToDatabase();
