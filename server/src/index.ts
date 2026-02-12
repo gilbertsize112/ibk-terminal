@@ -29,13 +29,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (like mobile apps)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('CORS Policy: Origin not allowed'), false);
     }
-    return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -102,9 +102,6 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found', path: req.url });
 });
 
-/**
- * 🚀 Startup Logic
- */
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   
