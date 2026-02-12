@@ -135,6 +135,7 @@ const TransferMoney = () => {
           await axios.post(`${API_BASE_URL}/api/user/setup-pin`, { pin }, {
             headers: { Authorization: `Bearer ${token}` }
           });
+          // Update local state so we don't try to set it again
           setUser(prev => prev ? { ...prev, hasPin: true } : null);
         } catch (setupErr: any) {
           console.error("PIN Setup Failed:", setupErr);
@@ -164,10 +165,10 @@ const TransferMoney = () => {
       setShowKeypad(false);
       setShowConfirm(false);
 
-      // SAFETY FIX: Check for recipientName one last time to prevent 'undefined' crash on receipt
+      // SAFETY FIX: Check for recipientName one last time
       const finalRecipientName = transferData?.recipientName || "Valued Client";
 
-      // FINAL REDIRECT: Passing strictly typed data to the receipt component
+      // FINAL REDIRECT
       navigate('/dashboard/receipt', { 
         state: { 
           details: {
@@ -175,7 +176,7 @@ const TransferMoney = () => {
             senderAcc: user?.accountNumber || "N/A",
             recipientAcc: recipientAccount,
             recipientName: finalRecipientName,
-            amount: Number(amount), // Ensuring this is a number
+            amount: Number(amount),
             memo: memo,
             transactionId: generatedId,
             date: new Date().toLocaleString()
@@ -583,7 +584,6 @@ const TransferMoney = () => {
               </button>
             </div>
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#475569', textAlign: 'right' }}>
-                {/* FIXED LINE BELOW: Added safe check for user?.balance */}
                 Available: <span style={{color: '#94a3b8'}}>${(user?.balance || 0).toLocaleString()}</span>
             </div>
           </div>
@@ -638,7 +638,6 @@ const TransferMoney = () => {
 
               <div className="confirm-item" style={{ animationDelay: '0.4s', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '16px' }}>
                 <span style={{ color: '#fff', fontSize: '13px', fontWeight: 800 }}>Total Amount</span>
-                {/* FIXED LINE BELOW: Added fallback for amount formatting */}
                 <span style={{ fontWeight: 900, color: '#10b981', fontSize: '24px', fontFamily: 'Plus Jakarta Sans' }}>${(Number(amount) || 0).toLocaleString()}</span>
               </div>
             </div>

@@ -360,15 +360,28 @@ const AdminDashboard = () => {
           System Developer: <span style={{ color: '#3b82f6', fontWeight: 800 }}>GILBERT FAVOUR</span>
         </div>
       </footer>
-
-      {showUserModal && selectedUser && (
-        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-              <div style={{ width: '60px', height: '60px', background: '#3b82f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', margin: '0 auto 16px', fontSize: '24px', color: 'white' }}>👤</div>
-              <h2 style={{ fontSize: '24px', fontWeight: 900 }}>{selectedUser.name}</h2>
-              <p style={{ color: theme.subtext, fontSize: '14px' }}>System UID: {selectedUser._id.slice(-8)}</p>
-            </div>
+       
+       {showUserModal && selectedUser && (
+  <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+    <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <div style={{ 
+          width: '60px', 
+          height: '60px', 
+          background: '#3b82f6', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', // ✅ Fixed from justifyCenter
+          margin: '0 auto 16px', 
+          fontSize: '24px', 
+          color: 'white' 
+        }}>
+          👤
+        </div>
+        <h2 style={{ fontSize: '24px', fontWeight: 900 }}>{selectedUser.name}</h2>
+        <p style={{ color: theme.subtext, fontSize: '14px' }}>System UID: {selectedUser._id.slice(-8)}</p>
+      </div>
             
             <div style={{ display: 'grid', gap: '10px', marginBottom: '30px' }}>
               {[
