@@ -27,7 +27,6 @@ const AdminDashboard = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [amount, setAmount] = useState('');
-  // activeTab kept for internal logic but navigation buttons removed as requested
   const [activeTab] = useState('dashboard');
 
   // --- Theme Logic Start ---
@@ -51,25 +50,20 @@ const AdminDashboard = () => {
     subtext: darkMode ? '#64748b' : '#94a3b8',
     tableBorder: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'
   };
-  // --- Theme Logic End ---
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    let isMounted = true; // Flag to prevent memory leaks and double-log noise
+    let isMounted = true;
 
-    const fetchUsers = async () => {
+    const fetchInitialUsers = async () => {
       try {
         if (isMounted) setLoading(true);
         const token = localStorage.getItem('token');
-        
-        // Log only once per mount
         if (isMounted) console.log("🚀 Syncing with Bank Database...");
-        
         const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
         if (isMounted) {
           const userData = Array.isArray(data) ? data : (data.users || []);
           setUsers(userData);
@@ -84,11 +78,8 @@ const AdminDashboard = () => {
       }
     };
 
-    fetchUsers();
-
-    return () => {
-      isMounted = false; // Cleanup: tells React to stop background tasks if component unmounts
-    };
+    fetchInitialUsers();
+    return () => { isMounted = false; };
   }, [API_BASE_URL]);
 
   const fetchUsers = async () => {
@@ -110,7 +101,6 @@ const AdminDashboard = () => {
   const handleToggleUserStatus = async (userId: string, currentlyFrozen: boolean) => {
     const newStatus = !currentlyFrozen;
     if (!window.confirm(`Are you sure you want to set this user to ${newStatus ? 'frozen' : 'active'}?`)) return;
-
     try {
       const token = localStorage.getItem('token');
       await axios.patch(`${API_BASE_URL}/api/admin/user-status`, {
@@ -129,18 +119,12 @@ const AdminDashboard = () => {
   const handleLoadMoney = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || !amount) return;
-
     try {
       const token = localStorage.getItem('token');
-      const payload = {
-        userId: selectedUser._id,
-        amount: parseFloat(amount)
-      };
-
+      const payload = { userId: selectedUser._id, amount: parseFloat(amount) };
       await axios.post(`${API_BASE_URL}/api/admin/load-wallet`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       alert(`Success! $${amount} injected into ${selectedUser.name}'s account.`);
       setShowLoadModal(false);
       setAmount('');
@@ -161,161 +145,190 @@ const AdminDashboard = () => {
 
   return (
     <div style={{ 
-      minHeight: '100vh', 
+      minHeight: '100%', 
       background: theme.bg, 
       color: theme.text, 
-      padding: '16px', 
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      paddingTop: 'env(safe-area-inset-top)',
+      padding: '20px 16px', 
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.3s ease'
+      transition: 'background 0.3s ease'
     }}>
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         html, body { 
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-          -webkit-font-smoothing: antialiased; 
           background: ${theme.bg};
+          height: auto;
+          overflow-y: auto; 
           overflow-x: hidden;
           width: 100%;
           transition: background 0.3s ease;
         }
-        
-        button { cursor: pointer; min-height: 44px; border-radius: 10px; font-weight: 600; transition: all 0.2s; touch-action: manipulation; }
-        .btn-primary { background: #004da0; color: white; border: none; padding: 10px 20px; }
-        .btn-primary:active { background: #003a7a; transform: scale(0.97); }
+
+        /* Animations */
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .animate-slide { animation: slideUp 0.5s ease forwards; }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+
+        button { cursor: pointer; min-height: 48px; border-radius: 12px; font-weight: 600; transition: all 0.2s; touch-action: manipulation; }
+        .btn-primary { background: #004da0; color: white; border: none; padding: 10px 20px; box-shadow: 0 4px 12px rgba(0,77,160,0.3); }
+        .btn-primary:active { transform: scale(0.96); }
         .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 10px 20px; }
-        .btn-danger:active { background: rgba(239,68,68,0.3); transform: scale(0.97); }
         
         input { 
-          padding: 14px; 
+          padding: 16px; 
           border: 1px solid ${darkMode ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)'}; 
-          border-radius: 10px; 
+          border-radius: 12px; 
           background: ${theme.inputBg}; 
           color: ${theme.inputText}; 
           width: 100%; 
           font-size: 16px; 
-          -webkit-appearance: none;
+          outline: none;
+        }
+
+        .card { 
+          background: ${theme.card}; 
+          backdrop-filter: blur(12px); 
+          -webkit-backdrop-filter: blur(12px); 
+          border: 1px solid ${theme.cardBorder}; 
+          padding: 20px; 
+          border-radius: 20px; 
+          margin-bottom: 16px; 
+          box-shadow: ${darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 25px rgba(0,0,0,0.05)'};
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .stat-label { color: ${theme.subtext}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 24px; font-weight: 900; margin: 8px 0; color: #3b82f6; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; padding: 16px 12px; color: ${theme.subtext}; font-size: 10px; font-weight: 800; border-bottom: 1px solid ${theme.cardBorder}; text-transform: uppercase; }
+        td { padding: 18px 12px; font-size: 14px; border-bottom: 1px solid ${theme.tableBorder}; color: ${theme.text}; }
+        
+        .modal-overlay { 
+          position: fixed; 
+          inset: 0; 
+          background: rgba(0,0,0,0.8); 
+          backdrop-filter: blur(5px);
+          display: flex; 
+          align-items: flex-end; 
+          justify-content: center; 
+          z-index: 1000; 
+          animation: fadeIn 0.3s ease;
         }
         
-        .card { background: ${theme.card}; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid ${theme.cardBorder}; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: ${darkMode ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.05)'}; transition: all 0.3s ease; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-label { color: ${theme.subtext}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 22px; font-weight: 800; margin: 8px 0; color: #3b82f6; }
-        
-        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { text-align: left; padding: 12px; color: ${theme.subtext}; font-size: 11px; border-bottom: 1px solid ${theme.cardBorder}; }
-        td { padding: 14px 12px; font-size: 13px; border-bottom: 1px solid ${theme.tableBorder}; color: ${theme.text}; }
-        
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; padding: 10px; }
         .modal-content { 
           background: ${theme.modalBg}; 
-          padding: 24px; 
-          border-radius: 24px 24px 12px 12px; 
+          padding: 30px 24px; 
+          border-radius: 30px 30px 0 0; 
           width: 100%; 
           max-width: 500px; 
-          margin-bottom: env(safe-area-inset-bottom);
-          box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
+          animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           color: ${theme.text};
         }
 
-        .action-group { display: flex; gap: 8px; }
-        .btn-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; }
+        .action-group { display: flex; gap: 10px; }
+        .btn-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 18px; border: none; }
 
         @media (max-width: 640px) {
-          h1 { font-size: 20px; }
-          .stat-value { font-size: 18px; }
-          .card { padding: 15px; }
-          .modal { align-items: center; }
-          .modal-content { border-radius: 20px; margin-bottom: 0; }
+          .modal-overlay { align-items: flex-end; }
+          .modal-content { border-radius: 24px 24px 0 0; padding-bottom: 40px; }
+          .stat-value { font-size: 20px; }
+          .grid { grid-template-columns: 1fr 1fr; }
+          .grid > div:last-child { grid-column: span 2; }
         }
 
-        footer { margin-top: auto; padding: 24px 0; text-align: center; border-top: 1px solid ${theme.cardBorder}; }
-        .footer-text { color: ${theme.subtext}; font-size: 12px; line-height: 1.6; }
-        .footer-credit { color: #3b82f6; font-weight: 700; }
-
-        .theme-toggle {
-          background: ${theme.card};
-          color: ${theme.text};
-          border: 1px solid ${theme.cardBorder};
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          font-size: 18px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
+        footer { margin-top: 40px; padding: 30px 0; text-align: center; border-top: 1px solid ${theme.cardBorder}; }
       `}</style>
 
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontWeight: 800 }}>Admin <span style={{ color: '#3b82f6' }}>Dashboard</span></h1>
+      <div style={{ flex: 1 }} className="animate-fade">
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div>
+            <h1 style={{ fontWeight: 900, fontSize: '24px', letterSpacing: '-0.5px' }}>
+              Admin <span style={{ color: '#3b82f6' }}>Portal</span>
+            </h1>
+            <p style={{ fontSize: '12px', color: theme.subtext }}>Secure Node Management</p>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+            <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)} style={{
+               background: theme.card, color: theme.text, border: `1px solid ${theme.cardBorder}`,
+               width: '44px', height: '44px', borderRadius: '14px', fontSize: '20px'
+            }}>
               {darkMode ? '☀️' : '🌙'}
             </button>
-            <button className="btn-danger" onClick={handleLogout} style={{ padding: '8px 16px', fontSize: '13px', minHeight: '36px' }}>Logout</button>
+            <button className="btn-danger" onClick={handleLogout} style={{ padding: '8px 16px', fontSize: '13px', minHeight: '44px', borderRadius: '14px' }}>Logout</button>
           </div>
-        </div>
+        </header>
 
         {activeTab === 'dashboard' && (
           <>
             <div className="grid">
-              <div className="card">
-                <div className="stat-label">Users</div>
+              <div className="card animate-slide" style={{ animationDelay: '0.1s' }}>
+                <div className="stat-label">Total Clients</div>
                 <div className="stat-value">{safeUsers.length}</div>
-                <div style={{ fontSize: '11px', color: theme.subtext }}>{activeUsers} Active</div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#10b981' }}>● {activeUsers} Online</div>
               </div>
-              <div className="card">
-                <div className="stat-label">Vault</div>
+              <div className="card animate-slide" style={{ animationDelay: '0.2s' }}>
+                <div className="stat-label">Total Reserves</div>
                 <div className="stat-value" style={{ color: '#10b981' }}>${totalBalance.toLocaleString()}</div>
-                <div style={{ fontSize: '11px', color: theme.subtext }}>Total Balance</div>
+                <div style={{ fontSize: '11px', color: theme.subtext }}>Global Liquidity</div>
               </div>
-              <div className="card">
-                <div className="stat-label">Status</div>
-                <div className="stat-value" style={{ color: '#f59e0b' }}>Live</div>
-                <div style={{ fontSize: '11px', color: theme.subtext }}>System Up</div>
+              <div className="card animate-slide" style={{ animationDelay: '0.3s' }}>
+                <div className="stat-label">Server Status</div>
+                <div className="stat-value" style={{ color: '#f59e0b' }}>Stable</div>
+                <div style={{ fontSize: '11px', color: theme.subtext }}>Encryption v3.4.1</div>
               </div>
             </div>
 
-            <div className="card">
-              <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>User Management</h3>
+            <div className="card animate-slide" style={{ animationDelay: '0.4s', padding: '10px' }}>
+              <h3 style={{ padding: '15px', fontSize: '18px', fontWeight: 800 }}>Master Database</h3>
               {loading ? (
-                <p style={{ color: theme.subtext, textAlign: 'center', padding: '40px' }}>Loading Database...</p>
+                <div style={{ padding: '60px 0', textAlign: 'center' }}>
+                  <div style={{ width: '30px', height: '30px', border: '3px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }}></div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                  <p style={{ color: theme.subtext, fontSize: '14px' }}>Establishing Secure Link...</p>
+                </div>
               ) : safeUsers.length > 0 ? (
                 <div className="table-wrapper">
                   <table>
                     <thead>
                       <tr>
-                        <th>CLIENT</th>
-                        <th>BALANCE</th>
-                        <th>STATUS</th>
-                        <th>ACTIONS</th>
+                        <th>Client Identity</th>
+                        <th>Balance</th>
+                        <th>Account Status</th>
+                        <th>Management</th>
                       </tr>
                     </thead>
                     <tbody>
                       {safeUsers.map(user => (
                         <tr key={user._id}>
                           <td>
-                            <div style={{ fontWeight: 700 }}>{user.name}</div>
-                            <div style={{ fontSize: '10px', color: theme.subtext }}>{user.email}</div>
+                            <div style={{ fontWeight: 800, fontSize: '15px' }}>{user.name}</div>
+                            <div style={{ fontSize: '11px', color: theme.subtext }}>{user.email}</div>
                           </td>
-                          <td style={{ color: '#10b981', fontWeight: 700 }}>
+                          <td style={{ color: '#10b981', fontWeight: 800 }}>
                             ${user.balance?.toLocaleString() || '0'}
                           </td>
                           <td>
                             <span style={{ 
-                              padding: '4px 8px', 
-                              borderRadius: '6px', 
+                              padding: '6px 10px', 
+                              borderRadius: '8px', 
                               fontSize: '10px', 
-                              fontWeight: 800, 
+                              fontWeight: 900, 
                               background: user.isFrozen ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', 
-                              color: user.isFrozen ? '#ef4444' : '#10b981'
+                              color: user.isFrozen ? '#ef4444' : '#10b981',
+                              border: user.isFrozen ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)'
                             }}>
                               {user.isFrozen ? 'FROZEN' : 'ACTIVE'}
                             </span>
@@ -323,7 +336,7 @@ const AdminDashboard = () => {
                           <td>
                             <div className="action-group">
                               <button className="btn-primary btn-icon" onClick={() => { setSelectedUser(user); setShowLoadModal(true); }}>💰</button>
-                              <button className="btn-primary btn-icon" onClick={() => { setSelectedUser(user); setShowUserModal(true); }}>👤</button>
+                              <button className="btn-primary btn-icon" style={{ background: '#1e293b' }} onClick={() => { setSelectedUser(user); setShowUserModal(true); }}>👤</button>
                             </div>
                           </td>
                         </tr>
@@ -332,7 +345,7 @@ const AdminDashboard = () => {
                   </table>
                 </div>
               ) : (
-                <p style={{ color: theme.subtext, textAlign: 'center', padding: '24px' }}>No records found</p>
+                <p style={{ color: theme.subtext, textAlign: 'center', padding: '40px' }}>No client data available.</p>
               )}
             </div>
           </>
@@ -340,76 +353,81 @@ const AdminDashboard = () => {
       </div>
 
       <footer>
-        <div className="footer-text">
-          &copy; {new Date().getFullYear()} Global Asset Management. All Rights Reserved.
+        <div style={{ color: theme.subtext, fontSize: '11px', marginBottom: '8px', letterSpacing: '1px' }}>
+          &copy; {new Date().getFullYear()} BEACON TRUST FINANCIAL
         </div>
-        <div className="footer-text">
-          System Secure & Encrypted. Built by <span className="footer-credit">Gilbert Favour</span>
+        <div style={{ color: theme.subtext, fontSize: '13px' }}>
+          System Developer: <span style={{ color: '#3b82f6', fontWeight: 800 }}>GILBERT FAVOUR</span>
         </div>
       </footer>
 
       {showUserModal && selectedUser && (
-        <div className="modal" onClick={() => setShowUserModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '22px' }}>{selectedUser.name}</h2>
-              <p style={{ color: theme.subtext, fontSize: '13px' }}>Client Profile</p>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ width: '60px', height: '60px', background: '#3b82f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', margin: '0 auto 16px', fontSize: '24px', color: 'white' }}>👤</div>
+              <h2 style={{ fontSize: '24px', fontWeight: 900 }}>{selectedUser.name}</h2>
+              <p style={{ color: theme.subtext, fontSize: '14px' }}>System UID: {selectedUser._id.slice(-8)}</p>
             </div>
             
-            <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gap: '10px', marginBottom: '30px' }}>
               {[
-                { label: 'Account #', value: selectedUser.accountNumber || 'PENDING' },
-                { label: 'Balance', value: `$${selectedUser.balance?.toLocaleString()}`, color: '#10b981' },
-                { label: 'Status', value: selectedUser.isFrozen ? 'Frozen' : 'Active' },
-                { label: 'SSN', value: selectedUser.ssn || 'N/A' },
-                { label: 'Phone', value: selectedUser.phoneNumber || 'N/A' }
+                { label: 'Account Number', value: selectedUser.accountNumber || 'PENDING' },
+                { label: 'Current Assets', value: `$${selectedUser.balance?.toLocaleString()}`, color: '#10b981' },
+                { label: 'Security Status', value: selectedUser.isFrozen ? 'Access Restricted' : 'Access Granted' },
+                { label: 'Identity (SSN)', value: selectedUser.ssn || 'NOT VERIFIED' },
+                { label: 'Primary Contact', value: selectedUser.phoneNumber || 'N/A' }
               ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', borderRadius: '10px' }}>
-                  <span style={{ color: theme.subtext, fontSize: '13px' }}>{item.label}</span>
-                  <span style={{ fontWeight: 700, fontSize: '13px', color: item.color || theme.text }}>{item.value}</span>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', borderRadius: '15px', border: `1px solid ${theme.cardBorder}` }}>
+                  <span style={{ color: theme.subtext, fontSize: '12px', fontWeight: 600 }}>{item.label}</span>
+                  <span style={{ fontWeight: 800, fontSize: '13px', color: item.color || theme.text }}>{item.value}</span>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'grid', gap: '10px' }}>
+            <div style={{ display: 'grid', gap: '12px' }}>
               <button className={selectedUser.isFrozen ? 'btn-primary' : 'btn-danger'} 
+                style={{ height: '54px', fontSize: '16px' }}
                 onClick={() => { setShowUserModal(false); handleToggleUserStatus(selectedUser._id, selectedUser.isFrozen); }}>
-                {selectedUser.isFrozen ? 'Unfreeze Account' : 'Freeze Account'}
+                {selectedUser.isFrozen ? 'Authorize Access' : 'Restrict Access'}
               </button>
-              <button onClick={() => setShowUserModal(false)} style={{ border: 'none', background: 'transparent', color: theme.subtext }}>Close</button>
+              <button onClick={() => setShowUserModal(false)} style={{ border: 'none', background: 'transparent', color: theme.subtext, fontWeight: 700 }}>Dismiss</button>
             </div>
           </div>
         </div>
       )}
 
       {showLoadModal && (
-        <div className="modal" onClick={() => setShowLoadModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowLoadModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '8px', textAlign: 'center' }}>Inject Funds</h2>
-            <p style={{ textAlign: 'center', color: theme.subtext, fontSize: '14px', marginBottom: '20px' }}>To: {selectedUser?.name}</p>
+            <h2 style={{ marginBottom: '10px', textAlign: 'center', fontSize: '24px', fontWeight: 900 }}>Financial Injection</h2>
+            <p style={{ textAlign: 'center', color: theme.subtext, fontSize: '14px', marginBottom: '30px' }}>Recipient: <span style={{ color: theme.text, fontWeight: 800 }}>{selectedUser?.name}</span></p>
             
             <form onSubmit={handleLoadMoney}>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount (0.00)"
-                required
-                style={{ marginBottom: '16px' }}
-              />
+              <div style={{ position: 'relative', marginBottom: '24px' }}>
+                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#3b82f6' }}>$</span>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  style={{ paddingLeft: '35px' }}
+                />
+              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                {[100, 1000, 5000, 10000].map(val => (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '30px' }}>
+                {[100, 1000, 10000, 50000].map(val => (
                   <button type="button" key={val} onClick={() => setAmount(val.toString())} 
-                    style={{ background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: theme.text, border: `1px solid ${theme.cardBorder}`, minHeight: '40px', fontSize: '13px' }}>
+                    style={{ background: darkMode ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', fontSize: '14px', borderRadius: '14px' }}>
                     +${val.toLocaleString()}
                   </button>
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gap: '10px' }}>
-                <button type="submit" className="btn-primary" style={{ background: '#10b981' }}>Confirm Transfer</button>
-                <button type="button" onClick={() => setShowLoadModal(false)} style={{ border: 'none', background: 'transparent', color: theme.subtext }}>Cancel</button>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                <button type="submit" className="btn-primary" style={{ background: '#10b981', height: '54px', fontSize: '16px' }}>Execute Transfer</button>
+                <button type="button" onClick={() => setShowLoadModal(false)} style={{ border: 'none', background: 'transparent', color: theme.subtext, fontWeight: 700 }}>Cancel</button>
               </div>
             </form>
           </div>
