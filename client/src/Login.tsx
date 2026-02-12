@@ -22,6 +22,17 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
   const [isAdminView, setIsAdminView] = useState(false);
   const [isUserView, setIsUserView] = useState(false);
 
+  // SPLASH SCREEN STATE
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Splash Screen Timer (5 Seconds)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Background Slideshow Logic (Matches Signup.tsx)
   useEffect(() => {
     const imgInterval = setInterval(() => {
@@ -91,7 +102,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
 
   return (
     <div className="app-viewport">
-      {/* INTERNAL CSS - Exact match to Signup for seamless transition */}
+      {/* INTERNAL CSS - Added Splash Screen Animations */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -107,6 +118,104 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
+        /* --- SPLASH SCREEN STYLES --- */
+        .splash-screen {
+          position: fixed;
+          inset: 0;
+          background: #020617;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          transition: transform 1s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+        }
+
+        .splash-hidden {
+          transform: translateY(-100%);
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .splash-logo {
+          font-size: 60px;
+          margin-bottom: 20px;
+          animation: splashPulse 2s infinite ease-in-out;
+        }
+
+        .splash-text-container {
+          text-align: center;
+          color: white;
+        }
+
+        .splash-title {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: 2px;
+          margin-bottom: 10px;
+          background: linear-gradient(90deg, #fff, #3b82f6, #fff);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine 3s linear infinite;
+        }
+
+        .splash-subtitle {
+          font-size: 14px;
+          color: #94a3b8;
+          font-weight: 500;
+          letter-spacing: 1px;
+        }
+
+        .loading-bar-container {
+          width: 200px;
+          height: 3px;
+          background: rgba(255,255,255,0.1);
+          border-radius: 10px;
+          margin-top: 30px;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .loading-bar-fill {
+          position: absolute;
+          height: 100%;
+          width: 50%;
+          background: #3b82f6;
+          border-radius: 10px;
+          animation: loadingSwipe 1.5s infinite ease-in-out;
+        }
+
+        .security-scan-line {
+          position: absolute;
+          width: 100%;
+          height: 2px;
+          background: rgba(59, 130, 246, 0.5);
+          box-shadow: 0 0 15px #3b82f6;
+          top: 0;
+          animation: scan 3s infinite linear;
+        }
+
+        @keyframes scan {
+          0% { top: 0; }
+          100% { top: 100%; }
+        }
+
+        @keyframes loadingSwipe {
+          0% { left: -50%; }
+          100% { left: 100%; }
+        }
+
+        @keyframes shine {
+          to { background-position: 200% center; }
+        }
+
+        @keyframes splashPulse {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px #3b82f6); }
+          50% { transform: scale(1.1); filter: drop-shadow(0 0 20px #3b82f6); }
+        }
+
+        /* --- EXISTING STYLES --- */
         .slideshow-container {
           position: fixed;
           inset: 0;
@@ -271,6 +380,20 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         }
         .forgot-pass:hover { color: #004da0; }
       `}</style>
+
+      {/* --- SPLASH SCREEN COMPONENT --- */}
+      <div className={`splash-screen ${!showSplash ? 'splash-hidden' : ''}`}>
+        <div className="security-scan-line"></div>
+        <div className="splash-logo">🏛️</div>
+        <div className="splash-text-container">
+          <h1 className="splash-title">IBK BANK</h1>
+          <p className="splash-subtitle">WHERE YOUR FUNDS ARE SECURED</p>
+          <p style={{fontSize: '10px', color: '#64748b', marginTop: '5px', letterSpacing: '2px'}}>ENCRYPTING SESSION...</p>
+        </div>
+        <div className="loading-bar-container">
+          <div className="loading-bar-fill"></div>
+        </div>
+      </div>
 
       {/* Background Slideshow */}
       <div className="slideshow-container">
