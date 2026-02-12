@@ -39,20 +39,20 @@ const AdminDashboard = () => {
   }, [darkMode]);
 
   const theme = {
-    bg: darkMode ? '#070b14' : '#f1f5f9',
-    text: darkMode ? '#f8fafc' : '#0f172a',
-    card: darkMode ? '#111827' : '#ffffff',
-    cardBorder: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-    inputBg: darkMode ? '#1f2937' : '#f8fafc',
-    inputText: darkMode ? '#ffffff' : '#1e293b',
-    modalBg: darkMode ? '#111827' : '#ffffff',
+    bg: darkMode ? '#020617' : '#f8fafc',
+    card: darkMode ? '#0f172a' : '#ffffff',
+    cardBorder: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)',
+    text: darkMode ? '#f1f5f9' : '#0f172a',
     subtext: darkMode ? '#94a3b8' : '#64748b',
-    tableBorder: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    accent: '#3b82f6'
+    accent: '#3b82f6',
+    success: '#10b981',
+    danger: '#ef4444',
+    inputBg: darkMode ? '#1e293b' : '#f1f5f9',
   };
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+  // --- Functions (Kept exactly as requested) ---
   useEffect(() => {
     let isMounted = true;
     const fetchInitialUsers = async () => {
@@ -139,202 +139,232 @@ const AdminDashboard = () => {
       minHeight: '100vh', 
       background: theme.bg, 
       color: theme.text, 
-      padding: 'env(safe-area-inset-top) 16px 80px 16px',
-      display: 'block', // Ensuring it blocks for scrolling
-      overflowY: 'visible',
-      WebkitOverflowScrolling: 'touch'
+      paddingBottom: '100px', // Space for bottom nav
+      transition: 'all 0.3s ease'
     }}>
       <style>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
-        html, body { background: ${theme.bg}; height: auto !important; overflow-y: auto !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        .card { 
-          background: ${theme.card}; 
-          border: 1px solid ${theme.cardBorder}; 
-          padding: 20px; 
-          border-radius: 24px; 
-          margin-bottom: 16px; 
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        .glass-card {
+          background: ${theme.card};
+          border: 1px solid ${theme.cardBorder};
+          border-radius: 24px;
+          padding: 20px;
+          margin-bottom: 16px;
         }
 
-        .btn-primary { 
-            background: ${theme.accent}; 
-            color: white; border: none; 
-            padding: 12px; border-radius: 14px; 
-            font-weight: 700; width: 100%;
-            display: flex; align-items: center; justify-content: center;
+        .pulse {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: ${theme.success};
+          display: inline-block; margin-right: 6px;
+          box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+          animation: pulse-animation 2s infinite;
         }
 
-        .btn-icon {
-            width: 42px; height: 42px; border-radius: 12px; border: none;
-            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        @keyframes pulse-animation {
+          0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.7); }
+          100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
         }
 
-        .scroll-container {
-            width: 100%; overflow-x: auto; 
-            -webkit-overflow-scrolling: touch;
-            border-radius: 16px;
+        .bottom-nav {
+          position: fixed; bottom: 20px; left: 20px; right: 20px;
+          background: ${darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)'};
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+          height: 70px; border-radius: 35px;
+          border: 1px solid ${theme.cardBorder};
+          display: flex; justify-content: space-around; align-items: center;
+          z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { text-align: left; padding: 12px; color: ${theme.subtext}; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 16px 12px; border-top: 1px solid ${theme.tableBorder}; }
-
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 9999; display: flex; align-items: center; justify-content: center;
-            padding: 20px;
+        .scroll-section {
+          width: 100%; overflow-x: auto;
+          scrollbar-width: none; -ms-overflow-style: none;
         }
+        .scroll-section::-webkit-scrollbar { display: none; }
 
-        .modal-content {
-            background: ${theme.modalBg}; width: 100%; max-width: 400px;
-            border-radius: 28px; padding: 24px; position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        .btn-action {
+          padding: 12px 24px; border-radius: 16px; border: none;
+          font-weight: 700; font-size: 14px; cursor: pointer;
+          transition: transform 0.2s;
         }
+        .btn-action:active { transform: scale(0.95); }
 
-        input {
-            width: 100%; padding: 16px; border-radius: 14px;
-            background: ${theme.inputBg}; border: 1px solid ${theme.cardBorder};
-            color: ${theme.inputText}; font-size: 16px; outline: none;
+        .modal-blur {
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+          display: flex; align-items: flex-end; justify-content: center;
+          z-index: 2000;
         }
+        .modal-sheet {
+          background: ${theme.card}; width: 100%; max-width: 500px;
+          border-radius: 32px 32px 0 0; padding: 30px 24px;
+          animation: slide-up 0.3s ease-out;
+        }
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-in { animation: fadeIn 0.3s ease-in; }
+        .stat-card {
+           flex: 1; min-width: 140px; padding: 16px; border-radius: 20px;
+           background: ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'};
+        }
       `}</style>
 
-      {/* HEADER */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0' }}>
+      {/* TOP BAR */}
+      <div style={{ padding: '24px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 800 }}>Dashboard</h1>
-          <p style={{ fontSize: '12px', color: theme.subtext }}>System Control Panel</p>
+          <h2 style={{ fontSize: '14px', color: theme.subtext, fontWeight: 700, letterSpacing: '1px' }}>BEACON TRUST</h2>
+          <h1 style={{ fontSize: '24px', fontWeight: 800 }}>Admin Center</h1>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => setDarkMode(!darkMode)} style={{ background: theme.card, border: `1px solid ${theme.cardBorder}`, borderRadius: '12px', width: '40px', height: '40px' }}>
-            {darkMode ? '☀️' : '🌙'}
-          </button>
-          <button onClick={handleLogout} style={{ background: '#ef444420', color: '#ef4444', border: 'none', padding: '0 15px', borderRadius: '12px', fontWeight: 600, fontSize: '13px' }}>
-            Exit
-          </button>
-        </div>
-      </header>
+        <button 
+          onClick={() => setDarkMode(!darkMode)}
+          style={{ width: '48px', height: '48px', borderRadius: '50%', background: theme.card, border: `1px solid ${theme.cardBorder}`, fontSize: '20px' }}
+        >
+          {darkMode ? '🌙' : '☀️'}
+        </button>
+      </div>
 
-      {/* STATS GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-        <div className="card" style={{ marginBottom: 0 }}>
-          <span style={{ fontSize: '11px', color: theme.subtext, fontWeight: 700 }}>CLIENTS</span>
-          <div style={{ fontSize: '24px', fontWeight: 800, margin: '5px 0' }}>{safeUsers.length}</div>
+      {/* STATS AREA */}
+      <div style={{ padding: '0 20px', marginBottom: '24px' }}>
+        <div className="glass-card" style={{ background: theme.accent, color: 'white', border: 'none' }}>
+          <p style={{ opacity: 0.8, fontSize: '13px', fontWeight: 600 }}>Total Controlled Assets</p>
+          <h2 style={{ fontSize: '36px', fontWeight: 800, margin: '8px 0' }}>
+            ${totalBalance.toLocaleString()}
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+            <span className="pulse"></span> System Online & Secured
+          </div>
         </div>
-        <div className="card" style={{ marginBottom: 0 }}>
-          <span style={{ fontSize: '11px', color: theme.subtext, fontWeight: 700 }}>RESERVES</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, margin: '5px 0', color: '#10b981' }}>
-            ${totalBalance > 1000000 ? (totalBalance / 1000000).toFixed(1) + 'M' : totalBalance.toLocaleString()}
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="stat-card">
+            <p style={{ fontSize: '12px', color: theme.subtext, fontWeight: 700 }}>USERS</p>
+            <p style={{ fontSize: '20px', fontWeight: 800 }}>{safeUsers.length}</p>
+          </div>
+          <div className="stat-card">
+            <p style={{ fontSize: '12px', color: theme.subtext, fontWeight: 700 }}>ACTIVE</p>
+            <p style={{ fontSize: '20px', fontWeight: 800, color: theme.success }}>{safeUsers.filter(u => !u.isFrozen).length}</p>
           </div>
         </div>
       </div>
 
-      {/* USER LIST */}
-      <div className="card">
-        <h3 style={{ marginBottom: '20px', fontSize: '16px' }}>Client Management</h3>
+      {/* USERS LIST */}
+      <div style={{ padding: '0 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Master Database</h3>
+          <button onClick={fetchUsers} style={{ background: 'none', border: 'none', color: theme.accent, fontWeight: 700, fontSize: '13px' }}>Refresh</button>
+        </div>
+
         {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
+          <div style={{ padding: '40px', textAlign: 'center', color: theme.subtext }}>Syncing encryption keys...</div>
         ) : (
-          <div className="scroll-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Balance</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {safeUsers.map(user => (
-                  <tr key={user._id}>
-                    <td>
-                      <div style={{ fontWeight: 700, fontSize: '14px' }}>{user.name}</div>
-                      <div style={{ fontSize: '10px', color: theme.subtext }}>{user.isFrozen ? '⛔ Frozen' : '✅ Active'}</div>
-                    </td>
-                    <td style={{ fontWeight: 700, color: '#10b981' }}>${user.balance?.toLocaleString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="btn-icon" style={{ background: theme.accent + '20', color: theme.accent }} onClick={() => { setSelectedUser(user); setShowLoadModal(true); }}>💰</button>
-                        <button className="btn-icon" style={{ background: theme.subtext + '20', color: theme.text }} onClick={() => { setSelectedUser(user); setShowUserModal(true); }}>⚙️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          safeUsers.map(user => (
+            <div key={user._id} className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: 800, fontSize: '16px' }}>{user.name}</p>
+                <p style={{ fontSize: '12px', color: theme.subtext }}>{user.email}</p>
+                <div style={{ marginTop: '8px', fontSize: '11px', fontWeight: 700, color: user.isFrozen ? theme.danger : theme.success }}>
+                   {user.isFrozen ? 'LOCKED' : 'VERIFIED'} • ${user.balance?.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                 <button 
+                  onClick={() => { setSelectedUser(user); setShowLoadModal(true); }}
+                  style={{ width: '44px', height: '44px', borderRadius: '14px', background: theme.accent + '15', border: 'none', color: theme.accent, fontSize: '18px' }}
+                 >
+                   💰
+                 </button>
+                 <button 
+                  onClick={() => { setSelectedUser(user); setShowUserModal(true); }}
+                  style={{ width: '44px', height: '44px', borderRadius: '14px', background: theme.inputBg, border: 'none', color: theme.text, fontSize: '18px' }}
+                 >
+                   ⚙️
+                 </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
-      {/* MODALS */}
+      {/* BOTTOM NAV */}
+      <div className="bottom-nav">
+        <div style={{ textAlign: 'center', color: theme.accent }}>
+          <div style={{ fontSize: '20px' }}>📊</div>
+          <div style={{ fontSize: '10px', fontWeight: 800 }}>DASHBOARD</div>
+        </div>
+        <div onClick={handleLogout} style={{ textAlign: 'center', opacity: 0.5 }}>
+          <div style={{ fontSize: '20px' }}>🚪</div>
+          <div style={{ fontSize: '10px', fontWeight: 800 }}>LOGOUT</div>
+        </div>
+      </div>
+
+      {/* MODAL: LOAD MONEY */}
       {showLoadModal && selectedUser && (
-        <div className="modal-overlay animate-in" onClick={() => setShowLoadModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>Load Funds</h2>
-            <p style={{ color: theme.subtext, fontSize: '14px', marginBottom: '20px' }}>To: {selectedUser.name}</p>
+        <div className="modal-blur" onClick={() => setShowLoadModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Inject Funds</h2>
+            <p style={{ color: theme.subtext, marginBottom: '24px' }}>Recipient: <b>{selectedUser.name}</b></p>
+            
             <form onSubmit={handleLoadMoney}>
-              <input 
-                type="number" 
-                placeholder="0.00" 
-                value={amount} 
-                onChange={e => setAmount(e.target.value)} 
-                required 
-                autoFocus
-              />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '15px 0' }}>
-                {[1000, 5000, 10000, 50000].map(v => (
-                  <button type="button" key={v} onClick={() => setAmount(v.toString())} style={{ background: theme.inputBg, border: `1px solid ${theme.cardBorder}`, color: theme.text, padding: '8px', borderRadius: '10px', fontSize: '12px' }}>
-                    +${v.toLocaleString()}
+              <div style={{ position: 'relative', marginBottom: '20px' }}>
+                <span style={{ position: 'absolute', left: '16px', top: '18px', fontWeight: 800, color: theme.accent }}>$</span>
+                <input 
+                  type="number" 
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  style={{ padding: '18px 18px 18px 35px', borderRadius: '16px', background: theme.inputBg, border: 'none', color: theme.text, width: '100%', fontSize: '18px', fontWeight: 700 }}
+                  autoFocus
+                />
+              </div>
+
+              <div className="scroll-section" style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                {[500, 1000, 5000, 10000, 50000].map(val => (
+                  <button key={val} type="button" onClick={() => setAmount(val.toString())} style={{ padding: '10px 16px', borderRadius: '12px', border: `1px solid ${theme.cardBorder}`, background: 'none', color: theme.text, fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    +${val.toLocaleString()}
                   </button>
                 ))}
               </div>
-              <button type="submit" className="btn-primary">Confirm Injection</button>
-              <button type="button" onClick={() => setShowLoadModal(false)} style={{ width: '100%', background: 'none', border: 'none', color: theme.subtext, marginTop: '15px', fontWeight: 600 }}>Cancel</button>
+
+              <button type="submit" className="btn-action" style={{ background: theme.success, color: 'white', width: '100%', height: '56px' }}>Authorize Injection</button>
             </form>
           </div>
         </div>
       )}
 
+      {/* MODAL: USER DETAILS */}
       {showUserModal && selectedUser && (
-        <div className="modal-overlay animate-in" onClick={() => setShowUserModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ width: '50px', height: '50px', background: theme.accent, borderRadius: '50%', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '20px' }}>{selectedUser.name[0]}</div>
-                <h2 style={{ fontSize: '18px' }}>{selectedUser.name}</h2>
-                <p style={{ fontSize: '12px', color: theme.subtext }}>{selectedUser.email}</p>
+        <div className="modal-blur" onClick={() => setShowUserModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '22px', background: theme.accent, margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px', fontWeight: 800 }}>
+                {selectedUser.name[0]}
+              </div>
+              <h2 style={{ fontWeight: 800 }}>{selectedUser.name}</h2>
+              <p style={{ fontSize: '13px', color: theme.subtext }}>{selectedUser.email}</p>
             </div>
-            
-            <div style={{ background: theme.inputBg, borderRadius: '16px', padding: '15px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '12px', color: theme.subtext }}>Account No.</span>
-                    <span style={{ fontSize: '12px', fontWeight: 700 }}>{selectedUser.accountNumber || 'N/A'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '12px', color: theme.subtext }}>SSN/ID</span>
-                    <span style={{ fontSize: '12px', fontWeight: 700 }}>{selectedUser.ssn || 'N/A'}</span>
-                </div>
+
+            <div style={{ background: theme.inputBg, borderRadius: '20px', padding: '16px', marginBottom: '24px' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${theme.cardBorder}` }}>
+                 <span style={{ color: theme.subtext, fontSize: '13px' }}>Account No.</span>
+                 <span style={{ fontWeight: 700 }}>{selectedUser.accountNumber || '---'}</span>
+               </div>
+               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                 <span style={{ color: theme.subtext, fontSize: '13px' }}>ID/SSN</span>
+                 <span style={{ fontWeight: 700 }}>{selectedUser.ssn || 'PENDING'}</span>
+               </div>
             </div>
 
             <button 
-                className="btn-primary" 
-                style={{ background: selectedUser.isFrozen ? '#10b981' : '#ef4444' }}
-                onClick={() => { setShowUserModal(false); handleToggleUserStatus(selectedUser._id, selectedUser.isFrozen); }}
+              onClick={() => { setShowUserModal(false); handleToggleUserStatus(selectedUser._id, selectedUser.isFrozen); }}
+              className="btn-action" 
+              style={{ background: selectedUser.isFrozen ? theme.success : theme.danger, color: 'white', width: '100%', height: '56px', marginBottom: '12px' }}
             >
-                {selectedUser.isFrozen ? 'Unlock Account' : 'Freeze Account'}
+              {selectedUser.isFrozen ? 'Unlock Account Assets' : 'Freeze All Access'}
             </button>
-            <button type="button" onClick={() => setShowUserModal(false)} style={{ width: '100%', background: 'none', border: 'none', color: theme.subtext, marginTop: '15px', fontWeight: 600 }}>Close</button>
+            <button onClick={() => setShowUserModal(false)} style={{ width: '100%', background: 'none', border: 'none', color: theme.subtext, fontWeight: 700 }}>Dismiss</button>
           </div>
         </div>
       )}
-
-      <footer style={{ textAlign: 'center', padding: '20px 0', opacity: 0.5 }}>
-        <p style={{ fontSize: '10px', fontWeight: 700 }}>BEACON TRUST FINANCIAL SYSTEM</p>
-        <p style={{ fontSize: '9px' }}>DEV: GILBERT FAVOUR</p>
-      </footer>
     </div>
   );
 };
