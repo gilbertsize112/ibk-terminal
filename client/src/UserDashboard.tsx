@@ -159,13 +159,51 @@ const UserDashboard = () => {
   const isViewingSubPage = location.pathname !== '/dashboard' && !location.pathname.endsWith('/dashboard/');
 
   return (
-    <div style={{ background: '#f9fafb', color: '#1f2937', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', minHeight: '100vh', width: '100%' }}>
+    <div style={{ 
+      background: '#f9fafb', 
+      color: '#1f2937', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', 
+      minHeight: '100vh', 
+      width: '100%',
+      overflow: 'auto',
+      overflowX: 'hidden',
+      scrollBehavior: 'smooth'
+    }}>
       <style>{`
+        html, body { 
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { overflow-x: hidden; }
+
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: #1e40af;
+          border-radius: 10px;
+          opacity: 0.5;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          opacity: 0.8;
+        }
+
+        scrollbar-color: #1e40af transparent;
+        scrollbar-width: thin;
+
         body { background: #f9fafb; }
-        
-        .scroll-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
         button { border: none; border-radius: 10px; font-weight: 600; transition: all 0.2s ease; font-size: 14px; cursor: pointer; touch-action: manipulation; }
         .btn-primary { background: #1e40af; color: white; padding: 12px 20px; }
@@ -188,42 +226,41 @@ const UserDashboard = () => {
         .section { margin: 24px 16px; }
         .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #1f2937; }
         
-        .top-bar { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; sticky: top; z-index: 50; }
+        .top-bar { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; }
         .top-bar-logo { font-size: 14px; font-weight: 800; color: #1e40af; letter-spacing: 1px; }
         .top-bar-user { font-size: 13px; font-weight: 600; color: #1f2937; }
         
         .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .action-btn { background: white; border: 1px solid #e5e7eb; padding: 14px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
-        .action-btn:active { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        .action-btn-icon { font-size: 24px; }
-        .action-btn-label { font-size: 12px; font-weight: 600; color: #1f2937; text-align: center; }
+        .action-btn { background: white; border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .action-btn:active { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .action-btn-icon { font-size: 28px; }
+        .action-btn-label { font-size: 13px; font-weight: 700; color: #1f2937; text-align: center; }
         
-        .transaction-item { background: white; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
-        .transaction-item:active { background: #f3f4f6; }
-        .tx-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .tx-icon.credit { background: #d1fae5; }
-        .tx-icon.debit { background: #fee2e2; }
+        .transaction-item { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .transaction-item:active { background: #f3f4f6; transform: translateY(-1px); }
+        .tx-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .tx-icon.credit { background: #d1fae5; color: #059669; }
+        .tx-icon.debit { background: #fee2e2; color: #dc2626; }
         .tx-content { flex: 1; margin-left: 12px; }
-        .tx-desc { font-size: 13px; font-weight: 600; color: #1f2937; }
-        .tx-date { font-size: 11px; color: #6b7280; margin-top: 2px; }
-        .tx-amount { font-weight: 700; font-size: 14px; }
+        .tx-desc { font-size: 14px; font-weight: 700; color: #1f2937; }
+        .tx-date { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .tx-amount { font-weight: 700; font-size: 15px; }
         .tx-amount.credit { color: #059669; }
         .tx-amount.debit { color: #1f2937; }
         
-        .month-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
-        .month-btn { padding: 8px 14px; border-radius: 18px; background: white; border: 1px solid #e5e7eb; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+        .month-filter { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px 16px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .month-btn { padding: 8px 16px; border-radius: 20px; background: white; border: 1px solid #e5e7eb; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
         .month-btn.active { background: #1e40af; color: white; border: none; }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: flex-end; justify-content: center; }
-        .modal-sheet { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px; animation: slide-up 0.3s ease-out; }
+        .modal-sheet { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px; animation: slide-up 0.3s ease-out; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
         .modal-handle { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 20px; }
         
-        .modal-label { color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
         .modal-content-item { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
         .modal-content-item:last-child { border-bottom: none; }
-        .modal-content-label { color: #6b7280; font-size: 13px; font-weight: 500; }
+        .modal-content-label { color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; }
         .modal-content-value { font-weight: 700; font-size: 14px; color: #1f2937; }
         
         .pin-inputs { display: flex; gap: 12px; justify-content: center; margin: 24px 0; }
@@ -234,14 +271,19 @@ const UserDashboard = () => {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; padding: 8px 0; cursor: pointer; transition: all 0.15s; color: #9ca3af; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; padding: 10px 0; cursor: pointer; transition: all 0.15s; color: #9ca3af; touch-action: manipulation; }
         .nav-item.active { color: #1e40af; }
-        .nav-icon { font-size: 22px; }
+        .nav-icon { font-size: 24px; }
         .nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        .main-wrapper { padding-bottom: 100px; }
+        .main-wrapper { 
+          padding-bottom: 100px;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overflow-x: hidden;
+        }
         
-        .balance-section { background: white; margin: 16px 16px 0 16px; padding: 20px; border-radius: 14px; border: 1px solid #e5e7eb; }
+        .balance-section { background: white; margin: 16px 16px 0 16px; padding: 20px; border-radius: 14px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .balance-label { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .balance-amount { font-size: 32px; font-weight: 800; color: #1f2937; margin-bottom: 16px; letter-spacing: -1px; }
         
@@ -252,6 +294,7 @@ const UserDashboard = () => {
         @media (max-width: 640px) {
           .quick-actions { grid-template-columns: 1fr; }
           .section { margin: 20px 12px; }
+          .card-container { margin: 12px 12px 0 12px; }
         }
       `}</style>
 
@@ -269,12 +312,12 @@ const UserDashboard = () => {
         <div className="modal-overlay" onClick={() => setSelectedTx(null)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-handle" />
-            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '20px', color: '#1f2937' }}>Transaction Details</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '24px', color: '#1f2937' }}>Transaction Details</h3>
             
-            <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+            <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
               <div className="modal-content-item">
                 <span className="modal-content-label">Status</span>
-                <span style={{ color: '#059669', fontWeight: 700 }}>Success</span>
+                <span style={{ color: '#059669', fontWeight: 700, fontSize: '14px' }}>✓ Success</span>
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Type</span>
@@ -282,23 +325,27 @@ const UserDashboard = () => {
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Description</span>
-                <span className="modal-content-value">{selectedTx.description}</span>
+                <span className="modal-content-value">{selectedTx.description || 'Transfer'}</span>
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Date</span>
-                <span className="modal-content-value">{new Date(selectedTx.createdAt).toLocaleDateString()}</span>
+                <span className="modal-content-value">{new Date(selectedTx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              </div>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Time</span>
+                <span className="modal-content-value">{new Date(selectedTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Amount</span>
                 <span className="modal-content-value" style={{ color: selectedTx.type === 'credit' ? '#059669' : '#1f2937', fontSize: '16px' }}>
-                  {selectedTx.type === 'credit' ? '+' : '-'}${selectedTx.amount?.toLocaleString()}
+                  {selectedTx.type === 'credit' ? '+' : '-'}${selectedTx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <button className="btn-secondary" onClick={() => handleShareReceipt(selectedTx)} style={{ width: '100%' }}>Share</button>
-              <button className="btn-primary" onClick={() => setSelectedTx(null)} style={{ width: '100%' }}>Done</button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button className="btn-secondary" onClick={() => handleShareReceipt(selectedTx)} style={{ width: '100%', padding: '12px' }}>📤 Share</button>
+              <button className="btn-primary" onClick={() => setSelectedTx(null)} style={{ width: '100%', padding: '12px' }}>Done</button>
             </div>
           </div>
         </div>
@@ -307,17 +354,17 @@ const UserDashboard = () => {
       {/* TOP BAR */}
       <div className="top-bar">
         <div>
-          <div className="top-bar-logo">IBK</div>
-          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Terminal</div>
+          <div className="top-bar-logo">🏦 IBK</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Terminal</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div className="top-bar-user">Hi, {user?.name?.split(' ')[0] || 'User'}</div>
-          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Welcome back</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Welcome back</div>
         </div>
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="main-wrapper scroll-container">
+      <div className="main-wrapper">
         {isViewingSubPage ? (
           <div>
             <Outlet context={{ user }} />
@@ -351,8 +398,8 @@ const UserDashboard = () => {
             {activeTab === 'overview' && (
               <div className="balance-section">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <span className="balance-label">Available Balance</span>
-                  <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 600, padding: 0 }}>
+                  <span className="balance-label">💰 Available Balance</span>
+                  <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0, cursor: 'pointer' }}>
                     {showBalance ? 'HIDE' : 'SHOW'}
                   </button>
                 </div>
@@ -382,9 +429,9 @@ const UserDashboard = () => {
             {(activeTab === 'overview' || activeTab === 'transactions') && (
               <div className="section">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <h3 className="section-title">Recent Activity</h3>
+                  <h3 className="section-title">📊 Recent Activity</h3>
                   {activeTab === 'overview' && (
-                    <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0 }}>VIEW ALL</button>
+                    <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0, cursor: 'pointer' }}>VIEW ALL</button>
                   )}
                 </div>
 
@@ -407,18 +454,18 @@ const UserDashboard = () => {
                         </div>
                         <div className="tx-content">
                           <div className="tx-desc">{tx.description || 'Transfer'}</div>
-                          <div className="tx-date">{new Date(tx.createdAt).toLocaleDateString()}</div>
+                          <div className="tx-date">{new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                         </div>
                       </div>
                       <div className={`tx-amount ${tx.type === 'credit' ? 'credit' : 'debit'}`}>
-                        {tx.type === 'credit' ? '+' : '-'}${tx.amount?.toLocaleString()}
+                        {tx.type === 'credit' ? '+' : '-'}${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="empty-state">
                     <div className="empty-state-icon">📭</div>
-                    <div className="empty-state-text">No transactions found</div>
+                    <div className="empty-state-text">No transactions yet</div>
                   </div>
                 )}
               </div>
@@ -427,10 +474,10 @@ const UserDashboard = () => {
             {/* SECURITY SECTION */}
             {activeTab === 'security' && (
               <div className="section" style={{ maxWidth: '100%', margin: '40px 16px' }}>
-                <div style={{ background: 'white', padding: '28px 20px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔐</div>
-                  <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>Set Transaction PIN</h2>
-                  <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '28px' }}>Create a 4-digit PIN to secure your transactions</p>
+                <div style={{ background: 'white', padding: '32px 24px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                  <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔐</div>
+                  <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', color: '#1f2937' }}>Secure Your Account</h2>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5' }}>Set a 4-digit PIN to authorize all your transactions</p>
                   
                   <div className="pin-inputs">
                     {pin.map((d, i) => (
@@ -438,8 +485,8 @@ const UserDashboard = () => {
                     ))}
                   </div>
                   
-                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '44px', fontSize: '15px' }}>
-                    {isUpdating ? 'Saving PIN...' : 'Confirm PIN'}
+                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '48px', fontSize: '16px', fontWeight: 700 }}>
+                    {isUpdating ? '⏳ Securing...' : '✓ Set PIN'}
                   </button>
                 </div>
               </div>
