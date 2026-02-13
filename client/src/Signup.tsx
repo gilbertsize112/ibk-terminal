@@ -41,26 +41,25 @@ const Signup = ({ setUser }: SignupProps) => {
     name: '', 
     email: '', 
     phone: '',
+    dateOfBirth: '',
     country: '',
     accountType: 'Savings',
     password: '',
-    agreedToTerms: false
+    confirmPassword: '',
+    agreedToTerms: false,
+    newsletter: false
   });
 
   const [loading, setLoading] = useState(false);
-  const [showSplash] = useState(false); 
   const [currentImg, setCurrentImg] = useState(0);
-  
-  const [modalView, setModalView] = useState<'none' | 'forgot'>('none');
-  const [resetEmail, setResetEmail] = useState('');
   const [isLoginView, setIsLoginView] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [isShaking, setIsShaking] = useState(false); 
+  const [isShaking, setIsShaking] = useState(false);
 
-  // Searchable Country State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,7 +96,7 @@ const Signup = ({ setUser }: SignupProps) => {
     setFormData({ ...formData, password: val });
 
     let strength = 0;
-    if (val.length > 5) strength += 25;
+    if (val.length > 6) strength += 25;
     if (val.match(/[A-Z]/)) strength += 25;
     if (val.match(/[0-9]/)) strength += 25;
     if (val.match(/[^A-Za-z0-9]/)) strength += 25;
@@ -105,36 +104,74 @@ const Signup = ({ setUser }: SignupProps) => {
   };
 
   const getStrengthColor = () => {
-    if (passwordStrength <= 25) return '#ef4444'; 
-    if (passwordStrength <= 50) return '#f59e0b'; 
-    if (passwordStrength <= 75) return '#10b981'; 
-    return '#3b82f6'; 
+    if (passwordStrength <= 25) return '#ef4444';
+    if (passwordStrength <= 50) return '#f59e0b';
+    if (passwordStrength <= 75) return '#10b981';
+    return '#3b82f6';
+  };
+
+  const validateForm = () => {
+    if (!formData.name) {
+      alert("Please enter your full name");
+      return false;
+    }
+    if (!formData.email) {
+      alert("Please enter your email");
+      return false;
+    }
+    if (!formData.phone) {
+      alert("Please enter your phone number");
+      return false;
+    }
+    if (!formData.dateOfBirth) {
+      alert("Please select your date of birth");
+      return false;
+    }
+    if (!formData.country) {
+      alert("Please select your country");
+      return false;
+    }
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters");
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return false;
+    }
+    if (!formData.agreedToTerms) {
+      alert("Please agree to the Terms of Service");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.agreedToTerms) {
-      alert("Please agree to the Terms of Service to continue.");
-      return;
-    }
-
-    if (!formData.country) {
-      alert("Please select your country of residence.");
+    if (!validateForm()) {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
     setLoading(true);
     try {
       const signupPayload = {
-        ...formData,
-        email: formData.email.toLowerCase().trim()
+        name: formData.name,
+        email: formData.email.toLowerCase().trim(),
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+        country: formData.country,
+        accountType: formData.accountType,
+        password: formData.password,
+        agreedToTerms: formData.agreedToTerms,
+        newsletter: formData.newsletter
       };
 
       const { data } = await signup(signupPayload);
       
-      // Updated message as requested
-      alert(`🎉 Congratulations account created! \nYour Account Number: ${data.accountNumber}`);
+      alert(`🎉 Welcome to IBK Bank!\n\nYour Account Number: ${data.accountNumber}\n\nYour account is ready to use!`);
       
       if (data.role === 'admin') {
         setIsAdminView(true);
@@ -143,28 +180,21 @@ const Signup = ({ setUser }: SignupProps) => {
       }
     } catch (err: any) {
       if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]); 
+        navigator.vibrate([100, 50, 100]);
       }
       setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500); 
-
-      alert(err.response?.data?.message || "Verification failed");
+      setTimeout(() => setIsShaking(false), 500);
+      alert(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Reset link sent to: ${resetEmail}`);
-    setModalView('none');
-  };
-
-  if (!showSplash && isAdminView) {
+  if (isAdminView) {
     return <AdminDashboard />;
   }
 
-  if (!showSplash && isLoginView) {
+  if (isLoginView) {
     return (
       <Login 
         onSwitchToSignup={() => setIsLoginView(false)} 
@@ -176,24 +206,40 @@ const Signup = ({ setUser }: SignupProps) => {
   return (
     <div className="app-viewport">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        html, body {
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
+        }
 
         .app-viewport {
           position: relative;
           width: 100%;
-          height: 100vh;
+          min-height: 100vh;
           background: #000;
-          overflow: hidden;
+          overflow-x: hidden;
           display: flex;
           justify-content: center;
-          align-items: center;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          align-items: flex-start;
+          font-family: 'Montserrat', sans-serif;
+          padding-top: 0;
         }
 
+        /* --- SLIDESHOW STYLES --- */
         .slideshow-container {
           position: fixed;
           inset: 0;
           z-index: 0;
+          width: 100%;
+          height: 100vh;
         }
 
         .slide {
@@ -204,42 +250,105 @@ const Signup = ({ setUser }: SignupProps) => {
           background-repeat: no-repeat;
           opacity: 0;
           transition: opacity 2s ease-in-out;
+          width: 100%;
+          height: 100%;
         }
 
-        .slide.active { opacity: 1; }
+        .slide.active { 
+          opacity: 1;
+          animation: zoomIn 8s ease-in-out;
+        }
+
+        @keyframes zoomIn {
+          0% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
 
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(2, 6, 23, 0.9));
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(10, 14, 39, 0.8) 50%, rgba(2, 6, 23, 0.95) 100%);
           z-index: 1;
+          animation: gradientShift 15s ease infinite;
+          width: 100%;
+          height: 100%;
         }
 
+        @keyframes gradientShift {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+
+        /* --- AUTH PAGE STYLES --- */
         .auth-page {
           position: relative;
           z-index: 10;
           width: 100%;
-          height: 100%;
           display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          align-items: center;
-          padding: 40px 20px;
+          justify-content: center;
+          align-items: flex-start;
+          padding: 24px;
+          min-height: 100vh;
+          padding-top: 40px;
+          padding-bottom: 40px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
         }
 
         .auth-card {
-          background: #ffffff;
+          background: rgba(15, 23, 42, 0.92);
+          backdrop-filter: blur(20px);
           width: 100%;
-          max-width: 440px;
-          padding: 32px 24px;
+          max-width: 480px;
+          padding: 44px 32px;
           border-radius: 28px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
           text-align: center;
-          animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          animation: cardEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
           flex-shrink: 0;
-          margin-bottom: 40px;
+        }
+
+        .auth-card::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        .auth-card::after {
+          content: '';
+          position: absolute;
+          bottom: -30%;
+          left: -30%;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.05), transparent);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        @keyframes cardEntrance {
+          0% { 
+            opacity: 0; 
+            transform: scale(0.9) translateY(40px);
+            filter: blur(10px);
+          }
+          100% { 
+            opacity: 1; 
+            transform: scale(1) translateY(0);
+            filter: blur(0);
+          }
         }
 
         .shake-effect {
@@ -254,67 +363,173 @@ const Signup = ({ setUser }: SignupProps) => {
           40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
-        @keyframes cardEntrance {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         .bank-icon-header {
-          width: 54px;
-          height: 54px;
-          background: #004da0;
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white;
-          border-radius: 14px;
+          border-radius: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 16px;
-          font-size: 24px;
-          box-shadow: 0 10px 15px -3px rgba(0, 77, 160, 0.3);
+          margin: 0 auto 28px;
+          font-size: 40px;
+          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+          animation: iconPulse 2s ease-in-out infinite;
+          border: 2px solid rgba(96, 165, 250, 0.5);
+          position: relative;
+        }
+
+        .bank-icon-header::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          border-radius: 20px;
+          animation: borderSpin 3s linear infinite;
+        }
+
+        @keyframes iconPulse {
+          0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+          }
+          50% { 
+            transform: scale(1.08);
+            box-shadow: 0 30px 60px rgba(59, 130, 246, 0.5);
+          }
+        }
+
+        @keyframes borderSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .auth-header {
+          margin-bottom: 28px;
+          animation: headerslidein 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes headerslidein {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-header h1 {
+          font-size: 2rem;
+          color: #f1f5f9;
+          margin: 0 0 12px 0;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .auth-header p {
+          color: #cbd5e1;
+          font-size: 14px;
+          margin-bottom: 0;
+          line-height: 1.5;
+          font-weight: 500;
+        }
+
+        .progress-indicator {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 24px;
+          justify-content: center;
+        }
+
+        .progress-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(59, 130, 246, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+          background: #3b82f6;
+          box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
+
+        .form-section {
+          animation: formSlideIn 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes formSlideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .floating-input {
           position: relative;
           width: 100%;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           text-align: left;
+          animation: inputFadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes inputFadeIn {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .floating-input label {
           display: block;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
-          color: #64748b;
-          margin-bottom: 6px;
-          margin-left: 4px;
+          color: #94a3b8;
+          margin-bottom: 8px;
           text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
-        .floating-input input, .floating-input select {
+        .floating-input input,
+        .floating-input select {
           width: 100%;
           padding: 14px 16px;
           border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          font-size: 16px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          background: rgba(30, 58, 138, 0.3);
+          font-size: 14px;
           outline: none;
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-sizing: border-box;
-          color: #1e293b;
+          color: #f1f5f9;
+          font-weight: 500;
           font-family: inherit;
+        }
+
+        .floating-input input::placeholder {
+          color: #94a3b8;
+        }
+
+        .floating-input input:focus {
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.15);
+          box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+          transform: translateY(-2px);
         }
 
         .select-trigger {
           width: 100%;
           padding: 14px 16px;
           border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          font-size: 16px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          background: rgba(30, 58, 138, 0.3);
+          font-size: 14px;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          color: #f1f5f9;
+          font-weight: 500;
+          transition: all 0.3s ease;
+        }
+
+        .select-trigger:hover {
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.2);
         }
 
         .search-dropdown-menu {
@@ -322,14 +537,16 @@ const Signup = ({ setUser }: SignupProps) => {
           top: 100%;
           left: 0;
           right: 0;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          margin-top: 5px;
-          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+          background: rgba(15, 23, 42, 0.95);
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          border-top: none;
+          border-radius: 0 0 12px 12px;
+          margin-top: 0;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
           z-index: 100;
           max-height: 250px;
           overflow-y: auto;
+          backdrop-filter: blur(10px);
           animation: slideIn 0.2s ease-out;
         }
 
@@ -341,76 +558,94 @@ const Signup = ({ setUser }: SignupProps) => {
         .search-input-field {
           width: calc(100% - 20px) !important;
           margin: 10px auto !important;
-          display: block;
           padding: 10px !important;
+          border: 1px solid rgba(59, 130, 246, 0.4) !important;
           border-radius: 8px !important;
+          background: rgba(59, 130, 246, 0.1) !important;
           font-size: 14px !important;
+          color: #f1f5f9 !important;
+        }
+
+        .search-input-field::placeholder {
+          color: #94a3b8 !important;
         }
 
         .country-option {
           padding: 12px 16px;
           cursor: pointer;
           font-size: 14px;
-          color: #1e293b;
-          transition: background 0.2s;
+          color: #cbd5e1;
+          transition: all 0.2s;
         }
 
         .country-option:hover {
-          background: #f1f5f9;
-        }
-
-        .floating-input input:focus {
-          border-color: #004da0;
-          background: white;
-          box-shadow: 0 0 0 4px rgba(0, 77, 160, 0.05);
+          background: rgba(59, 130, 246, 0.2);
+          color: #60a5fa;
+          padding-left: 20px;
         }
 
         .eye-toggle {
           position: absolute;
-          right: 12px;
-          bottom: 12px;
+          right: 14px;
+          top: 40px;
           cursor: pointer;
           color: #94a3b8;
           font-size: 18px;
           z-index: 5;
           padding: 4px;
+          transition: all 0.2s ease;
+        }
+
+        .eye-toggle:hover {
+          color: #60a5fa;
+          transform: scale(1.1);
         }
 
         .strength-meter {
           height: 4px;
           width: 100%;
-          background: #f1f5f9;
+          background: rgba(59, 130, 246, 0.2);
           border-radius: 2px;
-          margin: -4px 0 15px 0;
+          margin: -8px 0 16px 0;
           overflow: hidden;
           display: ${formData.password.length > 0 ? 'block' : 'none'};
+          border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .strength-bar {
           height: 100%;
           transition: all 0.4s ease;
+          box-shadow: 0 0 10px ${formData.password.length > 0 ? 'currentColor' : 'none'};
         }
 
         .checkbox-container {
           display: flex;
           align-items: flex-start;
-          gap: 10px;
+          gap: 12px;
           text-align: left;
-          margin: 15px 0;
+          margin: 16px 0;
           cursor: pointer;
+          animation: checkboxFadeIn 0.6s ease-out 0.4s both;
+        }
+
+        @keyframes checkboxFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .checkbox-container input {
-          margin-top: 3px;
+          margin-top: 4px;
           width: 18px;
           height: 18px;
           cursor: pointer;
+          accent-color: #3b82f6;
         }
 
         .checkbox-container span {
-          font-size: 13px;
-          color: #64748b;
+          font-size: 12px;
+          color: #cbd5e1;
           line-height: 1.4;
+          font-weight: 500;
         }
 
         .submit-btn.primary {
@@ -418,14 +653,44 @@ const Signup = ({ setUser }: SignupProps) => {
           padding: 16px;
           border-radius: 12px;
           border: none;
-          background: #004da0;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white;
           font-weight: 700;
-          font-size: 16px;
+          font-size: 14px;
           cursor: pointer;
-          transition: 0.2s;
-          margin-top: 10px;
-          letter-spacing: 0.5px;
+          transition: all 0.3s ease;
+          margin-top: 12px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+          animation: buttonSlideIn 0.8s ease-out 0.5s both;
+        }
+
+        .submit-btn.primary::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .submit-btn.primary:hover::before {
+          left: 100%;
+        }
+
+        .submit-btn.primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        .submit-btn.primary:active {
+          transform: translateY(0);
+          box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
         }
 
         .submit-btn.primary:disabled {
@@ -433,42 +698,196 @@ const Signup = ({ setUser }: SignupProps) => {
           cursor: not-allowed;
         }
 
-        .login-link-btn {
-          background: #f1f5f9;
-          border: none;
-          color: #004da0;
-          width: 100%;
-          padding: 14px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 14px;
-          cursor: pointer;
-          margin-top: 8px;
+        @keyframes buttonSlideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
-        .modal-overlay {
-          position: fixed;
+        .auth-footer {
+          margin-top: 24px;
+          border-top: 1px solid rgba(59, 130, 246, 0.2);
+          padding-top: 24px;
+          animation: footerSlideIn 0.8s ease-out 0.7s both;
+        }
+
+        @keyframes footerSlideIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .auth-footer p {
+          color: #cbd5e1;
+          font-size: 12px;
+          margin-bottom: 14px;
+          font-weight: 600;
+        }
+
+        .login-link-btn {
+          background: rgba(96, 165, 250, 0.1);
+          border: 2px solid rgba(96, 165, 250, 0.3);
+          color: #60a5fa;
+          width: 100%;
+          padding: 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          margin-top: 0;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .login-link-btn::before {
+          content: '';
+          position: absolute;
           inset: 0;
-          background: rgba(0,0,0,0.85);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 100;
-          padding: 20px;
-          backdrop-filter: blur(5px);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(96, 165, 250, 0.1));
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .login-link-btn:hover::before {
+          transform: translateX(100%);
+        }
+
+        .login-link-btn:hover {
+          border-color: rgba(96, 165, 250, 0.6);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .login-link-btn:active {
+          transform: translateY(0);
+        }
+
+        .form-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+          margin: 20px 0;
+        }
+
+        .form-subtitle {
+          font-size: 12px;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin: 16px 0 12px 0;
+          font-weight: 700;
+        }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 640px) {
+          .auth-card {
+            padding: 32px 20px;
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 20px;
+          }
+
+          .auth-header h1 {
+            font-size: 1.5rem;
+          }
+
+          .auth-header p {
+            font-size: 13px;
+          }
+
+          .bank-icon-header {
+            width: 60px;
+            height: 60px;
+            font-size: 32px;
+            margin: 0 auto 18px;
+          }
+
+          .floating-input {
+            margin-bottom: 12px;
+          }
+
+          .floating-input input,
+          .floating-input select {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-radius: 10px;
+          }
+
+          .submit-btn.primary {
+            padding: 12px;
+            font-size: 13px;
+            margin-top: 8px;
+          }
+
+          .auth-footer p {
+            font-size: 11px;
+          }
+
+          .login-link-btn {
+            padding: 11px;
+            font-size: 12px;
+          }
         }
 
         @media (max-width: 480px) {
-          .auth-page { padding: 20px 15px; }
-          .auth-card { 
-            padding: 24px 20px; 
-            border-radius: 24px;
+          .auth-page {
+            padding: 16px;
+            padding-top: 30px;
+            padding-bottom: 30px;
           }
-          .bank-icon-header { width: 44px; height: 44px; font-size: 20px; }
-          h1 { font-size: 1.5rem !important; }
+
+          .auth-card {
+            padding: 24px 16px;
+            border-radius: 16px;
+          }
+
+          .auth-header h1 {
+            font-size: 1.3rem;
+          }
+
+          .auth-header p {
+            font-size: 12px;
+          }
+
+          .bank-icon-header {
+            width: 55px;
+            height: 55px;
+            font-size: 28px;
+            margin: 0 auto 16px;
+          }
+
+          .floating-input {
+            margin-bottom: 10px;
+          }
+
+          .floating-input label {
+            font-size: 10px;
+          }
+
+          .floating-input input,
+          .floating-input select {
+            padding: 11px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+          }
+
+          .submit-btn.primary {
+            padding: 11px;
+            font-size: 12px;
+          }
+
+          .checkbox-container span {
+            font-size: 11px;
+          }
+
+          .form-subtitle {
+            font-size: 10px;
+            margin: 12px 0 8px 0;
+          }
         }
       `}</style>
 
+      {/* Background Slideshow */}
       <div className="slideshow-container">
         {images.map((img, index) => (
           <div
@@ -481,62 +900,79 @@ const Signup = ({ setUser }: SignupProps) => {
       </div>
 
       <div className="auth-page">
-        {modalView === 'forgot' && (
-          <div className="modal-overlay" onClick={() => setModalView('none')}>
-            <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`} onClick={e => e.stopPropagation()}>
-              <div className="bank-icon-header">🔑</div>
-              <h1 style={{fontSize: '1.4rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Access</h1>
-              <p style={{color: '#64748b', fontSize: '13px', marginBottom: '24px'}}>Enter email for a recovery link.</p>
-              <form onSubmit={handleResetSubmit}>
-                <div className="floating-input">
-                  <input 
-                    type="email" placeholder="Email Address" required 
-                    value={resetEmail} onChange={(e) => setResetEmail(e.target.value)}
-                  />
-                </div>
-                <button type="submit" className="submit-btn primary">SEND LINK</button>
-                <p onClick={() => setModalView('none')} style={{marginTop: '20px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px'}}>GO BACK</p>
-              </form>
-            </div>
-          </div>
-        )}
-
         <div className={`auth-card ${isShaking ? 'shake-effect' : ''}`}>
-          <div className="bank-icon-header">🏦</div>
+          <div className="bank-icon-header" style={{ position: 'relative', zIndex: 2 }}>🏦</div>
           
           <div className="auth-header">
-            <h1 style={{fontSize: '1.7rem', color: '#0f172a', margin: '0 0 4px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Open Account</h1>
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px', fontWeight: 500}}>Complete the form below to join our digital bank.</p>
+            <h1>Open Your Account</h1>
+            <p>Join thousands of happy customers managing their finances with IBK Bank</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <div className="progress-indicator">
+            <div className="progress-dot active"></div>
+            <div className={`progress-dot ${formData.name && formData.email ? 'active' : ''}`}></div>
+            <div className={`progress-dot ${formData.password ? 'active' : ''}`}></div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="form-section">
+            {/* PERSONAL INFORMATION */}
+            <p className="form-subtitle">📋 Personal Information</p>
+
             <div className="floating-input">
               <label>Full Name</label>
-              <input type="text" placeholder="e.g. John Doe" required 
-                onChange={(e) => setFormData({...formData, name: e.target.value})} />
+              <input 
+                type="text" 
+                placeholder="e.g. John Doe" 
+                required 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})} 
+              />
             </div>
 
             <div className="floating-input">
               <label>Email Address</label>
-              <input type="email" placeholder="name@example.com" required 
-                onChange={(e) => setFormData({...formData, email: e.target.value})} />
+              <input 
+                type="email" 
+                placeholder="name@example.com" 
+                required 
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})} 
+              />
             </div>
 
             <div className="floating-input">
               <label>Phone Number</label>
-              <input type="tel" placeholder="+1 (555) 000-0000" required 
-                onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+              <input 
+                type="tel" 
+                placeholder="+1 (555) 000-0000" 
+                required 
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+              />
             </div>
 
-            {/* Searchable Country Dropdown */}
+            <div className="floating-input">
+              <label>Date of Birth</label>
+              <input 
+                type="date" 
+                required 
+                value={formData.dateOfBirth}
+                onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} 
+              />
+            </div>
+
+            <div className="form-divider"></div>
+
+            {/* ACCOUNT DETAILS */}
+            <p className="form-subtitle">🌍 Location & Account Type</p>
+
             <div className="floating-input" ref={dropdownRef}>
               <label>Country of Residence</label>
               <div 
                 className="select-trigger" 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                style={{ border: formData.country ? '1px solid #004da0' : '1px solid #e2e8f0' }}
               >
-                <span style={{ color: formData.country ? '#1e293b' : '#94a3b8' }}>
+                <span style={{ color: formData.country ? '#f1f5f9' : '#94a3b8' }}>
                   {formData.country || "Select your country"}
                 </span>
                 <span>{isDropdownOpen ? '▲' : '▼'}</span>
@@ -577,25 +1013,30 @@ const Signup = ({ setUser }: SignupProps) => {
               <select 
                 value={formData.accountType}
                 onChange={(e) => setFormData({...formData, accountType: e.target.value})}
-                style={{ appearance: 'auto' }}
               >
-                <option value="Savings">Savings Account</option>
-                <option value="Checking">Checking Account</option>
-                <option value="Business">Business Account</option>
-                <option value="Fixed Deposit">Fixed Deposit</option>
+                <option value="Savings">💰 Savings Account</option>
+                <option value="Checking">💳 Checking Account</option>
+                <option value="Business">🏢 Business Account</option>
+                <option value="Fixed Deposit">📈 Fixed Deposit</option>
               </select>
             </div>
 
+            <div className="form-divider"></div>
+
+            {/* SECURITY */}
+            <p className="form-subtitle">🔐 Security Settings</p>
+
             <div className="floating-input">
-              <label>Secure Password</label>
+              <label>Create Password</label>
               <input 
                 type={showPassword ? "text" : "password"} 
-                placeholder="••••••••" required 
+                placeholder="••••••••" 
+                required 
                 value={formData.password}
                 onChange={handlePasswordChange} 
               />
               <span className="eye-toggle" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? "👁️‍🗨️" : "👁️"}
+                {showPassword ? "👁️" : "👁️‍🗨️"}
               </span>
             </div>
 
@@ -606,24 +1047,50 @@ const Signup = ({ setUser }: SignupProps) => {
               ></div>
             </div>
 
+            <div className="floating-input">
+              <label>Confirm Password</label>
+              <input 
+                type={showConfirmPassword ? "text" : "password"} 
+                placeholder="••••••••" 
+                required 
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
+              />
+              <span className="eye-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+              </span>
+            </div>
+
+            <div className="form-divider"></div>
+
+            {/* AGREEMENTS */}
             <label className="checkbox-container">
               <input 
                 type="checkbox" 
                 checked={formData.agreedToTerms} 
                 onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})}
               />
-              <span>I agree to the Digital Banking Terms and Privacy Policy.</span>
+              <span>I agree to the Digital Banking Terms, Conditions, and Privacy Policy</span>
+            </label>
+
+            <label className="checkbox-container">
+              <input 
+                type="checkbox" 
+                checked={formData.newsletter} 
+                onChange={(e) => setFormData({...formData, newsletter: e.target.checked})}
+              />
+              <span>Send me exclusive offers and banking updates</span>
             </label>
             
             <button type="submit" disabled={loading} className="submit-btn primary">
-              {loading ? "PROCESSING..." : "REGISTER ACCOUNT"}
+              {loading ? "⏳ CREATING ACCOUNT..." : "✓ CREATE MY ACCOUNT"}
             </button>
           </form>
 
-          <div style={{marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '20px'}}>
-            <p style={{color: '#64748b', fontSize: '13px', marginBottom: '12px', fontWeight: 500}}>Already have an account?</p>
+          <div className="auth-footer">
+            <p>Already have an account?</p>
             <button className="login-link-btn" type="button" onClick={() => setIsLoginView(true)}>
-              SIGN IN
+              SIGN IN HERE
             </button>
           </div>
         </div>

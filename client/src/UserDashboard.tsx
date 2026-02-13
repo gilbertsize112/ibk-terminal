@@ -32,10 +32,11 @@ const UserDashboard = () => {
     }
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+ const handleLogout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+};
 
   useEffect(() => {
     let isMounted = true;

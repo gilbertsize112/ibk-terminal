@@ -114,11 +114,10 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           padding-top: 0;
         }
 
-        /* --- SPLASH SCREEN STYLES (NO TRANSPARENCY) --- */
         .splash-screen {
           position: fixed;
           inset: 0;
-          background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1429 100%);
+          background: linear-gradient(135deg, #0a0f1e 0%, #152238 25%, #0d1929 50%, #1a2340 75%, #0a0f1e 100%);
           z-index: 9999;
           display: flex;
           flex-direction: column;
@@ -135,8 +134,9 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           position: absolute;
           inset: 0;
           background: 
-            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.25) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 50% 30%, rgba(30, 64, 175, 0.15) 0%, transparent 50%);
           pointer-events: none;
           z-index: 1;
         }
@@ -147,10 +147,11 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           top: 0;
           left: 0;
           right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.8), transparent);
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 1), transparent);
           animation: topLineGlow 2s infinite;
-          z-index: 1;
+          z-index: 2;
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
         }
 
         @keyframes topLineGlow {
@@ -323,7 +324,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           box-shadow: 0 0 10px #10b981;
         }
 
-        /* --- SLIDESHOW STYLES --- */
         .slideshow-container {
           position: fixed;
           inset: 0;
@@ -357,12 +357,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(0, 0, 0, 0.4) 0%,
-            rgba(10, 14, 39, 0.8) 50%,
-            rgba(2, 6, 23, 0.95) 100%
-          );
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(10, 14, 39, 0.8) 50%, rgba(2, 6, 23, 0.95) 100%);
           z-index: 1;
           animation: gradientShift 15s ease infinite;
           width: 100%;
@@ -374,7 +369,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           50% { opacity: 1; }
         }
 
-        /* --- AUTH PAGE STYLES --- */
         .auth-page {
           position: relative;
           z-index: 10;
@@ -387,6 +381,9 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           min-height: 100vh;
           padding-top: 40px;
           padding-bottom: 40px;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
         }
 
         @keyframes authFadeIn {
@@ -401,9 +398,7 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           max-width: 440px;
           padding: 40px 28px;
           border-radius: 24px;
-          box-shadow: 
-            0 25px 50px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
           text-align: center;
           border: 1px solid rgba(59, 130, 246, 0.2);
           animation: cardEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1);
@@ -436,16 +431,8 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         }
 
         @keyframes cardEntrance {
-          0% { 
-            opacity: 0; 
-            transform: scale(0.9) translateY(40px);
-            filter: blur(10px);
-          }
-          100% { 
-            opacity: 1; 
-            transform: scale(1) translateY(0);
-            filter: blur(0);
-          }
+          0% { opacity: 0; transform: scale(0.9) translateY(40px); filter: blur(10px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
         }
 
         .bank-icon-header {
@@ -475,14 +462,8 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         }
 
         @keyframes iconPulse {
-          0%, 100% { 
-            transform: scale(1);
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
-          }
-          50% { 
-            transform: scale(1.08);
-            box-shadow: 0 30px 60px rgba(59, 130, 246, 0.5);
-          }
+          0%, 100% { transform: scale(1); box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3); }
+          50% { transform: scale(1.08); box-shadow: 0 30px 60px rgba(59, 130, 246, 0.5); }
         }
 
         @keyframes borderSpin {
@@ -747,220 +728,28 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           to { opacity: 1; }
         }
 
-        /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 640px) {
-          .app-viewport {
-            padding-top: 0;
-          }
-
-          .auth-card {
-            padding: 32px 20px;
-            max-width: 100%;
-            margin: 20px 0;
-            border-radius: 20px;
-          }
-
-          .auth-header h1 {
-            font-size: 1.5rem;
-            margin: 10px 0 6px 0;
-          }
-
-          .auth-header p {
-            font-size: 13px;
-            line-height: 1.4;
-          }
-
-          .bank-icon-header {
-            width: 60px;
-            height: 60px;
-            font-size: 32px;
-            margin: 0 auto 18px;
-          }
-
-          .secure-badge {
-            font-size: 9px;
-            padding: 6px 12px;
-            margin-bottom: 10px;
-          }
-
-          .floating-input {
-            margin-bottom: 12px;
-          }
-
-          .floating-input input {
-            padding: 12px 14px;
-            font-size: 13px;
-            border-radius: 10px;
-          }
-
-          .submit-btn.primary {
-            padding: 12px;
-            font-size: 13px;
-            margin-top: 6px;
-            border-radius: 10px;
-          }
-
-          .forgot-pass {
-            margin: 8px 0 14px 0;
-            font-size: 11px;
-          }
-
-          .auth-footer {
-            margin-top: 16px;
-            padding-top: 16px;
-          }
-
-          .auth-footer p {
-            font-size: 11px;
-            margin-bottom: 10px;
-          }
-
-          .signup-link-btn {
-            padding: 11px;
-            font-size: 12px;
-            border-radius: 10px;
-          }
-
-          .splash-title {
-            font-size: 28px;
-            letter-spacing: 2px;
-          }
-
-          .splash-subtitle {
-            font-size: 11px;
-          }
-
-          .splash-tagline {
-            font-size: 10px;
-          }
-
-          .security-features {
-            gap: 12px;
-            padding: 0 16px;
-          }
-
-          .security-badge {
-            font-size: 9px;
-          }
-
-          .loading-bar-container {
-            width: 200px;
-          }
-
-          .splash-logo {
-            font-size: 50px;
-          }
+          .auth-card { padding: 32px 20px; max-width: 100%; }
+          .auth-header h1 { font-size: 1.5rem; }
+          .bank-icon-header { width: 60px; height: 60px; font-size: 32px; }
+          .floating-input input { padding: 12px 14px; font-size: 13px; }
+          .submit-btn.primary { padding: 12px; font-size: 13px; }
+          .splash-title { font-size: 28px; }
+          .splash-logo { font-size: 50px; }
         }
 
         @media (max-width: 480px) {
-          .app-viewport {
-            padding-top: 0;
-          }
-
-          .auth-page {
-            padding: 16px;
-            padding-top: 30px;
-            padding-bottom: 30px;
-          }
-
-          .auth-card {
-            padding: 24px 16px;
-            border-radius: 16px;
-          }
-
-          .auth-header h1 {
-            font-size: 1.3rem;
-            margin: 8px 0 4px 0;
-          }
-
-          .auth-header p {
-            font-size: 12px;
-            line-height: 1.3;
-          }
-
-          .bank-icon-header {
-            width: 55px;
-            height: 55px;
-            font-size: 28px;
-            margin: 0 auto 16px;
-          }
-
-          .secure-badge {
-            font-size: 8px;
-            padding: 5px 10px;
-            margin-bottom: 8px;
-          }
-
-          .floating-input {
-            margin-bottom: 10px;
-          }
-
-          .floating-input input {
-            padding: 11px 12px;
-            font-size: 12px;
-            border-radius: 8px;
-          }
-
-          .submit-btn.primary {
-            padding: 11px;
-            font-size: 12px;
-            margin-top: 4px;
-          }
-
-          .forgot-pass {
-            margin: 6px 0 12px 0;
-            font-size: 10px;
-          }
-
-          .auth-footer {
-            margin-top: 14px;
-            padding-top: 14px;
-          }
-
-          .auth-footer p {
-            font-size: 10px;
-            margin-bottom: 8px;
-          }
-
-          .signup-link-btn {
-            padding: 10px;
-            font-size: 11px;
-          }
-
-          form {
-            margin: 0;
-          }
-
-          .splash-logo-container {
-            width: 100px;
-            height: 100px;
-          }
-
-          .splash-logo {
-            font-size: 40px;
-          }
-
-          .splash-ring-1 {
-            width: 110px;
-            height: 110px;
-          }
-
-          .splash-ring-2 {
-            width: 80px;
-            height: 80px;
-          }
-
-          .splash-title {
-            font-size: 24px;
-          }
-
-          .splash-content {
-            gap: 20px;
-          }
+          .auth-page { padding: 16px 16px 30px 16px; }
+          .auth-card { padding: 24px 16px; }
+          .auth-header h1 { font-size: 1.3rem; }
+          .bank-icon-header { width: 55px; height: 55px; font-size: 28px; }
+          .floating-input input { padding: 11px 12px; font-size: 12px; }
+          .submit-btn.primary { padding: 11px; font-size: 12px; }
+          .splash-logo { font-size: 40px; }
+          .splash-title { font-size: 24px; }
         }
       `}</style>
 
-      {/* --- PROFESSIONAL SPLASH SCREEN (NO TRANSPARENCY) --- */}
       <div className={`splash-screen ${!showSplash ? 'splash-hidden' : ''}`}>
         <div className="splash-content">
           <div className="splash-logo-container">
@@ -968,17 +757,14 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
             <div className="splash-ring-2"></div>
             <div className="splash-logo">🏦</div>
           </div>
-
           <div className="splash-text-container">
             <h1 className="splash-title">IBK BANK</h1>
             <p className="splash-subtitle">Secure Financial Services</p>
             <p className="splash-tagline">Enterprise Banking for Your Future</p>
           </div>
-
           <div className="loading-bar-container">
             <div className="loading-bar-fill"></div>
           </div>
-
           <div className="security-features">
             <div className="security-badge">SSL ENCRYPTED</div>
             <div className="security-badge">256-BIT SECURE</div>
@@ -987,7 +773,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         </div>
       </div>
 
-      {/* Background Slideshow */}
       <div className="slideshow-container">
         {images.map((img, index) => (
           <div
@@ -1000,7 +785,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
       </div>
 
       <div className="auth-page">
-        {/* FORGOT PASSWORD MODAL */}
         {modalView === 'forgot' && (
           <div className="modal-overlay">
             <div className="auth-card">
@@ -1020,29 +804,12 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
                   />
                 </div>
                 <button type="submit" className="submit-btn primary">SEND LINK</button>
-                <p 
-                  onClick={() => setModalView('none')} 
-                  style={{
-                    marginTop: '16px', 
-                    cursor: 'pointer', 
-                    color: '#60a5fa', 
-                    fontWeight: 700, 
-                    fontSize: '12px',
-                    transition: 'all 0.2s',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#93c5fd')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = '#60a5fa')}
-                >
-                  BACK TO LOGIN
-                </p>
+                <p onClick={() => setModalView('none')} style={{ marginTop: '16px', cursor: 'pointer', color: '#60a5fa', fontWeight: 700, fontSize: '12px', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.5px' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#93c5fd')} onMouseLeave={(e) => (e.currentTarget.style.color = '#60a5fa')}>BACK TO LOGIN</p>
               </form>
             </div>
           </div>
         )}
 
-        {/* LOGIN CARD */}
         <div className="auth-card">
           <div className="bank-icon-header" style={{ position: 'relative', zIndex: 2 }}>🏛️</div>
           <div className="auth-header">
