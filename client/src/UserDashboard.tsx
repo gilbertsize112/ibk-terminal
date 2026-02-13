@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
-// ✅ IMPORT THE CLEAN API FUNCTIONS
 import { setupPin, fetchProfile, fetchTransactions } from './api/index';
 
 const UserDashboard = () => {
@@ -14,24 +13,11 @@ const UserDashboard = () => {
   const [showBalance, setShowBalance] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const isMobile = window.innerWidth < 1024;
-    if (!isMobile) setSidebarOpen(false);
-
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) setSidebarOpen(false);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (location.pathname.includes('/transfer')) {
@@ -141,300 +127,346 @@ const UserDashboard = () => {
     }
   };
 
-  if (loading) return <div style={{ height: '100vh', background: '#020617', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><div style={{ width: '40px', height: '40px', border: '3px solid rgba(59,130,246,0.1)', borderTop: '3px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /><style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style></div>;
+  if (loading) return (
+    <div style={{ height: '100vh', background: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: '40px', height: '40px', border: '3px solid #e5e7eb', borderTop: '3px solid #1e40af', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
-  if (!user) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}><div>Connection Error. <button onClick={() => window.location.reload()} style={{color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline'}}>Refresh</button></div></div>;
+  if (!user) return (
+    <div style={{ height: '100vh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '50px', marginBottom: '20px' }}>⚠️</div>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '10px', color: '#1f2937' }}>Connection Error</h2>
+        <button onClick={() => window.location.reload()} style={{ color: '#1e40af', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}>Refresh Page</button>
+      </div>
+    </div>
+  );
 
-  if (user?.isFrozen) return <div style={{ height: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}><div style={{ background: '#070c1b', padding: '40px 20px', borderRadius: '24px', border: '1px solid rgba(239,68,68,0.3)', maxWidth: '500px', width: '100%', textAlign: 'center' }}><div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div><h2 style={{ fontSize: '24px', color: '#ef4444', fontWeight: 600, margin: '0 0 20px 0' }}>Account Suspended</h2><p style={{ color: '#94a3b8', lineHeight: '1.6' }}>Contact support@ibk-terminal.com to verify your account.</p><button onClick={handleLogout} style={{ marginTop: '30px', padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer', width: '100%' }}>LOGOUT</button></div></div>;
+  if (user?.isFrozen) return (
+    <div style={{ height: '100vh', background: 'linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ background: '#ffffff', padding: '40px 24px', borderRadius: '20px', border: '2px solid #dc2626', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 10px 25px rgba(220, 38, 38, 0.1)' }}>
+        <div style={{ fontSize: '60px', marginBottom: '16px' }}>🔒</div>
+        <h2 style={{ fontSize: '22px', color: '#dc2626', fontWeight: 700, margin: '0 0 12px 0' }}>Account Suspended</h2>
+        <p style={{ color: '#6b7280', lineHeight: '1.6', marginBottom: '28px', fontSize: '14px' }}>Your account has been temporarily suspended. Please contact our support team to resolve this issue.</p>
+        <p style={{ color: '#9ca3af', fontSize: '13px', marginBottom: '24px' }}>support@ibk-terminal.com</p>
+        <button onClick={handleLogout} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#dc2626', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%', fontSize: '14px' }}>LOGOUT</button>
+      </div>
+    </div>
+  );
 
   const isViewingSubPage = location.pathname !== '/dashboard' && !location.pathname.endsWith('/dashboard/');
 
   return (
-    <div style={{ height: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', width: '100%', overflow: 'hidden' }}>
+    <div style={{ background: '#f9fafb', color: '#1f2937', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', minHeight: '100vh', width: '100%' }}>
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { overflow-x: hidden; }
+        body { background: #f9fafb; }
         
-        /* FAST RESPONSE FOR TAPS */
-        .mobile-nav-item, button { 
-          touch-action: manipulation;
-          cursor: pointer;
+        .scroll-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        
+        button { border: none; border-radius: 10px; font-weight: 600; transition: all 0.2s ease; font-size: 14px; cursor: pointer; touch-action: manipulation; }
+        .btn-primary { background: #1e40af; color: white; padding: 12px 20px; }
+        .btn-primary:active { transform: scale(0.97); background: #1e3a8a; }
+        .btn-secondary { background: #e5e7eb; color: #1f2937; padding: 10px 16px; }
+        .btn-secondary:active { background: #d1d5db; }
+        
+        .card-container { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-radius: 16px; padding: 24px; color: white; margin: 16px 16px 0 16px; box-shadow: 0 10px 30px rgba(30, 64, 175, 0.15); position: relative; overflow: hidden; }
+        .card-container::before { content: ''; position: absolute; top: -40%; right: -40%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; }
+        .card-container::after { content: ''; position: absolute; bottom: -30%; left: -30%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; }
+        
+        .card-header { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .card-chip { width: 45px; height: 32px; background: linear-gradient(135deg, #fbbf24, #f97316); border-radius: 6px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .card-number { font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: 500; margin: 20px 0; position: relative; z-index: 2; }
+        .card-footer { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; }
+        .card-holder-name { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
+        .card-holder { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .section { margin: 24px 16px; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #1f2937; }
+        
+        .top-bar { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; sticky: top; z-index: 50; }
+        .top-bar-logo { font-size: 14px; font-weight: 800; color: #1e40af; letter-spacing: 1px; }
+        .top-bar-user { font-size: 13px; font-weight: 600; color: #1f2937; }
+        
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .action-btn { background: white; border: 1px solid #e5e7eb; padding: 14px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+        .action-btn:active { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .action-btn-icon { font-size: 24px; }
+        .action-btn-label { font-size: 12px; font-weight: 600; color: #1f2937; text-align: center; }
+        
+        .transaction-item { background: white; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+        .transaction-item:active { background: #f3f4f6; }
+        .tx-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .tx-icon.credit { background: #d1fae5; }
+        .tx-icon.debit { background: #fee2e2; }
+        .tx-content { flex: 1; margin-left: 12px; }
+        .tx-desc { font-size: 13px; font-weight: 600; color: #1f2937; }
+        .tx-date { font-size: 11px; color: #6b7280; margin-top: 2px; }
+        .tx-amount { font-weight: 700; font-size: 14px; }
+        .tx-amount.credit { color: #059669; }
+        .tx-amount.debit { color: #1f2937; }
+        
+        .month-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
+        .month-btn { padding: 8px 14px; border-radius: 18px; background: white; border: 1px solid #e5e7eb; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+        .month-btn.active { background: #1e40af; color: white; border: none; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: flex-end; justify-content: center; }
+        .modal-sheet { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px; animation: slide-up 0.3s ease-out; }
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-handle { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 20px; }
+        
+        .modal-label { color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+        .modal-content-item { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
+        .modal-content-item:last-child { border-bottom: none; }
+        .modal-content-label { color: #6b7280; font-size: 13px; font-weight: 500; }
+        .modal-content-value { font-weight: 700; font-size: 14px; color: #1f2937; }
+        
+        .pin-inputs { display: flex; gap: 12px; justify-content: center; margin: 24px 0; }
+        .pin-input { width: 50px; height: 50px; text-align: center; font-size: 20px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; font-weight: 600; transition: all 0.2s; }
+        .pin-input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        
+        .success-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; padding: 8px 0; cursor: pointer; transition: all 0.15s; color: #9ca3af; }
+        .nav-item.active { color: #1e40af; }
+        .nav-icon { font-size: 22px; }
+        .nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+        
+        .main-wrapper { padding-bottom: 100px; }
+        
+        .balance-section { background: white; margin: 16px 16px 0 16px; padding: 20px; border-radius: 14px; border: 1px solid #e5e7eb; }
+        .balance-label { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-amount { font-size: 32px; font-weight: 800; color: #1f2937; margin-bottom: 16px; letter-spacing: -1px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+        .empty-state-text { color: #6b7280; font-size: 14px; }
+        
+        @media (max-width: 640px) {
+          .quick-actions { grid-template-columns: 1fr; }
+          .section { margin: 20px 12px; }
         }
-
-        .scroll-container { 
-          flex: 1; 
-          height: 100vh; 
-          overflow-y: auto; 
-          -webkit-overflow-scrolling: touch; 
-          display: flex; 
-          flex-direction: column;
-        }
-
-        button { border: none; border-radius: 12px; font-weight: 500; transition: all 0.15s ease; font-size: 14px; }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-primary:active { transform: scale(0.97); background: #2563eb; }
-        .btn-secondary { background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.1); }
-        
-        .sidebar { width: 260px; background: #070c1b; border-right: 1px solid rgba(255,255,255,0.05); padding: 40px 20px; display: flex; flex-direction: column; }
-        .nav-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 6px; color: #64748b; display: flex; align-items: center; gap: 12px; font-weight: 500; }
-        .nav-item.active { background: rgba(59,130,246,0.1); color: #3b82f6; font-weight: 600; }
-        
-        .main-content { padding: 40px; max-width: 1100px; width: 100%; margin: 0 auto; flex: 1; }
-        
-        /* UPDATED PROFESSIONAL ATM CARD */
-        .card-visual { 
-          width: 100%; 
-          aspect-ratio: 1.75/1; /* Wider and shorter */
-          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
-          border-radius: 16px; 
-          padding: 24px; 
-          position: relative; 
-          border: 1px solid rgba(255,255,255,0.08); 
-          display: flex; 
-          flex-direction: column; 
-          justify-content: space-between;
-          box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-          overflow: hidden;
-        }
-        .card-visual::before {
-          content: "";
-          position: absolute;
-          top: -50%;
-          left: -20%;
-          width: 100%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
-          transform: rotate(30deg);
-        }
-
-        .card-chip { width: 40px; height: 28px; background: linear-gradient(135deg, #d1d5db, #9ca3af); border-radius: 4px; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
-        
-        .balance-panel { background: #0f172a; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 24px; }
-        
-        .mobile-top-bar { display: none; position: sticky; top: 0; background: #020617; padding: 14px 20px; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between; }
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(7, 12, 27, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.05); padding: 8px 10px env(safe-area-inset-bottom); z-index: 100; justify-content: space-around; }
-        
-        @media (max-width: 1024px) {
-          .sidebar { display: none; }
-          .mobile-top-bar, .mobile-nav { display: flex; }
-          .main-content { padding: 20px 20px 100px 20px; }
-          .top-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
-        }
-
-        .animate-fade { animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
       {/* SUCCESS OVERLAY */}
-      {showSuccess && <div style={{ position: 'fixed', inset: 0, background: '#020617', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} className="animate-fade"><div style={{ fontSize: '70px', marginBottom: '20px' }}>🛡️</div><h2 style={{ fontWeight: 600, fontSize: '24px' }}>SECURITY UPDATED</h2><p style={{ color: '#94a3b8' }}>Your secure PIN is now active.</p></div>}
+      {showSuccess && (
+        <div className="success-overlay">
+          <div style={{ fontSize: '60px', marginBottom: '20px' }}>✅</div>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1f2937', marginBottom: '8px' }}>PIN Activated</h2>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>Your transaction PIN is now secure</p>
+        </div>
+      )}
 
-      {/* TRANSACTION MODAL */}
+      {/* TRANSACTION DETAILS MODAL */}
       {selectedTx && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={() => setSelectedTx(null)}>
-          <div style={{ background: '#070c1b', width: '100%', maxWidth: '500px', borderRadius: '20px 20px 0 0', padding: '24px 20px calc(24px + env(safe-area-inset-bottom)) 20px' }} onClick={e => e.stopPropagation()} className="animate-fade">
-             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }} />
-             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Transaction Details</h2>
-             </div>
-             <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '14px', padding: '16px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}><span style={{ color: '#64748b', fontSize: '14px' }}>Status</span><span style={{ color: '#22c55e', fontWeight: 600, fontSize: '14px' }}>Success</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}><span style={{ color: '#64748b', fontSize: '14px' }}>Description</span><span style={{ fontSize: '14px' }}>{selectedTx.description}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}><span style={{ color: '#64748b', fontWeight: 600 }}>Amount</span><span style={{ fontSize: '18px', fontWeight: 700, color: selectedTx.type === 'credit' ? '#22c55e' : '#fff' }}>${selectedTx.amount?.toLocaleString()}</span></div>
-             </div>
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <button className="btn-secondary" onClick={() => handleShareReceipt(selectedTx)}>Share</button>
-                <button className="btn-primary" onClick={() => setSelectedTx(null)}>Done</button>
-             </div>
+        <div className="modal-overlay" onClick={() => setSelectedTx(null)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle" />
+            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '20px', color: '#1f2937' }}>Transaction Details</h3>
+            
+            <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Status</span>
+                <span style={{ color: '#059669', fontWeight: 700 }}>Success</span>
+              </div>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Type</span>
+                <span className="modal-content-value" style={{ textTransform: 'capitalize' }}>{selectedTx.type}</span>
+              </div>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Description</span>
+                <span className="modal-content-value">{selectedTx.description}</span>
+              </div>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Date</span>
+                <span className="modal-content-value">{new Date(selectedTx.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="modal-content-item">
+                <span className="modal-content-label">Amount</span>
+                <span className="modal-content-value" style={{ color: selectedTx.type === 'credit' ? '#059669' : '#1f2937', fontSize: '16px' }}>
+                  {selectedTx.type === 'credit' ? '+' : '-'}${selectedTx.amount?.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button className="btn-secondary" onClick={() => handleShareReceipt(selectedTx)} style={{ width: '100%' }}>Share</button>
+              <button className="btn-primary" onClick={() => setSelectedTx(null)} style={{ width: '100%' }}>Done</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="sidebar">
-        <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '40px', color: '#3b82f6', letterSpacing: '-0.5px' }}>IBK TERMINAL</div>
-        <div style={{ flex: 1 }}>
-          {[
-            { id: 'overview', name: 'Home', icon: '🏠', path: '/dashboard' },
-            { id: 'transfer', name: 'Send Money', icon: '💸', path: '/dashboard/transfer' },
-            { id: 'transactions', name: 'Activity', icon: '📊', path: null },
-            { id: 'cards', name: 'Cards', icon: '💳', path: '/dashboard/cards' },
-            { id: 'security', name: 'Security', icon: '🛡️', path: null },
-          ].map((item) => (
-            <div 
-              key={item.id} 
-              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => {
-                if (item.path) navigate(item.path);
-                else setActiveTab(item.id as any);
-              }}
-            >
-              <span style={{ fontSize: '18px' }}>{item.icon}</span> {item.name}
-            </div>
-          ))}
+      {/* TOP BAR */}
+      <div className="top-bar">
+        <div>
+          <div className="top-bar-logo">IBK</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Terminal</div>
         </div>
-        <button className="btn-secondary" onClick={handleLogout} style={{ marginTop: '20px' }}>Logout</button>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <div className="scroll-container">
-        <div className="mobile-top-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', background: '#3b82f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '11px' }}>IBK</div>
-            <span style={{ fontWeight: 600, fontSize: '14px' }}>Hi, {user?.name?.split(' ')[0]}</span>
-          </div>
-          <button onClick={handleLogout} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '0 12px', fontSize: '11px', minHeight: '32px', borderRadius: '8px' }}>LOGOUT</button>
+        <div style={{ textAlign: 'right' }}>
+          <div className="top-bar-user">Hi, {user?.name?.split(' ')[0] || 'User'}</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Welcome back</div>
         </div>
-
-        <main className="main-content">
-          {isViewingSubPage ? (
-            <div className="animate-fade">
-              <Outlet context={{ user }} />
-            </div>
-          ) : (
-            <div className="animate-fade">
-              <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '22px', fontWeight: 700 }}>Account Overview</h1>
-                <p style={{ color: '#64748b', fontSize: '13px' }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-              </div>
-
-              {activeTab === 'overview' && (
-                <div className="top-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px' }}>
-                  {/* CARD SECTION */}
-                  <div className="card-visual">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-                      <div>
-                        <p style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600, letterSpacing: '1.5px' }}>VISA PLATINUM</p>
-                        <p style={{ fontWeight: 500, fontSize: '13px', opacity: 0.8 }}>IBK Terminal</p>
-                      </div>
-                      <div className="card-chip" />
-                    </div>
-                    
-                    <div style={{ fontSize: '18px', letterSpacing: '4px', fontWeight: 500, fontFamily: 'monospace', color: '#fff', position: 'relative', zIndex: 1, margin: '10px 0' }}>
-                      •••• •••• •••• {user?.accountNumber?.toString().slice(-4) || '8842'}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 1 }}>
-                      <div>
-                        <p style={{ fontSize: '8px', color: '#64748b', marginBottom: '2px', letterSpacing: '0.5px' }}>CARD HOLDER</p>
-                        <p style={{ fontSize: '12px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>{user?.name || 'VALUED CUSTOMER'}</p>
-                      </div>
-                      <span style={{ fontSize: '18px', fontWeight: 700, fontStyle: 'italic', color: '#fff', opacity: 0.8 }}>VISA</span>
-                    </div>
-                  </div>
-
-                  {/* BALANCE SECTION */}
-                  <div className="balance-panel">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Available Balance</span>
-                      <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#3b82f6', fontSize: '12px' }}>
-                        {showBalance ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                    <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '24px', letterSpacing: '-0.5px' }}>
-                      {showBalance ? `$${(user?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <button className="btn-primary" style={{ minHeight: '40px' }} onClick={() => navigate('/dashboard/transfer')}>Transfer</button>
-                      <button className="btn-secondary" style={{ minHeight: '40px' }} onClick={() => navigate('/dashboard/cards')}>Cards</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TRANSACTIONS SECTION */}
-              {(activeTab === 'overview' || activeTab === 'transactions') && (
-                <div style={{ marginTop: '32px' }} className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Recent Activity</h3>
-                    {activeTab === 'overview' && <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#3b82f6', fontSize: '13px' }}>View All</button>}
-                  </div>
-
-                  {activeTab === 'transactions' && (
-                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '5px' }}>
-                      {months.map((m, i) => (
-                        <button key={m} onClick={() => setSelectedMonth(i)} style={{ padding: '0 16px', borderRadius: '20px', background: selectedMonth === i ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: selectedMonth === i ? '#fff' : '#64748b', fontSize: '12px', minHeight: '32px', whiteSpace: 'nowrap' }}>{m}</button>
-                      ))}
-                    </div>
-                  )}
-
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.slice(0, activeTab === 'overview' ? 5 : undefined).map(tx => (
-                      <div key={tx._id} className="animate-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', marginBottom: '10px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }} onClick={() => setSelectedTx(tx)}>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tx.type === 'credit' ? '#22c55e' : '#94a3b8' }}>
-                            {tx.type === 'credit' ? '↓' : '↑'}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 500, fontSize: '14px' }}>{tx.description || 'Transfer'}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
-                          </div>
-                        </div>
-                        <div style={{ fontWeight: 600, fontSize: '15px', color: tx.type === 'credit' ? '#22c55e' : '#fff' }}>
-                          {tx.type === 'credit' ? '+' : '-'}${tx.amount?.toLocaleString()}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#64748b', background: 'rgba(255,255,255,0.01)', borderRadius: '20px' }}>
-                      No transactions found.
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* SECURITY SECTION */}
-              {activeTab === 'security' && (
-                <div className="animate-fade" style={{ maxWidth: '400px', margin: '20px auto' }}>
-                  <div style={{ background: '#0f172a', padding: '30px', borderRadius: '20px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔐</div>
-                    <h2 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '8px' }}>Secure PIN</h2>
-                    <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '24px' }}>Set a 4-digit PIN for your transactions.</p>
-                    
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '24px' }}>
-                      {pin.map((d, i) => (
-                        <input key={i} id={`pin-${i}`} type="password" style={{ width: '45px', height: '50px', textAlign: 'center', fontSize: '18px', background: '#020617', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff' }} value={d} maxLength={1} onChange={(e) => handlePinChange(i, e.target.value)} inputMode="numeric" />
-                      ))}
-                    </div>
-                    
-                    <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '44px' }}>
-                      {isUpdating ? 'Saving...' : 'Set Transaction PIN'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </main>
       </div>
 
-      {/* MOBILE BOTTOM NAV - OPTIMIZED FOR SPEED */}
-      <nav className="mobile-nav">
+      {/* MAIN CONTENT */}
+      <div className="main-wrapper scroll-container">
+        {isViewingSubPage ? (
+          <div>
+            <Outlet context={{ user }} />
+          </div>
+        ) : (
+          <>
+            {/* CARD DISPLAY */}
+            {activeTab === 'overview' && (
+              <div className="card-container">
+                <div className="card-header">
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8, letterSpacing: '1.5px' }}>VISA PLATINUM</div>
+                    <div style={{ fontSize: '13px', opacity: 0.9, marginTop: '4px' }}>IBK Terminal</div>
+                  </div>
+                  <div className="card-chip" />
+                </div>
+                
+                <div className="card-number">•••• •••• •••• {user?.accountNumber?.toString().slice(-4) || '8842'}</div>
+
+                <div className="card-footer">
+                  <div>
+                    <div className="card-holder-name">Card Holder</div>
+                    <div className="card-holder">{user?.name || 'VALUED CUSTOMER'}</div>
+                  </div>
+                  <span style={{ fontSize: '18px', fontWeight: 700, opacity: 0.9 }}>VISA</span>
+                </div>
+              </div>
+            )}
+
+            {/* BALANCE SECTION */}
+            {activeTab === 'overview' && (
+              <div className="balance-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span className="balance-label">Available Balance</span>
+                  <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 600, padding: 0 }}>
+                    {showBalance ? 'HIDE' : 'SHOW'}
+                  </button>
+                </div>
+                <div className="balance-amount">
+                  {showBalance ? `$${(user?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}
+                </div>
+              </div>
+            )}
+
+            {/* QUICK ACTIONS */}
+            {activeTab === 'overview' && (
+              <div className="section">
+                <div className="quick-actions">
+                  <div className="action-btn" onClick={() => navigate('/dashboard/transfer')}>
+                    <div className="action-btn-icon">💸</div>
+                    <div className="action-btn-label">Send Money</div>
+                  </div>
+                  <div className="action-btn" onClick={() => navigate('/dashboard/cards')}>
+                    <div className="action-btn-icon">💳</div>
+                    <div className="action-btn-label">My Cards</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* RECENT ACTIVITY / TRANSACTIONS */}
+            {(activeTab === 'overview' || activeTab === 'transactions') && (
+              <div className="section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h3 className="section-title">Recent Activity</h3>
+                  {activeTab === 'overview' && (
+                    <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0 }}>VIEW ALL</button>
+                  )}
+                </div>
+
+                {activeTab === 'transactions' && (
+                  <div className="month-filter">
+                    {months.map((m, i) => (
+                      <button key={m} onClick={() => setSelectedMonth(i)} className={`month-btn ${selectedMonth === i ? 'active' : ''}`}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.slice(0, activeTab === 'overview' ? 5 : undefined).map(tx => (
+                    <div key={tx._id} className="transaction-item" onClick={() => setSelectedTx(tx)}>
+                      <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                        <div className={`tx-icon ${tx.type === 'credit' ? 'credit' : 'debit'}`}>
+                          {tx.type === 'credit' ? '↓' : '↑'}
+                        </div>
+                        <div className="tx-content">
+                          <div className="tx-desc">{tx.description || 'Transfer'}</div>
+                          <div className="tx-date">{new Date(tx.createdAt).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className={`tx-amount ${tx.type === 'credit' ? 'credit' : 'debit'}`}>
+                        {tx.type === 'credit' ? '+' : '-'}${tx.amount?.toLocaleString()}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <div className="empty-state-icon">📭</div>
+                    <div className="empty-state-text">No transactions found</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SECURITY SECTION */}
+            {activeTab === 'security' && (
+              <div className="section" style={{ maxWidth: '100%', margin: '40px 16px' }}>
+                <div style={{ background: 'white', padding: '28px 20px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔐</div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>Set Transaction PIN</h2>
+                  <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '28px' }}>Create a 4-digit PIN to secure your transactions</p>
+                  
+                  <div className="pin-inputs">
+                    {pin.map((d, i) => (
+                      <input key={i} id={`pin-${i}`} type="password" className="pin-input" value={d} maxLength={1} onChange={(e) => handlePinChange(i, e.target.value)} inputMode="numeric" />
+                    ))}
+                  </div>
+                  
+                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '44px', fontSize: '15px' }}>
+                    {isUpdating ? 'Saving PIN...' : 'Confirm PIN'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <nav className="bottom-nav">
         {[
           { id: 'overview', icon: '🏠', label: 'Home', path: '/dashboard' },
           { id: 'transfer', icon: '💸', label: 'Send', path: '/dashboard/transfer' },
-          { id: 'transactions', icon: '📊', label: 'History', path: null },
+          { id: 'transactions', icon: '📊', label: 'Activity', path: null },
           { id: 'cards', icon: '💳', label: 'Cards', path: '/dashboard/cards' },
-          { id: 'security', icon: '🛡️', label: 'Secure', path: null },
+          { id: 'security', icon: '🔐', label: 'Secure', path: null },
         ].map((item) => (
           <div 
-            key={item.id} 
-            className="mobile-nav-item"
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '4px', 
-              flex: 1, 
-              padding: '6px 0',
-              color: activeTab === item.id ? '#3b82f6' : '#64748b',
-              transition: 'color 0.1s ease'
-            }}
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
             onClick={() => {
               if (item.path) navigate(item.path);
               else setActiveTab(item.id as any);
             }}
           >
-            <span style={{ fontSize: '20px' }}>{item.icon}</span>
-            <span style={{ fontSize: '10px', fontWeight: 600 }}>{item.label}</span>
+            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-label">{item.label}</span>
           </div>
         ))}
       </nav>
