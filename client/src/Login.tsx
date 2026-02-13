@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { login } from './api'; // Use your centralized API config
+import { login } from './api';
 import AdminDashboard from './AdminDashboard'; 
 import UserDashboard from './UserDashboard'; 
 
@@ -18,14 +18,10 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
   const [modalView, setModalView] = useState<'none' | 'forgot'>('none');
   const [resetEmail, setResetEmail] = useState('');
   
-  // NEW STATES: To handle the dashboard transitions
   const [isAdminView, setIsAdminView] = useState(false);
   const [isUserView, setIsUserView] = useState(false);
-
-  // SPLASH SCREEN STATE
   const [showSplash, setShowSplash] = useState(true);
 
-  // Splash Screen Timer (5 Seconds)
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
@@ -33,7 +29,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Background Slideshow Logic (Matches Signup.tsx)
   useEffect(() => {
     const imgInterval = setInterval(() => {
       setCurrentImg((prev) => (prev + 1) % images.length);
@@ -45,25 +40,18 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // ✅ FIX: Force email to lowercase and trim to match the Signup data in MongoDB
       const loginPayload = {
         email: formData.email.toLowerCase().trim(),
         password: formData.password
       };
 
-      // ✅ FIX: Use the imported 'login' function from your ./api file
       const { data } = await login(loginPayload);
       
-      // DEBUG LOG: Open your browser console (F12) to see this!
       console.log("Login Response Data:", data);
 
-      // Save the token and user to local storage for persistence
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      /** * ⚠️ CRITICAL UPDATE: 
-       * We update the local view states FIRST, then notify the global state.
-       */
       if (data.user && data.user.role === 'admin') {
         console.log("Switching to Admin View...");
         setIsAdminView(true);
@@ -72,12 +60,10 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
         setIsUserView(true);
       }
 
-      // Update the Global state in App.tsx
       setUser(data.user);
       
     } catch (err: any) {
       console.error("Login Error:", err);
-      // This handles the "Invalid credentials" message coming from your server
       alert(err.response?.data?.message || "Login failed. Please check your credentials or connection.");
     } finally {
       setLoading(false);
@@ -90,8 +76,6 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
     setModalView('none');
   };
 
-  // VIEW LOGIC (This happens before the return below):
-  // If the user logs in successfully, we swap the entire UI for the dashboard
   if (isAdminView) {
     return <AdminDashboard />;
   }
@@ -102,33 +86,76 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
 
   return (
     <div className="app-viewport">
-      {/* INTERNAL CSS - Added Splash Screen Animations */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        html, body {
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
+        }
 
         .app-viewport {
           position: relative;
           width: 100%;
-          height: 100vh;
+          min-height: 100vh;
           background: #000;
-          overflow: hidden;
+          overflow-x: hidden;
           display: flex;
           justify-content: center;
-          align-items: center;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          align-items: flex-start;
+          font-family: 'Montserrat', sans-serif;
+          padding-top: 0;
         }
 
-        /* --- SPLASH SCREEN STYLES --- */
+        /* --- SPLASH SCREEN STYLES (NO TRANSPARENCY) --- */
         .splash-screen {
           position: fixed;
           inset: 0;
-          background: #020617;
+          background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1429 100%);
           z-index: 9999;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           transition: transform 1s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+          overflow: hidden;
+          width: 100%;
+          height: 100%;
+        }
+
+        .splash-screen::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: 
+            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .splash-screen::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.8), transparent);
+          animation: topLineGlow 2s infinite;
+          z-index: 1;
+        }
+
+        @keyframes topLineGlow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
         }
 
         .splash-hidden {
@@ -137,89 +164,172 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           pointer-events: none;
         }
 
+        .splash-content {
+          position: relative;
+          z-index: 10;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 30px;
+          padding: 20px;
+        }
+
+        .splash-logo-container {
+          position: relative;
+          width: 120px;
+          height: 120px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .splash-logo {
-          font-size: 60px;
-          margin-bottom: 20px;
-          animation: splashPulse 2s infinite ease-in-out;
+          font-size: 70px;
+          filter: drop-shadow(0 20px 50px rgba(59, 130, 246, 0.4));
+          animation: splashBounce 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+          z-index: 2;
+          position: relative;
+        }
+
+        .splash-ring-1 {
+          position: absolute;
+          width: 140px;
+          height: 140px;
+          border: 2px solid rgba(59, 130, 246, 0.4);
+          border-radius: 50%;
+          animation: splashRing 3s ease-out infinite;
+          z-index: 1;
+        }
+
+        .splash-ring-2 {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          border: 2px solid rgba(99, 102, 241, 0.3);
+          border-radius: 50%;
+          animation: splashRing 3s ease-out 0.6s infinite;
+          z-index: 1;
+        }
+
+        @keyframes splashBounce {
+          0%, 100% { transform: scale(1) translateY(0); }
+          50% { transform: scale(1.15) translateY(-20px); }
+        }
+
+        @keyframes splashRing {
+          0% { transform: scale(0.5); opacity: 1; }
+          100% { transform: scale(1.5); opacity: 0; }
         }
 
         .splash-text-container {
-          text-align: center;
-          color: white;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          animation: fadeInUp 1s ease-out 0.5s both;
+          z-index: 2;
+          position: relative;
+        }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .splash-title {
-          font-size: 28px;
-          font-weight: 800;
-          letter-spacing: 2px;
-          margin-bottom: 10px;
-          background: linear-gradient(90deg, #fff, #3b82f6, #fff);
-          background-size: 200% auto;
+          font-size: 42px;
+          font-weight: 900;
+          letter-spacing: 3px;
+          background: linear-gradient(135deg, #fff 0%, #60a5fa 50%, #3b82f6 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          animation: shine 3s linear infinite;
+          background-clip: text;
+          text-transform: uppercase;
+          font-family: 'Syne', sans-serif;
         }
 
         .splash-subtitle {
-          font-size: 14px;
+          font-size: 13px;
           color: #94a3b8;
+          font-weight: 600;
+          letter-spacing: 2.5px;
+          text-transform: uppercase;
+        }
+
+        .splash-tagline {
+          font-size: 11px;
+          color: #64748b;
           font-weight: 500;
-          letter-spacing: 1px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
         }
 
         .loading-bar-container {
-          width: 200px;
-          height: 3px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 10px;
-          margin-top: 30px;
+          width: 240px;
+          height: 4px;
+          background: rgba(59, 130, 246, 0.2);
+          border-radius: 2px;
           overflow: hidden;
           position: relative;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          animation: fadeInUp 1s ease-out 1s both;
+          z-index: 2;
         }
 
         .loading-bar-fill {
           position: absolute;
           height: 100%;
-          width: 50%;
-          background: #3b82f6;
-          border-radius: 10px;
-          animation: loadingSwipe 1.5s infinite ease-in-out;
+          width: 30%;
+          background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+          background-size: 200% 100%;
+          border-radius: 2px;
+          animation: loadingSlide 2s ease-in-out infinite;
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
         }
 
-        .security-scan-line {
-          position: absolute;
-          width: 100%;
-          height: 2px;
-          background: rgba(59, 130, 246, 0.5);
-          box-shadow: 0 0 15px #3b82f6;
-          top: 0;
-          animation: scan 3s infinite linear;
-        }
-
-        @keyframes scan {
-          0% { top: 0; }
-          100% { top: 100%; }
-        }
-
-        @keyframes loadingSwipe {
-          0% { left: -50%; }
+        @keyframes loadingSlide {
+          0% { left: -100%; }
+          50% { left: 100%; }
           100% { left: 100%; }
         }
 
-        @keyframes shine {
-          to { background-position: 200% center; }
+        .security-features {
+          display: flex;
+          gap: 16px;
+          justify-content: center;
+          animation: fadeInUp 1s ease-out 1.5s both;
+          flex-wrap: wrap;
+          padding: 0 24px;
+          z-index: 2;
+          position: relative;
         }
 
-        @keyframes splashPulse {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px #3b82f6); }
-          50% { transform: scale(1.1); filter: drop-shadow(0 0 20px #3b82f6); }
+        .security-badge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 10px;
+          color: #cbd5e1;
+          font-weight: 600;
+          letter-spacing: 0.5px;
         }
 
-        /* --- EXISTING STYLES --- */
+        .security-badge::before {
+          content: '';
+          width: 6px;
+          height: 6px;
+          background: #10b981;
+          border-radius: 50%;
+          box-shadow: 0 0 10px #10b981;
+        }
+
+        /* --- SLIDESHOW STYLES --- */
         .slideshow-container {
           position: fixed;
           inset: 0;
           z-index: 0;
+          width: 100%;
+          height: 100vh;
         }
 
         .slide {
@@ -230,168 +340,650 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           background-repeat: no-repeat;
           opacity: 0;
           transition: opacity 1.5s ease-in-out;
+          width: 100%;
+          height: 100%;
         }
 
-        .slide.active { opacity: 1; }
+        .slide.active { 
+          opacity: 1;
+          animation: zoomIn 8s ease-in-out;
+        }
+
+        @keyframes zoomIn {
+          0% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
 
         .overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(2, 6, 23, 0.9));
+          background: linear-gradient(
+            135deg,
+            rgba(0, 0, 0, 0.4) 0%,
+            rgba(10, 14, 39, 0.8) 50%,
+            rgba(2, 6, 23, 0.95) 100%
+          );
           z-index: 1;
+          animation: gradientShift 15s ease infinite;
+          width: 100%;
+          height: 100%;
         }
 
+        @keyframes gradientShift {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+
+        /* --- AUTH PAGE STYLES --- */
         .auth-page {
           position: relative;
           z-index: 10;
           width: 100%;
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: flex-start;
           padding: 24px;
+          animation: authFadeIn 0.8s ease-out;
+          min-height: 100vh;
+          padding-top: 40px;
+          padding-bottom: 40px;
+        }
+
+        @keyframes authFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .auth-card {
-          background: #ffffff;
+          background: rgba(15, 23, 42, 0.92);
+          backdrop-filter: blur(20px);
           width: 100%;
-          max-width: 420px;
-          padding: 40px;
-          border-radius: 28px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          max-width: 440px;
+          padding: 40px 28px;
+          border-radius: 24px;
+          box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
           text-align: center;
-          animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          animation: cardEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .auth-card::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        .auth-card::after {
+          content: '';
+          position: absolute;
+          bottom: -30%;
+          left: -30%;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.05), transparent);
+          border-radius: 50%;
+          pointer-events: none;
         }
 
         @keyframes cardEntrance {
-          from { opacity: 0; transform: scale(0.95) translateY(30px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        @media (max-width: 480px) {
-          .auth-card {
-            padding: 30px 24px;
-            max-width: 340px; 
+          0% { 
+            opacity: 0; 
+            transform: scale(0.9) translateY(40px);
+            filter: blur(10px);
+          }
+          100% { 
+            opacity: 1; 
+            transform: scale(1) translateY(0);
+            filter: blur(0);
           }
         }
 
         .bank-icon-header {
-          width: 54px;
-          height: 54px;
-          background: #004da0;
+          width: 70px;
+          height: 70px;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white;
-          border-radius: 14px;
+          border-radius: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 20px;
-          font-size: 24px;
-          box-shadow: 0 10px 15px -3px rgba(0, 77, 160, 0.3);
-          animation: pulse 2s infinite;
+          margin: 0 auto 24px;
+          font-size: 36px;
+          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+          animation: iconPulse 2s ease-in-out infinite;
+          border: 2px solid rgba(96, 165, 250, 0.5);
+          position: relative;
         }
 
-        @keyframes pulse {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0.4); }
-          70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 77, 160, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 77, 160, 0); }
+        .bank-icon-header::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          border-radius: 18px;
+          animation: borderSpin 3s linear infinite;
+        }
+
+        @keyframes iconPulse {
+          0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+          }
+          50% { 
+            transform: scale(1.08);
+            box-shadow: 0 30px 60px rgba(59, 130, 246, 0.5);
+          }
+        }
+
+        @keyframes borderSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .auth-header {
+          margin-bottom: 28px;
+          animation: headerslidein 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes headerslidein {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .secure-badge {
+          color: #60a5fa;
+          font-weight: 800;
+          font-size: 10px;
+          background: rgba(59, 130, 246, 0.15);
+          padding: 8px 16px;
+          border-radius: 50px;
+          letter-spacing: 1.5px;
+          display: inline-block;
+          margin-bottom: 14px;
+          text-transform: uppercase;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          animation: badgeFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes badgeFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+
+        .auth-header h1 {
+          font-size: 1.8rem;
+          color: #f1f5f9;
+          margin: 12px 0 8px 0;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .auth-header p {
+          color: #cbd5e1;
+          font-size: 14px;
+          margin-bottom: 0;
+          line-height: 1.5;
+          font-weight: 500;
+        }
+
+        form {
+          animation: formSlideIn 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes formSlideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .floating-input { 
+          position: relative; 
+          width: 100%; 
+          margin-bottom: 14px;
+        }
+
+        .floating-input input {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 12px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          background: rgba(30, 58, 138, 0.3);
+          font-size: 14px;
+          outline: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-sizing: border-box;
+          color: #f1f5f9;
+          font-weight: 500;
+          font-family: inherit;
+        }
+
+        .floating-input input::placeholder {
+          color: #94a3b8;
+        }
+
+        .floating-input input:focus {
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.15);
+          box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+          transform: translateY(-2px);
+        }
+
+        .security-indicator {
+          position: absolute;
+          right: 16px;
+          top: 14px;
+          font-size: 16px;
+          animation: lockRoll 0.6s ease-out;
+        }
+
+        @keyframes lockRoll {
+          0% { transform: rotateZ(0deg) scale(0); opacity: 0; }
+          50% { transform: rotateZ(180deg) scale(1.2); }
+          100% { transform: rotateZ(360deg) scale(1); opacity: 1; }
+        }
+
+        .forgot-pass {
+          text-align: right;
+          margin: 10px 0 16px 0;
+          font-size: 12px;
+          color: #94a3b8;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          animation: linkFadeIn 0.8s ease-out 0.6s both;
+        }
+
+        .forgot-pass:hover { 
+          color: #60a5fa;
+          transform: translateX(2px);
+        }
+
+        @keyframes linkFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .submit-btn.primary {
+          width: 100%;
+          padding: 14px;
+          border-radius: 12px;
+          border: none;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin-top: 8px;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+          animation: buttonSlideIn 0.8s ease-out 0.5s both;
+        }
+
+        .submit-btn.primary::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .submit-btn.primary:hover::before {
+          left: 100%;
+        }
+
+        .submit-btn.primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        .submit-btn.primary:active { 
+          transform: translateY(0);
+          box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .submit-btn.primary:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        @keyframes buttonSlideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-footer {
+          margin-top: 20px;
+          border-top: 1px solid rgba(59, 130, 246, 0.2);
+          padding-top: 20px;
+          animation: footerSlideIn 0.8s ease-out 0.7s both;
+        }
+
+        @keyframes footerSlideIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .auth-footer p {
+          color: #cbd5e1;
+          font-size: 12px;
+          margin-bottom: 12px;
+          font-weight: 600;
+        }
+
+        .signup-link-btn {
+          background: rgba(96, 165, 250, 0.1);
+          border: 2px solid rgba(96, 165, 250, 0.3);
+          color: #60a5fa;
+          width: 100%;
+          padding: 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          margin-top: 0;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .signup-link-btn::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(96, 165, 250, 0.1));
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .signup-link-btn:hover::before {
+          transform: translateX(100%);
+        }
+
+        .signup-link-btn:hover { 
+          border-color: rgba(96, 165, 250, 0.6);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .signup-link-btn:active {
+          transform: translateY(0);
         }
 
         .modal-overlay {
-          position: absolute;
+          position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.7);
-          backdrop-filter: blur(12px);
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(20px);
           z-index: 100;
           display: flex;
           justify-content: center;
           align-items: center;
           padding: 20px;
+          animation: modalFadeIn 0.3s ease-out;
+          overflow-y: auto;
         }
 
-        .floating-input { position: relative; width: 100%; }
-
-        .floating-input input {
-          width: 100%;
-          padding: 16px 20px;
-          margin-bottom: 12px;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          font-size: 15px;
-          outline: none;
-          transition: all 0.2s;
-          box-sizing: border-box;
-          color: #1e293b;
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
-        .floating-input input:focus {
-          border-color: #004da0;
-          background: white;
-          box-shadow: 0 0 0 4px rgba(0, 77, 160, 0.05);
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 640px) {
+          .app-viewport {
+            padding-top: 0;
+          }
+
+          .auth-card {
+            padding: 32px 20px;
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 20px;
+          }
+
+          .auth-header h1 {
+            font-size: 1.5rem;
+            margin: 10px 0 6px 0;
+          }
+
+          .auth-header p {
+            font-size: 13px;
+            line-height: 1.4;
+          }
+
+          .bank-icon-header {
+            width: 60px;
+            height: 60px;
+            font-size: 32px;
+            margin: 0 auto 18px;
+          }
+
+          .secure-badge {
+            font-size: 9px;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+          }
+
+          .floating-input {
+            margin-bottom: 12px;
+          }
+
+          .floating-input input {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-radius: 10px;
+          }
+
+          .submit-btn.primary {
+            padding: 12px;
+            font-size: 13px;
+            margin-top: 6px;
+            border-radius: 10px;
+          }
+
+          .forgot-pass {
+            margin: 8px 0 14px 0;
+            font-size: 11px;
+          }
+
+          .auth-footer {
+            margin-top: 16px;
+            padding-top: 16px;
+          }
+
+          .auth-footer p {
+            font-size: 11px;
+            margin-bottom: 10px;
+          }
+
+          .signup-link-btn {
+            padding: 11px;
+            font-size: 12px;
+            border-radius: 10px;
+          }
+
+          .splash-title {
+            font-size: 28px;
+            letter-spacing: 2px;
+          }
+
+          .splash-subtitle {
+            font-size: 11px;
+          }
+
+          .splash-tagline {
+            font-size: 10px;
+          }
+
+          .security-features {
+            gap: 12px;
+            padding: 0 16px;
+          }
+
+          .security-badge {
+            font-size: 9px;
+          }
+
+          .loading-bar-container {
+            width: 200px;
+          }
+
+          .splash-logo {
+            font-size: 50px;
+          }
         }
 
-        .security-indicator {
-          position: absolute;
-          right: 18px;
-          top: 15px;
-          font-size: 16px;
-          opacity: 0.7;
+        @media (max-width: 480px) {
+          .app-viewport {
+            padding-top: 0;
+          }
+
+          .auth-page {
+            padding: 16px;
+            padding-top: 30px;
+            padding-bottom: 30px;
+          }
+
+          .auth-card {
+            padding: 24px 16px;
+            border-radius: 16px;
+          }
+
+          .auth-header h1 {
+            font-size: 1.3rem;
+            margin: 8px 0 4px 0;
+          }
+
+          .auth-header p {
+            font-size: 12px;
+            line-height: 1.3;
+          }
+
+          .bank-icon-header {
+            width: 55px;
+            height: 55px;
+            font-size: 28px;
+            margin: 0 auto 16px;
+          }
+
+          .secure-badge {
+            font-size: 8px;
+            padding: 5px 10px;
+            margin-bottom: 8px;
+          }
+
+          .floating-input {
+            margin-bottom: 10px;
+          }
+
+          .floating-input input {
+            padding: 11px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+          }
+
+          .submit-btn.primary {
+            padding: 11px;
+            font-size: 12px;
+            margin-top: 4px;
+          }
+
+          .forgot-pass {
+            margin: 6px 0 12px 0;
+            font-size: 10px;
+          }
+
+          .auth-footer {
+            margin-top: 14px;
+            padding-top: 14px;
+          }
+
+          .auth-footer p {
+            font-size: 10px;
+            margin-bottom: 8px;
+          }
+
+          .signup-link-btn {
+            padding: 10px;
+            font-size: 11px;
+          }
+
+          form {
+            margin: 0;
+          }
+
+          .splash-logo-container {
+            width: 100px;
+            height: 100px;
+          }
+
+          .splash-logo {
+            font-size: 40px;
+          }
+
+          .splash-ring-1 {
+            width: 110px;
+            height: 110px;
+          }
+
+          .splash-ring-2 {
+            width: 80px;
+            height: 80px;
+          }
+
+          .splash-title {
+            font-size: 24px;
+          }
+
+          .splash-content {
+            gap: 20px;
+          }
         }
-
-        .submit-btn.primary {
-          width: 100%;
-          padding: 16px;
-          border-radius: 12px;
-          border: none;
-          background: #004da0;
-          color: white;
-          font-weight: 700;
-          font-size: 16px;
-          cursor: pointer;
-          transition: 0.2s;
-          margin-top: 10px;
-          letter-spacing: 0.5px;
-        }
-
-        .submit-btn.primary:active { transform: scale(0.98); }
-
-        .signup-link-btn {
-          background: #f1f5f9;
-          border: none;
-          color: #004da0;
-          width: 100%;
-          padding: 14px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 14px;
-          cursor: pointer;
-          margin-top: 8px;
-          transition: 0.2s;
-        }
-
-        .signup-link-btn:hover { background: #e2e8f0; }
-
-        .forgot-pass {
-          text-align: right;
-          margin: -4px 0 20px 0;
-          font-size: 13px;
-          color: #64748b;
-          font-weight: 500;
-          cursor: pointer;
-        }
-        .forgot-pass:hover { color: #004da0; }
       `}</style>
 
-      {/* --- SPLASH SCREEN COMPONENT --- */}
+      {/* --- PROFESSIONAL SPLASH SCREEN (NO TRANSPARENCY) --- */}
       <div className={`splash-screen ${!showSplash ? 'splash-hidden' : ''}`}>
-        <div className="security-scan-line"></div>
-        <div className="splash-logo">🏛️</div>
-        <div className="splash-text-container">
-          <h1 className="splash-title">IBK BANK</h1>
-          <p className="splash-subtitle">WHERE YOUR FUNDS ARE SECURED</p>
-          <p style={{fontSize: '10px', color: '#64748b', marginTop: '5px', letterSpacing: '2px'}}>ENCRYPTING SESSION...</p>
-        </div>
-        <div className="loading-bar-container">
-          <div className="loading-bar-fill"></div>
+        <div className="splash-content">
+          <div className="splash-logo-container">
+            <div className="splash-ring-1"></div>
+            <div className="splash-ring-2"></div>
+            <div className="splash-logo">🏦</div>
+          </div>
+
+          <div className="splash-text-container">
+            <h1 className="splash-title">IBK BANK</h1>
+            <p className="splash-subtitle">Secure Financial Services</p>
+            <p className="splash-tagline">Enterprise Banking for Your Future</p>
+          </div>
+
+          <div className="loading-bar-container">
+            <div className="loading-bar-fill"></div>
+          </div>
+
+          <div className="security-features">
+            <div className="security-badge">SSL ENCRYPTED</div>
+            <div className="security-badge">256-BIT SECURE</div>
+            <div className="security-badge">VERIFIED BANK</div>
+          </div>
         </div>
       </div>
 
@@ -413,8 +1005,10 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
           <div className="modal-overlay">
             <div className="auth-card">
               <div className="bank-icon-header">🔑</div>
-              <h1 style={{fontSize: '1.5rem', color: '#0f172a', fontWeight: 800, margin: '0 0 8px 0'}}>Reset Password</h1>
-              <p style={{color: '#64748b', fontSize: '14px', marginBottom: '24px'}}>Enter your email to receive recovery instructions.</p>
+              <div className="auth-header">
+                <h1>Reset Password</h1>
+                <p>Enter your email to receive recovery instructions.</p>
+              </div>
               <form onSubmit={handleResetSubmit}>
                 <div className="floating-input">
                   <input 
@@ -428,7 +1022,18 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
                 <button type="submit" className="submit-btn primary">SEND LINK</button>
                 <p 
                   onClick={() => setModalView('none')} 
-                  style={{marginTop: '20px', cursor: 'pointer', color: '#64748b', fontWeight: 700, fontSize: '13px'}}
+                  style={{
+                    marginTop: '16px', 
+                    cursor: 'pointer', 
+                    color: '#60a5fa', 
+                    fontWeight: 700, 
+                    fontSize: '12px',
+                    transition: 'all 0.2s',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#93c5fd')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#60a5fa')}
                 >
                   BACK TO LOGIN
                 </p>
@@ -439,11 +1044,11 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
 
         {/* LOGIN CARD */}
         <div className="auth-card">
-          <div className="bank-icon-header">🏛️</div>
+          <div className="bank-icon-header" style={{ position: 'relative', zIndex: 2 }}>🏛️</div>
           <div className="auth-header">
-            <span style={{color: '#004da0', fontWeight: 800, fontSize: '11px', background: 'rgba(0,77,160,0.08)', padding: '5px 14px', borderRadius: '50px', letterSpacing: '1px'}}>SECURE ACCESS</span>
-            <h1 style={{fontSize: '1.8rem', color: '#0f172a', margin: '12px 0 8px 0', fontWeight: 800, letterSpacing: '-0.5px'}}>Welcome Back</h1>
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5', fontWeight: 500}}>Enter your credentials to access your IBK Finance account.</p>
+            <span className="secure-badge">🔒 SECURE ACCESS</span>
+            <h1>Welcome Back</h1>
+            <p>Enter your credentials to access your IBK Finance account.</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -464,18 +1069,18 @@ const Login = ({ onSwitchToSignup, setUser }: LoginProps) => {
                 onBlur={() => setIsPasswordFocused(false)}
                 onChange={(e) => setFormData({...formData, password: e.target.value})} 
               />
-              {isPasswordFocused && <span className="security-indicator">🔒</span>}
+              {isPasswordFocused && <span className="security-indicator">🔐</span>}
             </div>
 
             <div className="forgot-pass" onClick={() => setModalView('forgot')}>Forgot Password?</div>
             
             <button type="submit" disabled={loading} className="submit-btn primary">
-              {loading ? "VERIFYING..." : "LOGIN"}
+              {loading ? "🔄 VERIFYING..." : "LOGIN"}
             </button>
           </form>
 
-          <div className="auth-footer" style={{marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '24px'}}>
-            <p style={{color: '#64748b', fontSize: '13px', marginBottom: '16px', fontWeight: 500}}>New to IBK Finance?</p>
+          <div className="auth-footer">
+            <p>New to IBK Finance?</p>
             <button 
               className="signup-link-btn" 
               type="button" 

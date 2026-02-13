@@ -17,8 +17,7 @@ const TransactionReceipt = () => {
     hour12: true
   });
 
-  // --- SAFETY SHIELD: This prevents the 'toLocaleString' error ---
-  // We check if location.state exists, AND if details exists inside it.
+
   const stateData = location.state?.details ? location.state.details : {
     senderName: "Valued Member",
     senderAcc: "Checking ****1234",

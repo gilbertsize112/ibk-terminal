@@ -14,6 +14,7 @@ const UserDashboard = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.replace('/');
+    navigate('/login');
   };
 
   useEffect(() => {
@@ -128,30 +129,35 @@ const UserDashboard = () => {
   };
 
   if (loading) return (
-    <div style={{ height: '100vh', background: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ width: '40px', height: '40px', border: '3px solid #e5e7eb', borderTop: '3px solid #1e40af', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+    <div style={{ height: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+        <div style={{ width: '50px', height: '50px', border: '3px solid rgba(255,255,255,0.2)', borderTop: '3px solid #60a5fa', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 500 }}>Loading your account...</p>
+      </div>
       <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (!user) return (
-    <div style={{ height: '100vh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+    <div style={{ height: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '50px', marginBottom: '20px' }}>⚠️</div>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '10px', color: '#1f2937' }}>Connection Error</h2>
-        <button onClick={() => window.location.reload()} style={{ color: '#1e40af', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}>Refresh Page</button>
+        <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>⚠️</div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '10px', color: '#f1f5f9' }}>Connection Error</h2>
+        <p style={{ color: '#cbd5e1', fontSize: '14px', marginBottom: '24px' }}>Unable to load your account</p>
+        <button onClick={() => window.location.reload()} style={{ padding: '12px 28px', background: '#60a5fa', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Refresh Page</button>
       </div>
+      <style>{`@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }`}</style>
     </div>
   );
 
   if (user?.isFrozen) return (
-    <div style={{ height: '100vh', background: 'linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ background: '#ffffff', padding: '40px 24px', borderRadius: '20px', border: '2px solid #dc2626', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 10px 25px rgba(220, 38, 38, 0.1)' }}>
+    <div style={{ height: '100vh', background: 'linear-gradient(135deg, #7f1d1d 0%, #4c0519 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ background: 'rgba(255,255,255,0.95)', padding: '40px 24px', borderRadius: '16px', border: '2px solid #dc2626', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
         <div style={{ fontSize: '60px', marginBottom: '16px' }}>🔒</div>
         <h2 style={{ fontSize: '22px', color: '#dc2626', fontWeight: 700, margin: '0 0 12px 0' }}>Account Suspended</h2>
-        <p style={{ color: '#6b7280', lineHeight: '1.6', marginBottom: '28px', fontSize: '14px' }}>Your account has been temporarily suspended. Please contact our support team to resolve this issue.</p>
-        <p style={{ color: '#9ca3af', fontSize: '13px', marginBottom: '24px' }}>support@ibk-terminal.com</p>
-        <button onClick={handleLogout} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#dc2626', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%', fontSize: '14px' }}>LOGOUT</button>
+        <p style={{ color: '#64748b', lineHeight: '1.6', marginBottom: '28px', fontSize: '14px' }}>Your account has been temporarily suspended. Please contact our support team.</p>
+        <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '24px', fontWeight: 500 }}>support@ibk-terminal.com</p>
+        <button onClick={handleLogout} style={{ padding: '12px 24px', borderRadius: '8px', border: 'none', background: '#dc2626', color: 'white', fontWeight: 700, cursor: 'pointer', width: '100%', fontSize: '14px' }}>LOGOUT</button>
       </div>
     </div>
   );
@@ -160,9 +166,9 @@ const UserDashboard = () => {
 
   return (
     <div style={{ 
-      background: '#f9fafb', 
-      color: '#1f2937', 
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', 
+      background: 'linear-gradient(to bottom, #0f172a 0%, #1a1f2e 50%, #0f172a 100%)',
+      color: '#f1f5f9', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif', 
       minHeight: '100vh', 
       width: '100%',
       overflow: 'auto',
@@ -178,6 +184,7 @@ const UserDashboard = () => {
           overflow-x: hidden;
           scroll-behavior: smooth;
           -webkit-overflow-scrolling: touch;
+          background: linear-gradient(to bottom, #0f172a 0%, #1a1f2e 50%, #0f172a 100%);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -187,123 +194,697 @@ const UserDashboard = () => {
         }
 
         ::-webkit-scrollbar-track {
-          background: transparent;
+          background: rgba(15, 23, 42, 0.5);
         }
 
         ::-webkit-scrollbar-thumb {
-          background: #1e40af;
+          background: #3b82f6;
           border-radius: 10px;
-          opacity: 0.5;
+          opacity: 0.6;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-          opacity: 0.8;
+          opacity: 0.9;
         }
 
-        scrollbar-color: #1e40af transparent;
+        scrollbar-color: #3b82f6 transparent;
         scrollbar-width: thin;
 
-        body { background: #f9fafb; }
+        body { background: linear-gradient(to bottom, #0f172a 0%, #1a1f2e 50%, #0f172a 100%); }
         
-        button { border: none; border-radius: 10px; font-weight: 600; transition: all 0.2s ease; font-size: 14px; cursor: pointer; touch-action: manipulation; }
-        .btn-primary { background: #1e40af; color: white; padding: 12px 20px; }
-        .btn-primary:active { transform: scale(0.97); background: #1e3a8a; }
-        .btn-secondary { background: #e5e7eb; color: #1f2937; padding: 10px 16px; }
-        .btn-secondary:active { background: #d1d5db; }
+        button { 
+          border: none; 
+          border-radius: 10px; 
+          font-weight: 600; 
+          transition: all 0.3s ease; 
+          font-size: 14px; 
+          cursor: pointer; 
+          touch-action: manipulation; 
+          font-family: inherit;
+        }
         
-        .card-container { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-radius: 16px; padding: 24px; color: white; margin: 16px 16px 0 16px; box-shadow: 0 10px 30px rgba(30, 64, 175, 0.15); position: relative; overflow: hidden; }
-        .card-container::before { content: ''; position: absolute; top: -40%; right: -40%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; }
-        .card-container::after { content: ''; position: absolute; bottom: -30%; left: -30%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; }
+        button:active { transform: scale(0.97); }
         
-        .card-header { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-        .card-chip { width: 45px; height: 32px; background: linear-gradient(135deg, #fbbf24, #f97316); border-radius: 6px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-primary { 
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+          color: white; 
+          padding: 12px 20px;
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
         
-        .card-number { font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: 500; margin: 20px 0; position: relative; z-index: 2; }
-        .card-footer { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; }
-        .card-holder-name { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-        .card-holder { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-primary:hover { 
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-secondary { 
+          background: rgba(148, 163, 184, 0.2); 
+          color: #e2e8f0; 
+          padding: 10px 16px;
+          border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+        
+        .btn-secondary:hover { 
+          background: rgba(148, 163, 184, 0.3);
+        }
+
+        .btn-danger {
+          background: rgba(220, 38, 38, 0.1);
+          color: #fca5a5;
+          border: 1px solid rgba(220, 38, 38, 0.3);
+          padding: 10px 16px;
+        }
+
+        .btn-danger:hover {
+          background: rgba(220, 38, 38, 0.2);
+          border-color: rgba(220, 38, 38, 0.5);
+        }
+        
+        .card-container { 
+          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #0f172a 100%);
+          border-radius: 20px; 
+          padding: 28px 24px; 
+          color: white; 
+          margin: 24px 16px 12px 16px; 
+          box-shadow: 0 20px 40px rgba(30, 64, 175, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+          position: relative; 
+          overflow: hidden;
+          border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
+        .card-container::before { 
+          content: ''; 
+          position: absolute; 
+          top: -40%; 
+          right: -40%; 
+          width: 400px; 
+          height: 400px; 
+          background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 70%); 
+          border-radius: 50%; 
+        }
+
+        .card-container::after { 
+          content: ''; 
+          position: absolute; 
+          bottom: -30%; 
+          left: -30%; 
+          width: 300px; 
+          height: 300px; 
+          background: radial-gradient(circle, rgba(30, 64, 175, 0.2) 0%, transparent 70%); 
+          border-radius: 50%; 
+        }
+        
+        .card-header { 
+          position: relative; 
+          z-index: 2; 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-start; 
+          margin-bottom: 45px; 
+        }
+
+        .card-brand { 
+          font-size: 13px; 
+          font-weight: 700; 
+          letter-spacing: 2px; 
+          text-transform: uppercase; 
+          opacity: 0.85;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card-type {
+          font-size: 14px;
+          opacity: 0.7;
+          margin-top: 6px;
+          letter-spacing: 0.5px;
+        }
+
+        .card-chip { 
+          width: 50px; 
+          height: 35px; 
+          background: linear-gradient(135deg, #fbbf24, #f97316); 
+          border-radius: 8px; 
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .card-number { 
+          font-size: 22px; 
+          letter-spacing: 3px; 
+          font-family: 'Courier New', monospace; 
+          font-weight: 500; 
+          margin: 25px 0; 
+          position: relative; 
+          z-index: 2;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card-footer { 
+          position: relative; 
+          z-index: 2; 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-end; 
+        }
+
+        .card-holder-label { 
+          font-size: 11px; 
+          text-transform: uppercase; 
+          letter-spacing: 1px; 
+          opacity: 0.6; 
+          margin-bottom: 4px;
+          font-weight: 600;
+        }
+
+        .card-holder-name { 
+          font-size: 14px; 
+          font-weight: 700; 
+          text-transform: uppercase; 
+          letter-spacing: 0.5px;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card-visa { 
+          font-size: 20px; 
+          font-weight: 700;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
         
         .section { margin: 24px 16px; }
-        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #1f2937; }
+
+        .section-title { 
+          font-size: 18px; 
+          font-weight: 800; 
+          margin-bottom: 16px; 
+          color: '#f1f5f9';
+          letter-spacing: -0.5px;
+        }
         
-        .top-bar { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; }
-        .top-bar-logo { font-size: 14px; font-weight: 800; color: #1e40af; letter-spacing: 1px; }
-        .top-bar-user { font-size: 13px; font-weight: 600; color: #1f2937; }
+        .top-bar { 
+          background: rgba(15, 23, 42, 0.8);
+          backdrop-filter: blur(10px);
+          padding: 16px 16px; 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          border-bottom: 1px solid rgba(96, 165, 250, 0.1);
+          position: sticky; 
+          top: 0; 
+          z-index: 50;
+        }
+
+        .top-bar-logo { 
+          font-size: 13px; 
+          font-weight: 900; 
+          color: '#60a5fa'; 
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+        }
+
+        .top-bar-subtitle { 
+          font-size: 11px; 
+          color: '#94a3b8'; 
+          font-weight: 500;
+          letter-spacing: 0.5px;
+          margin-top: 2px;
+        }
+
+        .top-bar-user { 
+          font-size: 13px; 
+          font-weight: 700; 
+          color: '#f1f5f9';
+          text-align: right;
+        }
+
+        .top-bar-greeting {
+          font-size: 11px;
+          color: '#94a3b8';
+          font-weight: 500;
+          margin-top: 2px;
+        }
+
+        .profile-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 20px;
+          transition: all 0.3s ease;
+          border: 2px solid rgba(96, 165, 250, 0.3);
+          position: relative;
+        }
+
+        .profile-icon:hover {
+          border-color: rgba(96, 165, 250, 0.6);
+          transform: scale(1.05);
+        }
+
+        .profile-menu {
+          position: fixed;
+          top: 60px;
+          right: 16px;
+          background: rgba(15, 23, 42, 0.95);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(96, 165, 250, 0.2);
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+          z-index: 200;
+          overflow: hidden;
+          animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .profile-menu-item {
+          padding: 14px 20px;
+          color: '#e2e8f0';
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          border-bottom: 1px solid rgba(96, 165, 250, 0.1);
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .profile-menu-item:last-child {
+          border-bottom: none;
+        }
+
+        .profile-menu-item:hover {
+          background: rgba(59, 130, 246, 0.1);
+          color: '#60a5fa';
+          padding-left: 24px;
+        }
+
+        .profile-menu-logout {
+          color: '#fca5a5';
+        }
+
+        .profile-menu-logout:hover {
+          background: rgba(220, 38, 38, 0.1);
+          color: '#fca5a5';
+        }
         
-        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .action-btn { background: white; border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .action-btn:active { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .action-btn-icon { font-size: 28px; }
-        .action-btn-label { font-size: 13px; font-weight: 700; color: #1f2937; text-align: center; }
+        .quick-actions { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 14px; 
+        }
+
+        .action-btn { 
+          background: rgba(30, 58, 138, 0.4);
+          border: 1px solid rgba(96, 165, 250, 0.2);
+          padding: 24px 16px; 
+          border-radius: 14px; 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          gap: 10px; 
+          cursor: pointer; 
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          backdrop-filter: blur(10px);
+        }
+
+        .action-btn:active { 
+          transform: translateY(-4px); 
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .action-btn:hover {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .action-btn-icon { 
+          font-size: 32px; 
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .action-btn-label { 
+          font-size: 13px; 
+          font-weight: 700; 
+          color: '#e2e8f0'; 
+          text-align: center;
+          letter-spacing: -0.3px;
+        }
         
-        .transaction-item { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .transaction-item:active { background: #f3f4f6; transform: translateY(-1px); }
-        .tx-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-        .tx-icon.credit { background: #d1fae5; color: #059669; }
-        .tx-icon.debit { background: #fee2e2; color: #dc2626; }
-        .tx-content { flex: 1; margin-left: 12px; }
-        .tx-desc { font-size: 14px; font-weight: 700; color: #1f2937; }
-        .tx-date { font-size: 12px; color: #6b7280; margin-top: 2px; }
-        .tx-amount { font-weight: 700; font-size: 15px; }
-        .tx-amount.credit { color: #059669; }
-        .tx-amount.debit { color: #1f2937; }
+        .transaction-item { 
+          background: rgba(30, 58, 138, 0.2);
+          border-radius: 12px; 
+          padding: 16px; 
+          margin-bottom: 10px; 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          border: 1px solid rgba(96, 165, 250, 0.15);
+          cursor: pointer; 
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          backdrop-filter: blur(10px);
+        }
+
+        .transaction-item:active { 
+          background: rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px);
+        }
+
+        .transaction-item:hover {
+          background: rgba(59, 130, 246, 0.1);
+          border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .tx-icon { 
+          width: 44px; 
+          height: 44px; 
+          border-radius: 12px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          font-size: 20px; 
+          flex-shrink: 0;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .tx-icon.credit { 
+          background: rgba(16, 185, 129, 0.2);
+          color: '#6ee7b7';
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .tx-icon.debit { 
+          background: rgba(239, 68, 68, 0.2);
+          color: '#fca5a5';
+          border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .tx-content { 
+          flex: 1; 
+          margin-left: 12px; 
+        }
+
+        .tx-desc { 
+          font-size: 14px; 
+          font-weight: 700; 
+          color: '#f1f5f9';
+        }
+
+        .tx-date { 
+          font-size: 12px; 
+          color: '#94a3b8'; 
+          margin-top: 4px;
+        }
+
+        .tx-amount { 
+          font-weight: 700; 
+          font-size: 15px;
+        }
+
+        .tx-amount.credit { 
+          color: '#6ee7b7'; 
+        }
+
+        .tx-amount.debit { 
+          color: '#fca5a5'; 
+        }
         
-        .month-filter { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px 16px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-        .month-btn { padding: 8px 16px; border-radius: 20px; background: white; border: 1px solid #e5e7eb; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
-        .month-btn.active { background: #1e40af; color: white; border: none; }
+        .month-filter { 
+          display: flex; 
+          gap: 10px; 
+          overflow-x: auto; 
+          padding: 0 16px 16px 16px; 
+          scroll-behavior: smooth; 
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        .month-filter::-webkit-scrollbar {
+          display: none;
+        }
+
+        .month-btn { 
+          padding: 10px 16px; 
+          border-radius: 20px; 
+          background: rgba(30, 58, 138, 0.3);
+          border: 1px solid rgba(96, 165, 250, 0.2);
+          font-size: 12px; 
+          font-weight: 700; 
+          white-space: nowrap; 
+          cursor: pointer; 
+          transition: all 0.3s ease;
+          color: '#cbd5e1';
+        }
+
+        .month-btn:hover {
+          background: rgba(59, 130, 246, 0.2);
+          border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .month-btn.active { 
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white; 
+          border: none;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
         
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: flex-end; justify-content: center; }
-        .modal-sheet { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px; animation: slide-up 0.3s ease-out; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-overlay { 
+          position: fixed; 
+          inset: 0; 
+          background: rgba(0,0,0,0.6); 
+          backdrop-filter: blur(8px); 
+          z-index: 2000; 
+          display: flex; 
+          align-items: flex-end; 
+          justify-content: center;
+        }
+
+        .modal-sheet { 
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+          width: 100%; 
+          max-width: 500px; 
+          border-radius: 24px 24px 0 0; 
+          padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px; 
+          animation: slide-up 0.3s ease-out; 
+          max-height: 90vh; 
+          overflow-y: auto; 
+          -webkit-overflow-scrolling: touch;
+          border: 1px solid rgba(96, 165, 250, 0.1);
+          box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+
+        @keyframes slide-up { 
+          from { transform: translateY(100%); } 
+          to { transform: translateY(0); } 
+        }
         
-        .modal-handle { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 20px; }
+        .modal-handle { 
+          width: 36px; 
+          height: 4px; 
+          background: rgba(148, 163, 184, 0.3); 
+          border-radius: 2px; 
+          margin: 0 auto 20px; 
+        }
         
-        .modal-content-item { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
-        .modal-content-item:last-child { border-bottom: none; }
-        .modal-content-label { color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .modal-content-value { font-weight: 700; font-size: 14px; color: #1f2937; }
+        .modal-content-item { 
+          display: flex; 
+          justify-content: space-between; 
+          padding: 14px 0; 
+          border-bottom: 1px solid rgba(96, 165, 250, 0.1);
+        }
+
+        .modal-content-item:last-child { 
+          border-bottom: none; 
+        }
+
+        .modal-content-label { 
+          color: '#94a3b8'; 
+          font-size: 12px; 
+          font-weight: 700; 
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .modal-content-value { 
+          font-weight: 700; 
+          font-size: 14px; 
+          color: '#e2e8f0';
+        }
         
-        .pin-inputs { display: flex; gap: 12px; justify-content: center; margin: 24px 0; }
-        .pin-input { width: 50px; height: 50px; text-align: center; font-size: 20px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; font-weight: 600; transition: all 0.2s; }
-        .pin-input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .pin-inputs { 
+          display: flex; 
+          gap: 14px; 
+          justify-content: center; 
+          margin: 32px 0; 
+        }
+
+        .pin-input { 
+          width: 56px; 
+          height: 56px; 
+          text-align: center; 
+          font-size: 24px; 
+          border: 2px solid rgba(96, 165, 250, 0.3);
+          border-radius: 12px; 
+          background: rgba(30, 58, 138, 0.3);
+          font-weight: 700;
+          color: '#f1f5f9';
+          transition: all 0.3s ease;
+        }
+
+        .pin-input:focus { 
+          outline: none; 
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.2);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
         
-        .success-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .success-overlay { 
+          position: fixed; 
+          inset: 0; 
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          z-index: 9999; 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: center; 
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn { 
+          from { opacity: 0; } 
+          to { opacity: 1; } 
+        }
         
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; padding: 10px 0; cursor: pointer; transition: all 0.15s; color: #9ca3af; touch-action: manipulation; }
-        .nav-item.active { color: #1e40af; }
-        .nav-icon { font-size: 24px; }
-        .nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+        .bottom-nav { 
+          position: fixed; 
+          bottom: 0; 
+          left: 0; 
+          right: 0; 
+          background: rgba(15, 23, 42, 0.95);
+          backdrop-filter: blur(10px);
+          border-top: 1px solid rgba(96, 165, 250, 0.1);
+          display: flex; 
+          justify-content: space-around; 
+          padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0; 
+          z-index: 100;
+        }
+
+        .nav-item { 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          gap: 6px; 
+          flex: 1; 
+          padding: 12px 0; 
+          cursor: pointer; 
+          transition: all 0.2s ease;
+          color: '#94a3b8'; 
+          touch-action: manipulation;
+        }
+
+        .nav-item.active { 
+          color: '#60a5fa';
+        }
+
+        .nav-item.active::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          width: 40px;
+          height: 3px;
+          background: linear-gradient(90deg, #3b82f6, #60a5fa);
+          border-radius: 2px;
+        }
+
+        .nav-icon { 
+          font-size: 24px; 
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .nav-label { 
+          font-size: 10px; 
+          font-weight: 700; 
+          text-transform: uppercase; 
+          letter-spacing: 0.5px;
+        }
         
         .main-wrapper { 
-          padding-bottom: 100px;
+          padding-bottom: 120px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
           overflow-x: hidden;
         }
         
-        .balance-section { background: white; margin: 16px 16px 0 16px; padding: 20px; border-radius: 14px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .balance-label { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .balance-amount { font-size: 32px; font-weight: 800; color: #1f2937; margin-bottom: 16px; letter-spacing: -1px; }
+        .balance-section { 
+          background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
+          margin: 16px 16px 0 16px; 
+          padding: 24px; 
+          border-radius: 16px; 
+          border: 1px solid rgba(96, 165, 250, 0.2);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+          backdrop-filter: blur(10px);
+        }
+
+        .balance-label { 
+          font-size: 12px; 
+          color: '#94a3b8'; 
+          font-weight: 700; 
+          margin-bottom: 12px; 
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .balance-amount { 
+          font-size: 36px; 
+          font-weight: 900; 
+          color: '#f1f5f9'; 
+          margin-bottom: 0;
+          letter-spacing: -1.5px;
+        }
         
-        .empty-state { text-align: center; padding: 40px 20px; }
-        .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
-        .empty-state-text { color: #6b7280; font-size: 14px; }
+        .empty-state { 
+          text-align: center; 
+          padding: 60px 20px; 
+        }
+
+        .empty-state-icon { 
+          font-size: 50px; 
+          margin-bottom: 16px;
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+        }
+
+        .empty-state-text { 
+          color: '#94a3b8'; 
+          font-size: 14px;
+          font-weight: 500;
+        }
         
         @media (max-width: 640px) {
           .quick-actions { grid-template-columns: 1fr; }
           .section { margin: 20px 12px; }
-          .card-container { margin: 12px 12px 0 12px; }
+          .card-container { margin: 20px 12px 8px 12px; }
         }
       `}</style>
 
       {/* SUCCESS OVERLAY */}
       {showSuccess && (
         <div className="success-overlay">
-          <div style={{ fontSize: '60px', marginBottom: '20px' }}>✅</div>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1f2937', marginBottom: '8px' }}>PIN Activated</h2>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>Your transaction PIN is now secure</p>
+          <div style={{ fontSize: '70px', marginBottom: '24px', animation: 'bounce 0.6s ease-out' }}>✅</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#f1f5f9', marginBottom: '8px' }}>PIN Activated</h2>
+          <p style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>Your transaction PIN is now secure</p>
+          <style>{`@keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }`}</style>
         </div>
       )}
 
@@ -312,12 +893,14 @@ const UserDashboard = () => {
         <div className="modal-overlay" onClick={() => setSelectedTx(null)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-handle" />
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '24px', color: '#1f2937' }}>Transaction Details</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '24px', color: '#f1f5f9', letterSpacing: '-0.3px' }}>Transaction Details</h3>
             
-            <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
+            <div style={{ background: 'rgba(30, 58, 138, 0.3)', padding: '18px', borderRadius: '12px', marginBottom: '24px', border: '1px solid rgba(96, 165, 250, 0.1)' }}>
               <div className="modal-content-item">
                 <span className="modal-content-label">Status</span>
-                <span style={{ color: '#059669', fontWeight: 700, fontSize: '14px' }}>✓ Success</span>
+                <span style={{ color: '#6ee7b7', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12px' }}>✓</span> Success
+                </span>
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Type</span>
@@ -337,7 +920,7 @@ const UserDashboard = () => {
               </div>
               <div className="modal-content-item">
                 <span className="modal-content-label">Amount</span>
-                <span className="modal-content-value" style={{ color: selectedTx.type === 'credit' ? '#059669' : '#1f2937', fontSize: '16px' }}>
+                <span className="modal-content-value" style={{ color: selectedTx.type === 'credit' ? '#6ee7b7' : '#fca5a5', fontSize: '16px', fontWeight: 800 }}>
                   {selectedTx.type === 'credit' ? '+' : '-'}${selectedTx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -351,15 +934,49 @@ const UserDashboard = () => {
         </div>
       )}
 
+      {/* PROFILE MENU */}
+      {showLogoutMenu && (
+        <div className="profile-menu">
+          <div className="profile-menu-item" onClick={() => {
+            setShowLogoutMenu(false);
+            setActiveTab('security');
+            navigate('/dashboard');
+          }}>
+            <span>🔒</span>
+            Security
+          </div>
+          <div className="profile-menu-item" onClick={() => {
+            setShowLogoutMenu(false);
+            setActiveTab('overview');
+            navigate('/dashboard');
+          }}>
+            <span>⚙️</span>
+            Settings
+          </div>
+          <div className="profile-menu-item profile-menu-logout" onClick={() => {
+            setShowLogoutMenu(false);
+            handleLogout();
+          }}>
+            <span>🚪</span>
+            Logout
+          </div>
+        </div>
+      )}
+
       {/* TOP BAR */}
       <div className="top-bar">
         <div>
           <div className="top-bar-logo">🏦 IBK</div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Terminal</div>
+          <div className="top-bar-subtitle">Terminal</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className="top-bar-user">Hi, {user?.name?.split(' ')[0] || 'User'}</div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Welcome back</div>
+        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div>
+            <div className="top-bar-user">Hi, {user?.name?.split(' ')[0] || 'User'}</div>
+            <div className="top-bar-greeting">Welcome back</div>
+          </div>
+          <div className="profile-icon" onClick={() => setShowLogoutMenu(!showLogoutMenu)}>
+            👤
+          </div>
         </div>
       </div>
 
@@ -376,8 +993,8 @@ const UserDashboard = () => {
               <div className="card-container">
                 <div className="card-header">
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8, letterSpacing: '1.5px' }}>VISA PLATINUM</div>
-                    <div style={{ fontSize: '13px', opacity: 0.9, marginTop: '4px' }}>IBK Terminal</div>
+                    <div className="card-brand">VISA PLATINUM</div>
+                    <div className="card-type">IBK Terminal</div>
                   </div>
                   <div className="card-chip" />
                 </div>
@@ -386,10 +1003,10 @@ const UserDashboard = () => {
 
                 <div className="card-footer">
                   <div>
-                    <div className="card-holder-name">Card Holder</div>
-                    <div className="card-holder">{user?.name || 'VALUED CUSTOMER'}</div>
+                    <div className="card-holder-label">Card Holder</div>
+                    <div className="card-holder-name">{user?.name || 'VALUED CUSTOMER'}</div>
                   </div>
-                  <span style={{ fontSize: '18px', fontWeight: 700, opacity: 0.9 }}>VISA</span>
+                  <span className="card-visa">VISA</span>
                 </div>
               </div>
             )}
@@ -397,9 +1014,9 @@ const UserDashboard = () => {
             {/* BALANCE SECTION */}
             {activeTab === 'overview' && (
               <div className="balance-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="balance-label">💰 Available Balance</span>
-                  <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0, cursor: 'pointer' }}>
+                  <button onClick={() => setShowBalance(!showBalance)} style={{ background: 'none', color: '#60a5fa', fontSize: '11px', fontWeight: 700, padding: 0, cursor: 'pointer', border: 'none', transition: 'color 0.2s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {showBalance ? 'HIDE' : 'SHOW'}
                   </button>
                 </div>
@@ -428,10 +1045,10 @@ const UserDashboard = () => {
             {/* RECENT ACTIVITY / TRANSACTIONS */}
             {(activeTab === 'overview' || activeTab === 'transactions') && (
               <div className="section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3 className="section-title">📊 Recent Activity</h3>
                   {activeTab === 'overview' && (
-                    <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: 0, cursor: 'pointer' }}>VIEW ALL</button>
+                    <button onClick={() => setActiveTab('transactions')} style={{ background: 'none', color: '#60a5fa', fontSize: '12px', fontWeight: 700, padding: 0, cursor: 'pointer', border: 'none', transition: 'color 0.2s ease', textTransform: 'uppercase', letterSpacing: '0.3px' }}>VIEW ALL</button>
                   )}
                 </div>
 
@@ -474,10 +1091,10 @@ const UserDashboard = () => {
             {/* SECURITY SECTION */}
             {activeTab === 'security' && (
               <div className="section" style={{ maxWidth: '100%', margin: '40px 16px' }}>
-                <div style={{ background: 'white', padding: '32px 24px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔐</div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', color: '#1f2937' }}>Secure Your Account</h2>
-                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5' }}>Set a 4-digit PIN to authorize all your transactions</p>
+                <div style={{ background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%)', padding: '40px 24px', borderRadius: '16px', textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.2)', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}>
+                  <div style={{ fontSize: '56px', marginBottom: '20px', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.2))' }}>🔐</div>
+                  <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', color: '#f1f5f9', letterSpacing: '-0.3px' }}>Secure Your Account</h2>
+                  <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '36px', lineHeight: '1.6', fontWeight: 500 }}>Set a 4-digit PIN to authorize all your transactions</p>
                   
                   <div className="pin-inputs">
                     {pin.map((d, i) => (
@@ -485,7 +1102,7 @@ const UserDashboard = () => {
                     ))}
                   </div>
                   
-                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '48px', fontSize: '16px', fontWeight: 700 }}>
+                  <button className="btn-primary" onClick={handleConfirmPin} disabled={isUpdating} style={{ width: '100%', minHeight: '48px', fontSize: '16px', fontWeight: 700, letterSpacing: '-0.3px' }}>
                     {isUpdating ? '⏳ Securing...' : '✓ Set PIN'}
                   </button>
                 </div>
@@ -506,6 +1123,7 @@ const UserDashboard = () => {
         ].map((item) => (
           <div 
             key={item.id}
+            style={{ position: 'relative' }}
             className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
             onClick={() => {
               if (item.path) navigate(item.path);
